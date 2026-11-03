@@ -201,6 +201,16 @@ export type Database = {
       };
       remove_group_member: { Args: { p_group_id: string; p_profile_id: string }; Returns: undefined };
       set_group_role: { Args: { p_group_id: string; p_profile_id: string; p_role: string }; Returns: undefined };
+      block_user: { Args: { p_profile_id: string }; Returns: undefined };
+      unblock_user: { Args: { p_profile_id: string }; Returns: undefined };
+      my_blocked_profiles: {
+        Args: Record<string, never>;
+        Returns: { blocked_at: string; display_name: string; handle: string; profile_id: string }[];
+      };
+      report_content: {
+        Args: { p_details?: string; p_reason: string; p_target_id: string; p_target_type: string };
+        Returns: undefined;
+      };
       delete_my_post: { Args: { p_post_id: string }; Returns: undefined };
       nearby_feed: {
         Args: {

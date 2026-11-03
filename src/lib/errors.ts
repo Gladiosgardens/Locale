@@ -34,6 +34,11 @@ const MESSAGES: Record<string, string> = {
   cannot_remove: 'You can’t remove that member.',
   request_not_found: 'That request was already handled.',
   member_not_found: 'That person isn’t an active member.',
+  cannot_block_self: 'You can’t block yourself.',
+  profile_not_found: 'That account no longer exists.',
+  report_rate_limited: 'You’ve sent a lot of reports today. Try again tomorrow.',
+  report_target_not_found: 'That’s no longer available to report.',
+  invalid_report: 'Please choose a reason.',
   publish_failed: "We couldn't publish your post. Please try again.",
 };
 

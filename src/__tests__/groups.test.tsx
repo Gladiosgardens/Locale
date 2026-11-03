@@ -27,6 +27,10 @@ jest.mock('@/features/posts/hooks', () => ({
   useGroupFeed: jest.fn(),
   useDeletePost: () => ({ mutate: jest.fn() }),
 }));
+jest.mock('@/features/safety/hooks', () => ({
+  useBlockUser: () => ({ mutate: jest.fn() }),
+  useReport: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}));
 
 const hooks = groupHooks as jest.Mocked<typeof groupHooks>;
 const mutation = (over: Record<string, unknown> = {}) => ({ mutate: jest.fn(), mutateAsync: jest.fn(), isPending: false, ...over });

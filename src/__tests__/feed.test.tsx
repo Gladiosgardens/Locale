@@ -8,6 +8,10 @@ jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { 
 jest.mock('@/features/auth/api', () => ({ signOut: jest.fn() }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
 jest.mock('@/features/posts/hooks', () => ({ useFeed: jest.fn(), useDeletePost: jest.fn() }));
+jest.mock('@/features/safety/hooks', () => ({
+  useBlockUser: () => ({ mutate: jest.fn() }),
+  useReport: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}));
 
 const post = (id: string, authorId: string, name: string) => ({
   id,
@@ -47,14 +51,23 @@ beforeEach(() => {
 });
 
 describe('Feed', () => {
-  it('shows posts with authors, tags and delete only on my own post', async () => {
+  it('shows posts with authors and tags; delete for mine, report/block for others', async () => {
     (useFeed as jest.Mock).mockReturnValue(feedResult());
     await render(<Feed />);
     expect(screen.getByText('Downtown and around')).toBeTruthy();
     expect(screen.getByText('Caption p1')).toBeTruthy();
     expect(screen.getByText('Caption p2')).toBeTruthy();
     expect(screen.getAllByText('Dogs').length).toBeGreaterThan(0);
-    expect(screen.getAllByRole('button', { name: 'Delete post' })).toHaveLength(1);
+    const menus = screen.getAllByRole('button', { name: 'Post options' });
+    expect(menus).toHaveLength(2);
+    await fireEvent.press(menus[0]);
+    expect(screen.getByRole('button', { name: 'Delete post' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Block/ })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    await fireEvent.press(menus[1]);
+    expect(screen.getByRole('button', { name: 'Block @ben' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Report post' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Delete post' })).toBeNull();
   });
 
   it('filters by one of my interests', async () => {

@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Chip, colors } from '@/components/ui';
-import { signOut } from '@/features/auth/api';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import type { FeedScope } from '@/features/posts/api';
 import { useFeed } from '@/features/posts/hooks';
@@ -78,8 +77,8 @@ export default function Feed() {
               : 'Around you'
             : 'Public posts from everywhere'}
         </Text>
-        <Pressable accessibilityRole="button" onPress={signOut} hitSlop={8}>
-          <Text style={styles.link}>Sign out</Text>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/settings')} hitSlop={8}>
+          <Text style={styles.link}>Settings</Text>
         </Pressable>
       </View>
 

@@ -9,8 +9,7 @@ import type { FeedMedia, FeedPost, Item } from './api';
 type Props = {
   post: FeedPost;
   interests: Map<number, Interest>;
-  isMine: boolean;
-  onDelete: (post: FeedPost) => void;
+  onMenu: (post: FeedPost) => void;
   onOpenItem: (item: Item) => void;
 };
 
@@ -74,7 +73,7 @@ function TaggedPhoto({
   );
 }
 
-export const PostCard = memo(function PostCard({ post, interests, isMine, onDelete, onOpenItem }: Props) {
+export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpenItem }: Props) {
   const { width } = useWindowDimensions();
   const [page, setPage] = useState(0);
   // Search results open with their tags showing, so the match is visible.
@@ -93,11 +92,9 @@ export const PostCard = memo(function PostCard({ post, interests, isMine, onDele
             {[`@${post.author.handle}`, post.areaName, timeAgo(post.publishedAt)].filter(Boolean).join(' · ')}
           </Text>
         </View>
-        {isMine ? (
-          <Pressable accessibilityRole="button" accessibilityLabel="Delete post" onPress={() => onDelete(post)} hitSlop={10}>
-            <Text style={styles.delete}>Delete</Text>
-          </Pressable>
-        ) : null}
+        <Pressable accessibilityRole="button" accessibilityLabel="Post options" onPress={() => onMenu(post)} hitSlop={10}>
+          <Text style={styles.more}>•••</Text>
+        </Pressable>
       </View>
 
       <FlatList
@@ -145,7 +142,7 @@ const styles = StyleSheet.create({
   headerText: { flex: 1 },
   name: { fontSize: 15, fontWeight: '600', color: colors.text },
   meta: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  delete: { color: colors.danger, fontSize: 14 },
+  more: { color: colors.muted, fontSize: 16, letterSpacing: 1 },
   pager: { alignSelf: 'center', fontSize: 12, color: colors.muted, marginTop: 6 },
   caption: { fontSize: 15, color: colors.text, lineHeight: 21, paddingHorizontal: 16, paddingTop: 10 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },

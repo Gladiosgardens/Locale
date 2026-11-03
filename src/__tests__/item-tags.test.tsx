@@ -33,7 +33,7 @@ const post = (over: Partial<FeedPost> = {}): FeedPost => ({
 describe('tags on a post', () => {
   it('shows an item count, reveals dots on tap and opens an item', async () => {
     const onOpenItem = jest.fn();
-    await render(<PostCard post={post()} interests={new Map()} isMine={false} onDelete={jest.fn()} onOpenItem={onOpenItem} />);
+    await render(<PostCard post={post()} interests={new Map()} onMenu={jest.fn()} onOpenItem={onOpenItem} />);
     expect(screen.getByText('2 items')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Item: Linen sofa' })).toBeNull();
 
@@ -43,14 +43,14 @@ describe('tags on a post', () => {
   });
 
   it('omits the area for far-away posts', async () => {
-    await render(<PostCard post={post()} interests={new Map()} isMine={false} onDelete={jest.fn()} onOpenItem={jest.fn()} />);
+    await render(<PostCard post={post()} interests={new Map()} onMenu={jest.fn()} onOpenItem={jest.fn()} />);
     expect(screen.getByText(/^@amy · /)).toBeTruthy();
     expect(screen.queryByText(/Downtown/)).toBeNull();
   });
 
   it('opens search results with their tags already showing', async () => {
     await render(
-      <PostCard post={post({ matchedItemIds: ['i1'] })} interests={new Map()} isMine={false} onDelete={jest.fn()} onOpenItem={jest.fn()} />,
+      <PostCard post={post({ matchedItemIds: ['i1'] })} interests={new Map()} onMenu={jest.fn()} onOpenItem={jest.fn()} />,
     );
     expect(screen.getByRole('button', { name: 'Item: Linen sofa' })).toBeTruthy();
   });

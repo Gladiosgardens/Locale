@@ -3,10 +3,13 @@ import { ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet } from '
 import { colors } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { ItemSheet } from '@/features/items/ItemSheet';
+import { ReportSheet, type ReportSubject } from '@/features/safety/ReportSheet';
+import { useBlockUser } from '@/features/safety/hooks';
 import { useInterests } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
 import type { FeedPost, Item } from './api';
 import { useDeletePost } from './hooks';
+import { PostActions, type PostAction } from './PostActions';
 import { PostCard } from './PostCard';
 
 type PagedQuery = {
@@ -23,35 +26,43 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   const { session } = useAuth();
   const interests = useInterests();
   const remove = useDeletePost();
+  const block = useBlockUser();
   const [openItem, setOpenItem] = useState<Item | null>(null);
+  const [menuPost, setMenuPost] = useState<FeedPost | null>(null);
+  const [reporting, setReporting] = useState<ReportSubject | null>(null);
 
   const interestMap = useMemo(() => new Map((interests.data ?? []).map((i) => [i.id, i])), [interests.data]);
   const posts = useMemo(() => query.data?.pages.flat() ?? [], [query.data]);
 
-  const confirmDelete = useCallback(
-    (post: FeedPost) =>
-      Alert.alert('Delete this post?', 'It will disappear for everyone right away.', [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => remove.mutate(post.id, { onError: (e) => Alert.alert(friendlyError(e)) }),
-        },
-      ]),
-    [remove],
-  );
+  function onPick(action: PostAction, post: FeedPost) {
+    const fail = (e: unknown) => Alert.alert(friendlyError(e));
+    switch (action) {
+      case 'delete':
+        return Alert.alert('Delete this post?', 'It will disappear for everyone right away.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => remove.mutate(post.id, { onError: fail }) },
+        ]);
+      case 'report-post':
+        return setReporting({ type: 'post', id: post.id, label: 'post' });
+      case 'report-user':
+        return setReporting({ type: 'profile', id: post.author.id, label: `@${post.author.handle}` });
+      case 'block':
+        return Alert.alert(
+          `Block @${post.author.handle}?`,
+          'You won’t see each other’s posts or profiles. They won’t be told. You can unblock in Settings.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Block', style: 'destructive', onPress: () => block.mutate(post.author.id, { onError: fail }) },
+          ],
+        );
+    }
+  }
 
   const renderItem = useCallback(
     ({ item }: { item: FeedPost }) => (
-      <PostCard
-        post={item}
-        interests={interestMap}
-        isMine={item.author.id === session?.user.id}
-        onDelete={confirmDelete}
-        onOpenItem={setOpenItem}
-      />
+      <PostCard post={item} interests={interestMap} onMenu={setMenuPost} onOpenItem={setOpenItem} />
     ),
-    [interestMap, session?.user.id, confirmDelete],
+    [interestMap],
   );
 
   return (
@@ -78,6 +89,13 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
         ListEmptyComponent={empty}
       />
       <ItemSheet item={openItem} onClose={() => setOpenItem(null)} />
+      <PostActions
+        post={menuPost}
+        isMine={menuPost?.author.id === session?.user.id}
+        onPick={onPick}
+        onClose={() => setMenuPost(null)}
+      />
+      <ReportSheet subject={reporting} onClose={() => setReporting(null)} />
     </>
   );
 }

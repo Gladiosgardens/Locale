@@ -13,7 +13,9 @@ Built so far:
 
 4. **Groups:** one interest × the creator's area. Public groups are readable and joinable by anyone nearby. Private groups show only that they exist; posts and members are for approved members. Kid-related groups are always private. Owner, moderators and members, with requests, approvals, removal (which bans) and promotion. Group posts appear only in the group.
 
-Next up: follows and messaging (core-loop step 6). Reporting and blocking should land first or alongside.
+5. **Reporting and blocking:** every post has a ••• menu (Delete for yours; Report post, Report person or Block for others), groups can be reported, and Settings lists blocked accounts.
+
+Next up: follows and messaging (core-loop step 6).
 
 ## Stack
 
@@ -78,7 +80,18 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Group posts stay in the group.** They never appear in Nearby, Everywhere or search, and are never globally searchable (a database constraint).
 - **Moderation.** Removing a member bans them from rejoining. Nobody can remove the owner, and only the owner can promote, demote or remove moderators.
 
+## Safety (step 5)
+
+- **Blocking is two-way and silent.** Neither person sees the other's posts, tags, images or profile anywhere (feeds, search, group feeds, direct table reads, storage). The blocked person can't tell they've been blocked.
+- **Reports are private** to the reporter and the service role. Each person can report a given thing once, up to 30 reports a day, and only things they can see.
+- **Auto-hide pending review.** A post is hidden after one child-safety report or reports from 3 different people. A malicious reporter can wrongly hide a post this way; that trade-off is deliberate.
+- **Review.** In the Supabase SQL editor, `select * from moderation_queue;` lists open reports, child-safety first. `select resolve_report('post', '<id>', 'remove' | 'dismiss');` acts on one: dismissing restores a hidden post, removing takes it down.
+- **Known limitation.** A moderator who blocks a group member can't see them in the member list to remove them. Unblock, remove, then re-block.
+
 ## Before public launch (from the trust reviews)
+
+- **Child-safety reporting process.** US providers have legal obligations when they become aware of apparent child sexual abuse material (reporting to NCMEC's CyberTipline, preserving evidence). Set up the human process, response times and legal review before launch. The `child_safety` reason and the auto-hide are the technical hooks, not the process.
+- **A real moderator console** to replace SQL-editor review. It needs reviewer accounts, an audit log, and actions on profiles and groups (today only posts can be taken down).
 
 - **Stronger gates for kids' groups.** Approval is currently the only barrier, and moderators see just a handle and name. Before launch, give moderators more signal (account age, groups in common, reports) and give them guidance; consider verified-parent badges.
 

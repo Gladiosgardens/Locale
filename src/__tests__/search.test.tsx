@@ -6,6 +6,10 @@ jest.mock('expo-router', () => ({ router: { back: jest.fn() } }));
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: () => ({ data: [] }) }));
 jest.mock('@/features/posts/hooks', () => ({ useSearch: jest.fn(), useDeletePost: () => ({ mutate: jest.fn() }) }));
+jest.mock('@/features/safety/hooks', () => ({
+  useBlockUser: () => ({ mutate: jest.fn() }),
+  useReport: () => ({ mutateAsync: jest.fn(), isPending: false }),
+}));
 
 const result = (over: Record<string, unknown> = {}) => ({
   data: { pages: [[]] }, isPending: false, isError: false, isRefetching: false,

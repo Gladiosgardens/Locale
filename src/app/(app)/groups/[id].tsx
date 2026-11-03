@@ -17,6 +17,7 @@ import {
 import { useInterests } from '@/features/onboarding/hooks';
 import { useGroupFeed } from '@/features/posts/hooks';
 import { PostList } from '@/features/posts/PostList';
+import { ReportSheet, type ReportSubject } from '@/features/safety/ReportSheet';
 import { friendlyError } from '@/lib/errors';
 
 const ROLE_LABEL = { owner: 'Owner', moderator: 'Moderator', member: '' } as const;
@@ -158,6 +159,7 @@ export default function GroupPage() {
   const canReadPosts = !!g && (isMember || (g.privacy === 'public' && g.myStatus !== 'banned'));
   const feed = useGroupFeed(id, canReadPosts);
   const roster = useRoster(id, isMember);
+  const [reporting, setReporting] = useState<ReportSubject | null>(null);
 
   if (group.isPending) {
     return (
@@ -199,6 +201,15 @@ export default function GroupPage() {
           <Members group={g} entries={roster.data} myId={session?.user.id} />
         </>
       ) : null}
+      {g.myRole !== 'owner' ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => setReporting({ type: 'group', id: g.id, label: 'group' })}
+          hitSlop={8}
+        >
+          <Text style={styles.reportLink}>Report group</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 
@@ -229,6 +240,7 @@ export default function GroupPage() {
           ) : null}
         </View>
       )}
+      <ReportSheet subject={reporting} onClose={() => setReporting(null)} />
     </SafeAreaView>
   );
 }
@@ -249,6 +261,7 @@ const styles = StyleSheet.create({
   role: { fontSize: 12, color: colors.accent },
   approve: { color: colors.accent, fontSize: 14, fontWeight: '600' },
   decline: { color: colors.danger, fontSize: 14 },
+  reportLink: { color: colors.muted, fontSize: 13, textDecorationLine: 'underline' },
   loading: { marginVertical: 24 },
   emptyText: { padding: 16, fontSize: 15, color: colors.muted, lineHeight: 21 },
 });
