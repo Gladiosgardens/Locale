@@ -2,15 +2,17 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Chip, colors, ErrorText } from '@/components/ui';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
-import { MAX_PHOTOS, MAX_POST_INTERESTS, type PickedPhoto } from '@/features/posts/api';
+import { TagEditor } from '@/features/items/TagEditor';
+import { MAX_PHOTOS, MAX_POST_INTERESTS, type DraftTag, type PickedPhoto } from '@/features/posts/api';
 import { usePublishPost, type PublishStage } from '@/features/posts/hooks';
 import { friendlyError } from '@/lib/errors';
 
 const MAX_CAPTION = 2200;
+const MAX_POST_TAGS = 20;
 
 function stageText(stage: PublishStage, done: number, total: number) {
   if (stage === 'publishing') return 'Publishing…';
@@ -24,6 +26,9 @@ export default function NewPost() {
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const [caption, setCaption] = useState('');
   const [tags, setTags] = useState<number[]>([]);
+  const [itemTags, setItemTags] = useState<DraftTag[]>([]);
+  const [tagging, setTagging] = useState<number | null>(null);
+  const [nearbyOnly, setNearbyOnly] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const publish = usePublishPost((stage, done, total) => setProgress(stageText(stage, done, total)));
@@ -54,10 +59,25 @@ export default function NewPost() {
     );
   }
 
+  function removePhoto(index: number) {
+    setPhotos((prev) => prev.filter((_, j) => j !== index));
+    // Drop that photo's tags and shift later photos' tags down by one.
+    setItemTags((prev) =>
+      prev.filter((t) => t.media !== index).map((t) => (t.media > index ? { ...t, media: t.media - 1 } : t)),
+    );
+  }
+
   async function submit() {
     setError(null);
     try {
-      await publish.mutateAsync({ photos, caption, interestIds: tags });
+      await publish.mutateAsync({
+        photos,
+        caption,
+        interestIds: tags,
+        tags: itemTags,
+        // Kid-related posts are never shown outside the area (also enforced server-side).
+        searchable: !(nearbyOnly || familySelected),
+      });
       router.back();
     } catch (e) {
       setError(friendlyError(e));
@@ -88,9 +108,24 @@ export default function NewPost() {
                   accessibilityRole="button"
                   accessibilityLabel={`Remove photo ${i + 1}`}
                   style={styles.remove}
-                  onPress={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                  onPress={() => removePhoto(i)}
                 >
                   <Text style={styles.removeText}>×</Text>
+                </Pressable>
+              ) : null}
+              {!busy ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Tag items in photo ${i + 1}`}
+                  style={styles.tagButton}
+                  onPress={() => setTagging(i)}
+                >
+                  <Text style={styles.tagButtonText}>
+                    {(() => {
+                      const n = itemTags.filter((t) => t.media === i).length;
+                      return n ? `${n} tagged` : 'Tag items';
+                    })()}
+                  </Text>
                 </Pressable>
               ) : null}
             </View>
@@ -131,14 +166,36 @@ export default function NewPost() {
           </View>
         ) : null}
 
+        <View style={styles.switchRow}>
+          <Switch
+            accessibilityLabel="Nearby only"
+            value={nearbyOnly || familySelected}
+            onValueChange={setNearbyOnly}
+            disabled={familySelected || busy}
+            accessibilityState={{ disabled: familySelected || busy, checked: nearbyOnly || familySelected }}
+          />
+          <Text style={styles.switchText}>Nearby only</Text>
+        </View>
         <Text style={styles.notice}>
-          Visible to people within about 15 km of {profile.data?.area?.name ?? 'your area'}, and shows your area name.
+          {familySelected
+            ? `Posts with kid-related tags are only shown within about 15 km of ${profile.data?.area?.name ?? 'your area'}.`
+            : nearbyOnly
+              ? `Only people within about 15 km of ${profile.data?.area?.name ?? 'your area'} will see this.`
+              : `Public: shown nearby, in Everywhere and in item search. Only people near ${profile.data?.area?.name ?? 'you'} see your area name.`}
         </Text>
 
         <ErrorText>{error}</ErrorText>
         {progress ? <Text style={styles.progress}>{progress}</Text> : null}
         <Button label="Post" onPress={submit} disabled={photos.length === 0} loading={busy} />
       </ScrollView>
+      <TagEditor
+        photo={tagging != null ? photos[tagging] ?? null : null}
+        mediaIndex={tagging ?? 0}
+        tags={itemTags.filter((t) => t.media === tagging)}
+        remainingForPost={MAX_POST_TAGS - itemTags.length}
+        onChange={(next) => setItemTags((prev) => [...prev.filter((t) => t.media !== tagging), ...next])}
+        onClose={() => setTagging(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -182,6 +239,19 @@ const styles = StyleSheet.create({
   warning: { backgroundColor: '#FFF4E5', borderRadius: 12, padding: 12, gap: 4 },
   warningTitle: { fontWeight: '600', color: '#7A4B00', fontSize: 15 },
   warningText: { color: '#7A4B00', fontSize: 14, lineHeight: 20 },
+  tagButton: {
+    position: 'absolute',
+    left: 4,
+    right: 4,
+    bottom: 4,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 6,
+    paddingVertical: 3,
+    alignItems: 'center',
+  },
+  tagButtonText: { color: '#FFFFFF', fontSize: 11, fontWeight: '600' },
+  switchRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  switchText: { fontSize: 16, color: colors.text },
   notice: { color: colors.muted, fontSize: 13, lineHeight: 18 },
   progress: { color: colors.muted, fontSize: 14, textAlign: 'center' },
 });

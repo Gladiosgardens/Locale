@@ -35,7 +35,7 @@ describe('New post', () => {
     mutateAsync.mockResolvedValue('post-id');
     await render(<NewPost />);
     expect(screen.getByRole('button', { name: 'Post' })).toBeDisabled();
-    expect(screen.getByText(/within about 15 km of Downtown/)).toBeTruthy();
+    expect(screen.getByText(/Only people near Downtown see your area name/)).toBeTruthy();
 
     await fireEvent.press(screen.getByRole('button', { name: '+ Add photos' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Post' })).toBeEnabled());
@@ -49,6 +49,8 @@ describe('New post', () => {
       photos: [{ uri: 'file:///a.jpg', width: 4032, height: 3024 }],
       caption: 'Morning walk',
       interestIds: [1],
+      tags: [],
+      searchable: true,
     });
   });
 
@@ -66,6 +68,18 @@ describe('New post', () => {
     expect(screen.queryByText(/avoid showing children’s faces/i)).toBeNull();
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Toddlers' }));
     expect(screen.getByText(/avoid showing children’s faces/i)).toBeTruthy();
+    expect(screen.getByText(/kid-related tags are only shown within about 15 km/)).toBeTruthy();
+    expect(screen.getByLabelText('Nearby only')).toBeDisabled();
+  });
+
+  it('can be kept nearby only', async () => {
+    mutateAsync.mockResolvedValue('post-id');
+    await render(<NewPost />);
+    await fireEvent.press(screen.getByRole('button', { name: '+ Add photos' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Post' })).toBeEnabled());
+    await fireEvent(screen.getByLabelText('Nearby only'), 'valueChange', true);
+    await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ searchable: false })));
   });
 
   it('keeps the draft and explains when publishing fails', async () => {

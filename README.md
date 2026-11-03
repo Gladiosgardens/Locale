@@ -9,7 +9,9 @@ Built so far:
 1. **Sign-up:** email code → approximate area → interests → profile (18+).
 2. **Nearby feed + photo posts:** post 1–10 photos with a caption and up to 3 tags. The feed shows posts from your cell and the 8 around it (~15 km), newest first, filterable by your interests, and you can delete your own posts.
 
-Next up: item tags on photos.
+3. **Shoppable items + public discovery:** tag items on photos (name, brand, store, optional link and price, affiliate label). Tap a photo to see its tags, and tap a tag for details and a link that names the real site. An **Everywhere** tab and item search show public posts from anywhere.
+
+Next up: groups (interest × area), which unlock members-only family content.
 
 ## Stack
 
@@ -59,12 +61,20 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Who can see a post.** Only people whose area is the post's cell or one of the 8 around it, and the author. This rule lives in RLS, so it covers the feed, direct table reads and image downloads alike.
 - **Where photos are stored.** Images sit in a private bucket and reach the app as 1-hour signed URLs. Deleting a post makes its images unreadable immediately.
 - **Metadata removal.** The phone re-encodes photos, which drops EXIF. The `publish-post` function then strips EXIF/GPS/XMP/IPTC and anything appended to the file at byte level before publishing, so it doesn't rely on the phone.
-- **Limits.** 20 posts per 24 hours, 1–10 photos, up to 3 tags.
+- **Limits.** 20 posts per 24 hours, 1–10 photos, up to 3 interest tags.
+
+## Public discovery and item links (step 3)
+
+- **Public by default.** Posts appear nearby, in Everywhere and in item search. Authors can switch a post to *Nearby only*.
+- **Area stays local.** Viewers outside the area see the photo, items and handle, but not the poster's neighborhood. Everywhere and search go through `discover_posts()`, which decides exactly which fields leave, while the `posts` table itself stays nearby-only.
+- **Kid-tagged posts never leave the area.** Posts tagged Toddlers, School-age kids or Parenting teens stay local, and the server enforces this regardless of the switch.
+- **Links are checked by the database.** `https` only, a real ASCII host name (so no lookalike Unicode or IP addresses), no `user@host` tricks and no link shorteners, so the domain on the button is where it goes. Affiliate links are labelled.
 
 ## Before public launch (from the trust reviews)
 
 - **Image safety scanning.** Hash-match every upload against known child-abuse imagery, via an industry hash-matching service, inside `publish-post` before anything is published. Required for an app with family content and photo uploads.
-- **Reporting, blocking and a moderation queue.** Blocked users must disappear from each other's feeds.
+- **Malicious-link screening.** Check item links against a URL reputation service (e.g. Google Web Risk) in `publish-post`. The current rules stop disguised links, not bad sites.
+- **Reporting, blocking and a moderation queue.** Global discovery makes this more urgent. Blocked users must disappear from each other's feeds.
 - **Storage cleanup job.** It should purge images of deleted posts and holding uploads older than a day; abandoned uploads currently stay in storage.
 - In-app account deletion (an App Store requirement) that removes the profile and the user's storage objects.
 - CAPTCHA on sign-in (Supabase Auth supports hCaptcha/Turnstile) and a custom SMTP provider with sensible rate limits.

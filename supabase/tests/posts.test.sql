@@ -114,6 +114,8 @@ select public.create_post_record('44444444-4444-4444-4444-444444444444',
 reset role;
 update public.posts set published_at = now() - interval '1 hour'
 where id = '22222222-2222-2222-2222-222222222222';
+-- D's post is "Nearby only", so it is not discoverable from elsewhere.
+update public.posts set searchable = false where id = '44444444-4444-4444-4444-444444444444';
 
 ------------------------------------------------------------------------------
 -- Visibility (as B, north neighbour of A)
@@ -152,7 +154,7 @@ select is((select count(*)::int from storage.objects
   'B can download A''s images');
 select is((select count(*)::int from storage.objects
            where name like '44444444-4444-4444-4444-444444444444/%'), 0,
-  'B cannot download far-away images');
+  'B cannot download far-away nearby-only images');
 
 -- Storage writes
 select lives_ok($$insert into storage.objects (bucket_id, name)

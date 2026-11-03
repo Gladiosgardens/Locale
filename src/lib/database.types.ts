@@ -91,6 +91,7 @@ export type Database = {
           id: string;
           published_at: string;
           removed_at: string | null;
+          searchable: boolean;
           status: string;
         };
         Insert: never;
@@ -99,6 +100,30 @@ export type Database = {
       };
       post_media: {
         Row: { height: number; id: string; position: number; post_id: string; storage_path: string; width: number };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      items: {
+        Row: {
+          brand: string | null;
+          created_at: string;
+          created_by: string;
+          currency: string | null;
+          id: string;
+          is_affiliate: boolean;
+          price_cents: number | null;
+          store_name: string | null;
+          title: string;
+          url: string | null;
+          url_host: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      item_tags: {
+        Row: { id: string; item_id: string; post_media_id: string; x: number; y: number };
         Insert: never;
         Update: never;
         Relationships: [];
@@ -116,6 +141,26 @@ export type Database = {
       complete_onboarding: {
         Args: { p_confirm_adult: boolean; p_display_name: string; p_handle: string };
         Returns: ProfileRow;
+      };
+      discover_posts: {
+        Args: {
+          p_before_id?: string;
+          p_before_published_at?: string;
+          p_limit?: number;
+          p_query?: string;
+        };
+        Returns: {
+          area_name: string | null;
+          author_display_name: string;
+          author_handle: string;
+          author_id: string;
+          caption: string | null;
+          id: string;
+          interest_ids: number[];
+          matched_item_ids: string[];
+          media: Json;
+          published_at: string;
+        }[];
       };
       delete_my_post: { Args: { p_post_id: string }; Returns: undefined };
       nearby_feed: {
@@ -137,6 +182,7 @@ export type Database = {
           published_at: string;
         }[];
       };
+      item_url_host: { Args: { p_url: string }; Returns: string };
       geohash_center: { Args: { p_hash: string }; Returns: { lat: number; lng: number } };
       set_my_area: { Args: { p_geohash5: string; p_name: string }; Returns: AreaRow };
       set_my_interests: { Args: { p_interest_ids: number[] }; Returns: undefined };

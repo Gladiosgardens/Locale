@@ -11,30 +11,56 @@ export const MAX_POST_INTERESTS = 3;
 const MAX_EDGE = 2048;
 const SIGNED_URL_SECONDS = 60 * 60;
 
-export type FeedMedia = { path: string; width: number; height: number; url: string | null };
+export type Item = {
+  id: string;
+  title: string;
+  brand: string | null;
+  storeName: string | null;
+  url: string | null;
+  urlHost: string | null;
+  priceCents: number | null;
+  currency: string | null;
+  isAffiliate: boolean;
+};
+
+export type ItemTag = { id: string; x: number; y: number; item: Item };
+
+export type FeedMedia = { path: string; width: number; height: number; url: string | null; tags: ItemTag[] };
 
 export type FeedPost = {
   id: string;
   caption: string | null;
   publishedAt: string;
   author: { id: string; handle: string; displayName: string };
-  areaName: string;
+  /** Null when the post is outside the viewer's area (Everywhere and search). */
+  areaName: string | null;
   media: FeedMedia[];
   interestIds: number[];
+  matchedItemIds: string[];
 };
 
 export type FeedCursor = { publishedAt: string; id: string } | null;
+export type FeedScope = 'nearby' | 'everywhere';
 
-export async function fetchFeedPage(cursor: FeedCursor, interestId: number | null): Promise<FeedPost[]> {
-  const rows = unwrap(
-    await supabase.rpc('nearby_feed', {
-      p_limit: FEED_PAGE_SIZE,
-      ...(cursor ? { p_before_published_at: cursor.publishedAt, p_before_id: cursor.id } : {}),
-      ...(interestId ? { p_interest_id: interestId } : {}),
-    }),
-  );
+type RawItem = {
+  id: string; title: string; brand: string | null; store_name: string | null; url: string | null;
+  url_host: string | null; price_cents: number | null; currency: string | null; is_affiliate: boolean;
+};
+type RawMedia = {
+  path: string; width: number; height: number;
+  tags?: { id: string; x: number; y: number; item: RawItem }[];
+};
+type RawPost = {
+  id: string; caption: string | null; published_at: string; author_id: string; author_handle: string;
+  author_display_name: string; area_name: string | null; media: unknown; interest_ids: number[];
+  matched_item_ids?: string[];
+};
 
-  const media = rows.flatMap((r) => r.media as { path: string; width: number; height: number }[]);
+const cursorArgs = (cursor: FeedCursor) =>
+  cursor ? { p_before_published_at: cursor.publishedAt, p_before_id: cursor.id } : {};
+
+async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
+  const media = rows.flatMap((r) => r.media as RawMedia[]);
   const urls = new Map<string, string>();
   if (media.length) {
     // One request for the whole page. Storage RLS re-checks visibility.
@@ -51,11 +77,65 @@ export async function fetchFeedPage(cursor: FeedCursor, interestId: number | nul
     author: { id: r.author_id, handle: r.author_handle, displayName: r.author_display_name },
     areaName: r.area_name,
     interestIds: r.interest_ids,
-    media: (r.media as { path: string; width: number; height: number }[]).map((m) => ({
-      ...m,
+    matchedItemIds: r.matched_item_ids ?? [],
+    media: (r.media as RawMedia[]).map((m) => ({
+      path: m.path,
+      width: m.width,
+      height: m.height,
       url: urls.get(m.path) ?? null,
+      tags: (m.tags ?? []).map((t) => ({
+        id: t.id,
+        x: t.x,
+        y: t.y,
+        item: {
+          id: t.item.id,
+          title: t.item.title,
+          brand: t.item.brand,
+          storeName: t.item.store_name,
+          url: t.item.url,
+          urlHost: t.item.url_host,
+          priceCents: t.item.price_cents,
+          currency: t.item.currency,
+          isAffiliate: t.item.is_affiliate,
+        },
+      })),
     })),
   }));
+}
+
+export async function fetchFeedPage(
+  scope: FeedScope,
+  cursor: FeedCursor,
+  interestId: number | null,
+): Promise<FeedPost[]> {
+  if (scope === 'everywhere') {
+    return toFeedPosts(
+      unwrap(await supabase.rpc('discover_posts', { p_limit: FEED_PAGE_SIZE, ...cursorArgs(cursor) })),
+    );
+  }
+  return toFeedPosts(
+    unwrap(
+      await supabase.rpc('nearby_feed', {
+        p_limit: FEED_PAGE_SIZE,
+        ...cursorArgs(cursor),
+        ...(interestId ? { p_interest_id: interestId } : {}),
+      }),
+    ),
+  );
+}
+
+export const MIN_QUERY_LENGTH = 2;
+
+export async function searchPosts(query: string, cursor: FeedCursor): Promise<FeedPost[]> {
+  return toFeedPosts(
+    unwrap(
+      await supabase.rpc('discover_posts', {
+        p_query: query.trim(),
+        p_limit: FEED_PAGE_SIZE,
+        ...cursorArgs(cursor),
+      }),
+    ),
+  );
 }
 
 export async function deletePost(postId: string): Promise<void> {
@@ -90,13 +170,37 @@ export async function uploadPhoto(userId: string, uri: string): Promise<string> 
   return path;
 }
 
+/** A tag drawn in the composer; `media` is the photo index. */
+export type DraftTag = {
+  media: number;
+  x: number;
+  y: number;
+  item: {
+    title: string;
+    brand?: string;
+    store_name?: string;
+    url?: string;
+    price_cents?: number;
+    currency?: string;
+    is_affiliate?: boolean;
+  };
+};
+
 export async function publishPost(input: {
   uploads: string[];
   caption: string;
   interestIds: number[];
+  tags?: DraftTag[];
+  searchable?: boolean;
 }): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ id: string }>('publish-post', {
-    body: { uploads: input.uploads, caption: input.caption.trim() || null, interestIds: input.interestIds },
+    body: {
+      uploads: input.uploads,
+      caption: input.caption.trim() || null,
+      interestIds: input.interestIds,
+      tags: input.tags ?? [],
+      searchable: input.searchable ?? true,
+    },
   });
   if (error) {
     let code = 'publish_failed';

@@ -15,8 +15,9 @@ const post = (id: string, authorId: string, name: string) => ({
   publishedAt: new Date().toISOString(),
   author: { id: authorId, handle: name.toLowerCase(), displayName: name },
   areaName: 'Downtown',
-  media: [{ path: `${id}/0.jpg`, width: 100, height: 100, url: 'https://s/x' }],
+  media: [{ path: `${id}/0.jpg`, width: 100, height: 100, url: 'https://s/x', tags: [] as unknown[] }],
   interestIds: [1],
+  matchedItemIds: [] as string[],
 });
 
 function feedResult(overrides: Record<string, unknown> = {}) {
@@ -59,9 +60,18 @@ describe('Feed', () => {
   it('filters by one of my interests', async () => {
     (useFeed as jest.Mock).mockReturnValue(feedResult());
     await render(<Feed />);
-    expect(useFeed).toHaveBeenLastCalledWith(null);
+    expect(useFeed).toHaveBeenLastCalledWith('nearby', null);
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Coffee' }));
-    expect(useFeed).toHaveBeenLastCalledWith(2);
+    expect(useFeed).toHaveBeenLastCalledWith('nearby', 2);
+  });
+
+  it('switches to the Everywhere feed, which has no interest filter', async () => {
+    (useFeed as jest.Mock).mockReturnValue(feedResult());
+    await render(<Feed />);
+    await fireEvent.press(screen.getByRole('tab', { name: 'Everywhere' }));
+    expect(useFeed).toHaveBeenLastCalledWith('everywhere', null);
+    expect(screen.getByText('Public posts from everywhere')).toBeTruthy();
+    expect(screen.queryByRole('checkbox', { name: 'Coffee' })).toBeNull();
   });
 
   it('shows an empty state that invites the first post', async () => {

@@ -1,5 +1,5 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
-import { fetchFeedPage, publishPost } from '@/features/posts/api';
+import { fetchFeedPage, publishPost, searchPosts } from '@/features/posts/api';
 import { supabase } from '@/lib/supabase';
 
 jest.mock('@/lib/supabase', () => ({
@@ -37,7 +37,7 @@ describe('fetchFeedPage', () => {
       ],
     });
 
-    const page = await fetchFeedPage({ publishedAt: '2026-11-03T20:00:00Z', id: 'p0' }, 7);
+    const page = await fetchFeedPage('nearby', { publishedAt: '2026-11-03T20:00:00Z', id: 'p0' }, 7);
 
     expect(supabase.rpc).toHaveBeenCalledWith('nearby_feed', {
       p_limit: 20,
@@ -53,9 +53,34 @@ describe('fetchFeedPage', () => {
 
   it('skips signing when the page is empty', async () => {
     (supabase.rpc as jest.Mock).mockResolvedValue({ error: null, data: [] });
-    await expect(fetchFeedPage(null, null)).resolves.toEqual([]);
+    await expect(fetchFeedPage('nearby', null, null)).resolves.toEqual([]);
     expect(supabase.rpc).toHaveBeenCalledWith('nearby_feed', { p_limit: 20 });
     expect(createSignedUrls).not.toHaveBeenCalled();
+  });
+});
+
+describe('discovery', () => {
+  it('Everywhere and search use discover_posts and map tags and nullable areas', async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValue({
+      error: null,
+      data: [{
+        id: 'p9', caption: null, published_at: '2026-11-03T19:00:00Z', author_id: 'u9', author_handle: 'fay',
+        author_display_name: 'Fay', area_name: null, interest_ids: [], matched_item_ids: ['i1'],
+        media: [{ path: 'p9/0.jpg', width: 1, height: 1, tags: [{ id: 't1', x: 0.1, y: 0.2, item: {
+          id: 'i1', title: 'Linen dress', brand: 'Reformation', store_name: null, url: null, url_host: null,
+          price_cents: null, currency: null, is_affiliate: false } }] }],
+      }],
+    });
+    createSignedUrls.mockResolvedValue({ error: null, data: [{ path: 'p9/0.jpg', signedUrl: 'https://s/9', error: null }] });
+
+    await fetchFeedPage('everywhere', null, 3);
+    expect(supabase.rpc).toHaveBeenLastCalledWith('discover_posts', { p_limit: 20 });
+
+    const [found] = await searchPosts('  linen ', null);
+    expect(supabase.rpc).toHaveBeenLastCalledWith('discover_posts', { p_query: 'linen', p_limit: 20 });
+    expect(found.areaName).toBeNull();
+    expect(found.matchedItemIds).toEqual(['i1']);
+    expect(found.media[0].tags[0].item).toMatchObject({ title: 'Linen dress', brand: 'Reformation', storeName: null });
   });
 });
 
@@ -70,7 +95,7 @@ describe('publishPost', () => {
       'post_rate_limited',
     );
     expect(supabase.functions.invoke).toHaveBeenCalledWith('publish-post', {
-      body: { uploads: ['u/x.jpg'], caption: null, interestIds: [] },
+      body: { uploads: ['u/x.jpg'], caption: null, interestIds: [], tags: [], searchable: true },
     });
   });
 });

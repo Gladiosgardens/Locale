@@ -18,6 +18,11 @@ const MESSAGES: Record<string, string> = {
   too_many_interests: 'Pick up to 3 interests for a post.',
   not_onboarded: 'Finish setting up your profile first.',
   post_not_found: 'That post is already gone.',
+  too_many_tags: 'Up to 5 tagged items per photo and 20 per post.',
+  invalid_tag: 'One of the tagged items is missing a name or has invalid details.',
+  invalid_url: 'Links must start with https:// and point to a real website.',
+  shortened_url: 'Please paste the full store link, not a shortened one.',
+  query_too_short: 'Type at least 2 letters to search.',
   publish_failed: "We couldn't publish your post. Please try again.",
 };
 

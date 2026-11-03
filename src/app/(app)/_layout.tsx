@@ -5,6 +5,7 @@ export default function Layout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="new-post" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="search" />
     </Stack>
   );
 }

@@ -1,6 +1,7 @@
 // publish-post: turns the caller's held uploads into a published post.
 //
-// POST { uploads: ["<uid>/<uuid>.jpg", ...], caption?: string, interestIds?: number[] }
+// POST { uploads: ["<uid>/<uuid>.jpg", ...], caption?: string, interestIds?: number[],
+//        tags?: [{ media, x, y, item: {...} }], searchable?: boolean }
 //   -> 200 { id } | 4xx/5xx { error: "<code>" }
 //
 // Steps: verify the caller, re-sanitise every image (strip EXIF/GPS/XMP/IPTC,
@@ -14,6 +15,7 @@ const MAX_IMAGES = 10;
 const MAX_CAPTION = 2200;
 const MAX_DIMENSION = 8192;
 const MAX_BYTES = 10 * 1024 * 1024;
+const MAX_TAGS = 20;
 
 function serviceKey(): string {
   const keys = Deno.env.get('SUPABASE_SECRET_KEYS');
@@ -40,12 +42,16 @@ const RPC_ERRORS: Record<string, number> = {
   media_count: 400,
   too_many_interests: 400,
   unknown_interest: 400,
+  too_many_tags: 400,
+  invalid_tag: 400,
+  invalid_url: 400,
+  shortened_url: 400,
 };
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
-type Body = { uploads?: unknown; caption?: unknown; interestIds?: unknown };
+type Body = { uploads?: unknown; caption?: unknown; interestIds?: unknown; tags?: unknown; searchable?: unknown };
 
 function parseBody(body: Body, uid: string) {
   const uploads = Array.isArray(body.uploads) ? body.uploads : [];
@@ -65,7 +71,22 @@ function parseBody(body: Body, uid: string) {
     throw new PublishError(400, 'unknown_interest');
   }
 
-  return { uploads: uploads as string[], caption: caption as string | null, interestIds: interestIds as number[] };
+  // Tag contents are validated by create_post_record; only the shape is checked here.
+  const tags = body.tags ?? [];
+  if (!Array.isArray(tags) || tags.length > MAX_TAGS || !tags.every((t) => t && typeof t === 'object')) {
+    throw new PublishError(400, 'invalid_tag');
+  }
+
+  const searchable = body.searchable ?? true;
+  if (typeof searchable !== 'boolean') throw new PublishError(400, 'bad_request');
+
+  return {
+    uploads: uploads as string[],
+    caption: caption as string | null,
+    interestIds: interestIds as number[],
+    tags,
+    searchable,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -120,6 +141,8 @@ Deno.serve(async (req) => {
       p_caption: input.caption,
       p_interest_ids: input.interestIds,
       p_media: media,
+      p_tags: input.tags,
+      p_searchable: input.searchable,
     });
     if (rpcError) {
       const status = RPC_ERRORS[rpcError.message];
