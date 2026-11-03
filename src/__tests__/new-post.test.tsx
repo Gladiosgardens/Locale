@@ -5,7 +5,8 @@ import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { usePublishPost } from '@/features/posts/hooks';
 
 const mockBack = jest.fn();
-jest.mock('expo-router', () => ({ router: { back: () => mockBack() } }));
+let mockParams: Record<string, string> = {};
+jest.mock('expo-router', () => ({ router: { back: () => mockBack() }, useLocalSearchParams: () => mockParams }));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
 jest.mock('@/features/posts/hooks', () => ({ usePublishPost: jest.fn() }));
@@ -14,6 +15,7 @@ const mutateAsync = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockParams = {};
   (useMyProfile as jest.Mock).mockReturnValue({ data: { area: { id: 'a', name: 'Downtown' } } });
   (useInterests as jest.Mock).mockReturnValue({
     data: [
@@ -51,7 +53,24 @@ describe('New post', () => {
       interestIds: [1],
       tags: [],
       searchable: true,
+      groupId: null,
     });
+  });
+
+  it('posts into a group without the public options', async () => {
+    mockParams = { groupId: '6f1c0d3e-0000-4000-8000-000000000001', groupName: 'Toddler parents' };
+    mutateAsync.mockResolvedValue('post-id');
+    await render(<NewPost />);
+    expect(screen.getByText('Post in Toddler parents')).toBeTruthy();
+    expect(screen.queryByLabelText('Nearby only')).toBeNull();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Toddlers' }));
+    expect(screen.queryByText(/avoid showing children’s faces/i)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: '+ Add photos' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Post' })).toBeEnabled());
+    await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ groupId: '6f1c0d3e-0000-4000-8000-000000000001' })),
+    );
   });
 
   it('allows at most 3 tags', async () => {

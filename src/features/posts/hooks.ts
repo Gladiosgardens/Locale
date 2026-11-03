@@ -22,6 +22,17 @@ export function useFeed(scope: api.FeedScope, interestId: number | null) {
   });
 }
 
+export function useGroupFeed(groupId: string | undefined, enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: ['group-feed', groupId],
+    queryFn: ({ pageParam }) => api.fetchGroupFeedPage(groupId!, pageParam),
+    initialPageParam: null as api.FeedCursor,
+    getNextPageParam: nextCursor,
+    enabled: !!groupId && enabled,
+    staleTime: STALE_MS,
+  });
+}
+
 export function useSearch(query: string) {
   const q = query.trim();
   return useInfiniteQuery({
@@ -41,6 +52,7 @@ export function useDeletePost() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['search'] });
+      qc.invalidateQueries({ queryKey: ['group-feed'] });
     },
   });
 }
@@ -55,6 +67,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
       interestIds: number[];
       tags?: api.DraftTag[];
       searchable?: boolean;
+      groupId?: string | null;
     }) => {
       const userId = session?.user.id;
       if (!userId) throw new Error('not_authenticated');
@@ -73,11 +86,13 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
         interestIds: input.interestIds,
         tags: input.tags,
         searchable: input.searchable,
+        groupId: input.groupId,
       });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['search'] });
+      qc.invalidateQueries({ queryKey: ['group-feed'] });
     },
   });
 }

@@ -6,6 +6,9 @@ export default function Layout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="new-post" options={{ presentation: 'modal' }} />
       <Stack.Screen name="search" />
+      <Stack.Screen name="groups/index" />
+      <Stack.Screen name="groups/new" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="groups/[id]" />
     </Stack>
   );
 }

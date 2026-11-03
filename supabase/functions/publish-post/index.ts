@@ -1,7 +1,7 @@
 // publish-post: turns the caller's held uploads into a published post.
 //
 // POST { uploads: ["<uid>/<uuid>.jpg", ...], caption?: string, interestIds?: number[],
-//        tags?: [{ media, x, y, item: {...} }], searchable?: boolean }
+//        tags?: [{ media, x, y, item: {...} }], searchable?: boolean, groupId?: string }
 //   -> 200 { id } | 4xx/5xx { error: "<code>" }
 //
 // Steps: verify the caller, re-sanitise every image (strip EXIF/GPS/XMP/IPTC,
@@ -46,12 +46,20 @@ const RPC_ERRORS: Record<string, number> = {
   invalid_tag: 400,
   invalid_url: 400,
   shortened_url: 400,
+  not_a_member: 403,
 };
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
-type Body = { uploads?: unknown; caption?: unknown; interestIds?: unknown; tags?: unknown; searchable?: unknown };
+type Body = {
+  uploads?: unknown;
+  caption?: unknown;
+  interestIds?: unknown;
+  tags?: unknown;
+  searchable?: unknown;
+  groupId?: unknown;
+};
 
 function parseBody(body: Body, uid: string) {
   const uploads = Array.isArray(body.uploads) ? body.uploads : [];
@@ -80,12 +88,18 @@ function parseBody(body: Body, uid: string) {
   const searchable = body.searchable ?? true;
   if (typeof searchable !== 'boolean') throw new PublishError(400, 'bad_request');
 
+  const groupId = body.groupId ?? null;
+  if (groupId !== null && (typeof groupId !== 'string' || !/^[0-9a-f-]{36}$/.test(groupId))) {
+    throw new PublishError(400, 'bad_request');
+  }
+
   return {
     uploads: uploads as string[],
     caption: caption as string | null,
     interestIds: interestIds as number[],
     tags,
     searchable,
+    groupId: groupId as string | null,
   };
 }
 
@@ -143,6 +157,7 @@ Deno.serve(async (req) => {
       p_media: media,
       p_tags: input.tags,
       p_searchable: input.searchable,
+      p_group_id: input.groupId,
     });
     if (rpcError) {
       const status = RPC_ERRORS[rpcError.message];

@@ -95,7 +95,7 @@ describe('publishPost', () => {
       'post_rate_limited',
     );
     expect(supabase.functions.invoke).toHaveBeenCalledWith('publish-post', {
-      body: { uploads: ['u/x.jpg'], caption: null, interestIds: [], tags: [], searchable: true },
+      body: { uploads: ['u/x.jpg'], caption: null, interestIds: [], tags: [], searchable: true, groupId: null },
     });
   });
 });

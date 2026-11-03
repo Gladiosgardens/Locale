@@ -90,6 +90,7 @@ export type Database = {
           caption: string | null;
           id: string;
           published_at: string;
+          group_id: string | null;
           removed_at: string | null;
           searchable: boolean;
           status: string;
@@ -162,11 +163,50 @@ export type Database = {
           published_at: string;
         }[];
       };
+      list_groups: {
+        Args: { p_group_id?: string; p_interest_id?: number; p_mine?: boolean };
+        Returns: {
+          area_name: string;
+          description: string | null;
+          id: string;
+          interest_id: number;
+          member_count: number;
+          my_role: string | null;
+          my_status: string | null;
+          name: string;
+          pending_count: number;
+          privacy: string;
+        }[];
+      };
+      group_roster: {
+        Args: { p_group_id: string };
+        Returns: {
+          display_name: string;
+          handle: string;
+          profile_id: string;
+          requested_at: string;
+          role: string;
+          status: string;
+        }[];
+      };
+      create_group: {
+        Args: { p_description: string; p_interest_id: number; p_name: string; p_privacy: string };
+        Returns: string;
+      };
+      join_group: { Args: { p_group_id: string }; Returns: string };
+      leave_group: { Args: { p_group_id: string }; Returns: undefined };
+      respond_to_join_request: {
+        Args: { p_approve: boolean; p_group_id: string; p_profile_id: string };
+        Returns: undefined;
+      };
+      remove_group_member: { Args: { p_group_id: string; p_profile_id: string }; Returns: undefined };
+      set_group_role: { Args: { p_group_id: string; p_profile_id: string; p_role: string }; Returns: undefined };
       delete_my_post: { Args: { p_post_id: string }; Returns: undefined };
       nearby_feed: {
         Args: {
           p_before_id?: string;
           p_before_published_at?: string;
+          p_group_id?: string;
           p_interest_id?: number;
           p_limit?: number;
         };

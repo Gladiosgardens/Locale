@@ -19,7 +19,7 @@ type PagedQuery = {
 };
 
 // Shared by the Nearby and Everywhere feeds and by search.
-export function PostList({ query, empty }: { query: PagedQuery; empty: ReactElement }) {
+export function PostList({ query, empty, header }: { query: PagedQuery; empty: ReactElement; header?: ReactElement }) {
   const { session } = useAuth();
   const interests = useInterests();
   const remove = useDeletePost();
@@ -74,6 +74,7 @@ export function PostList({ query, empty }: { query: PagedQuery; empty: ReactElem
         ListFooterComponent={
           query.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={colors.accent} /> : undefined
         }
+        ListHeaderComponent={header}
         ListEmptyComponent={empty}
       />
       <ItemSheet item={openItem} onClose={() => setOpenItem(null)} />

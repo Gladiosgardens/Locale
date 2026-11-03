@@ -23,6 +23,17 @@ const MESSAGES: Record<string, string> = {
   invalid_url: 'Links must start with https:// and point to a real website.',
   shortened_url: 'Please paste the full store link, not a shortened one.',
   query_too_short: 'Type at least 2 letters to search.',
+  not_a_member: 'Only group members can do that.',
+  not_a_moderator: 'Only the group’s moderators can do that.',
+  not_owner: 'Only the group’s owner can do that.',
+  owner_cannot_leave: 'Owners can’t leave their own group.',
+  banned_from_group: 'You can’t join this group.',
+  group_not_found: 'That group isn’t available in your area.',
+  group_rate_limited: 'You’ve created 3 groups today. Try again tomorrow.',
+  invalid_group: 'Group names are 3–60 characters; descriptions up to 500.',
+  cannot_remove: 'You can’t remove that member.',
+  request_not_found: 'That request was already handled.',
+  member_not_found: 'That person isn’t an active member.',
   publish_failed: "We couldn't publish your post. Please try again.",
 };
 

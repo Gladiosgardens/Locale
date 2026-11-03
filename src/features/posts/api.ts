@@ -124,6 +124,14 @@ export async function fetchFeedPage(
   );
 }
 
+export async function fetchGroupFeedPage(groupId: string, cursor: FeedCursor): Promise<FeedPost[]> {
+  return toFeedPosts(
+    unwrap(
+      await supabase.rpc('nearby_feed', { p_limit: FEED_PAGE_SIZE, p_group_id: groupId, ...cursorArgs(cursor) }),
+    ),
+  );
+}
+
 export const MIN_QUERY_LENGTH = 2;
 
 export async function searchPosts(query: string, cursor: FeedCursor): Promise<FeedPost[]> {
@@ -192,6 +200,7 @@ export async function publishPost(input: {
   interestIds: number[];
   tags?: DraftTag[];
   searchable?: boolean;
+  groupId?: string | null;
 }): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ id: string }>('publish-post', {
     body: {
@@ -199,7 +208,8 @@ export async function publishPost(input: {
       caption: input.caption.trim() || null,
       interestIds: input.interestIds,
       tags: input.tags ?? [],
-      searchable: input.searchable ?? true,
+      searchable: input.groupId ? false : (input.searchable ?? true),
+      groupId: input.groupId ?? null,
     },
   });
   if (error) {

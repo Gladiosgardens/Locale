@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,6 +21,7 @@ function stageText(stage: PublishStage, done: number, total: number) {
 }
 
 export default function NewPost() {
+  const { groupId, groupName } = useLocalSearchParams<{ groupId?: string; groupName?: string }>();
   const profile = useMyProfile();
   const interests = useInterests();
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
@@ -77,6 +78,7 @@ export default function NewPost() {
         tags: itemTags,
         // Kid-related posts are never shown outside the area (also enforced server-side).
         searchable: !(nearbyOnly || familySelected),
+        groupId: groupId ?? null,
       });
       router.back();
     } catch (e) {
@@ -94,7 +96,9 @@ export default function NewPost() {
         <Pressable accessibilityRole="button" onPress={() => router.back()} disabled={busy} hitSlop={8}>
           <Text style={styles.cancel}>Cancel</Text>
         </Pressable>
-        <Text style={styles.title} accessibilityRole="header">New post</Text>
+        <Text style={styles.title} accessibilityRole="header" numberOfLines={1}>
+          {groupName ? `Post in ${groupName}` : 'New post'}
+        </Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -156,7 +160,7 @@ export default function NewPost() {
           ))}
         </View>
 
-        {familySelected ? (
+        {familySelected && !groupId ? (
           <View style={styles.warning} accessibilityRole="alert">
             <Text style={styles.warningTitle}>Please avoid showing children’s faces</Text>
             <Text style={styles.warningText}>
@@ -166,23 +170,32 @@ export default function NewPost() {
           </View>
         ) : null}
 
-        <View style={styles.switchRow}>
-          <Switch
-            accessibilityLabel="Nearby only"
-            value={nearbyOnly || familySelected}
-            onValueChange={setNearbyOnly}
-            disabled={familySelected || busy}
-            accessibilityState={{ disabled: familySelected || busy, checked: nearbyOnly || familySelected }}
-          />
-          <Text style={styles.switchText}>Nearby only</Text>
-        </View>
-        <Text style={styles.notice}>
-          {familySelected
-            ? `Posts with kid-related tags are only shown within about 15 km of ${profile.data?.area?.name ?? 'your area'}.`
-            : nearbyOnly
-              ? `Only people within about 15 km of ${profile.data?.area?.name ?? 'your area'} will see this.`
-              : `Public: shown nearby, in Everywhere and in item search. Only people near ${profile.data?.area?.name ?? 'you'} see your area name.`}
-        </Text>
+        {groupId ? (
+          <Text style={styles.notice}>
+            Only people who can see {groupName ?? 'this group'} will see this post. Group posts never appear in Nearby,
+            Everywhere or search.
+          </Text>
+        ) : (
+          <>
+            <View style={styles.switchRow}>
+              <Switch
+                accessibilityLabel="Nearby only"
+                value={nearbyOnly || familySelected}
+                onValueChange={setNearbyOnly}
+                disabled={familySelected || busy}
+                accessibilityState={{ disabled: familySelected || busy, checked: nearbyOnly || familySelected }}
+              />
+              <Text style={styles.switchText}>Nearby only</Text>
+            </View>
+            <Text style={styles.notice}>
+              {familySelected
+                ? `Posts with kid-related tags are only shown within about 15 km of ${profile.data?.area?.name ?? 'your area'}.`
+                : nearbyOnly
+                  ? `Only people within about 15 km of ${profile.data?.area?.name ?? 'your area'} will see this.`
+                  : `Public: shown nearby, in Everywhere and in item search. Only people near ${profile.data?.area?.name ?? 'you'} see your area name.`}
+            </Text>
+          </>
+        )}
 
         <ErrorText>{error}</ErrorText>
         {progress ? <Text style={styles.progress}>{progress}</Text> : null}

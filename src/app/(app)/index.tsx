@@ -60,6 +60,9 @@ export default function Feed() {
             </Pressable>
           ))}
         </View>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/groups')} hitSlop={8}>
+          <Text style={styles.link}>Groups</Text>
+        </Pressable>
         <Pressable accessibilityRole="button" onPress={() => router.push('/search')} hitSlop={8}>
           <Text style={styles.link}>Search</Text>
         </Pressable>

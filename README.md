@@ -11,7 +11,9 @@ Built so far:
 
 3. **Shoppable items + public discovery:** tag items on photos (name, brand, store, optional link and price, affiliate label). Tap a photo to see its tags, and tap a tag for details and a link that names the real site. An **Everywhere** tab and item search show public posts from anywhere.
 
-Next up: groups (interest × area), which unlock members-only family content.
+4. **Groups:** one interest × the creator's area. Public groups are readable and joinable by anyone nearby. Private groups show only that they exist; posts and members are for approved members. Kid-related groups are always private. Owner, moderators and members, with requests, approvals, removal (which bans) and promotion. Group posts appear only in the group.
+
+Next up: follows and messaging (core-loop step 6). Reporting and blocking should land first or alongside.
 
 ## Stack
 
@@ -70,7 +72,15 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Kid-tagged posts never leave the area.** Posts tagged Toddlers, School-age kids or Parenting teens stay local, and the server enforces this regardless of the switch.
 - **Links are checked by the database.** `https` only, a real ASCII host name (so no lookalike Unicode or IP addresses), no `user@host` tricks and no link shorteners, so the domain on the button is where it goes. Affiliate links are labelled.
 
+## Groups (step 4)
+
+- **Who sees what.** Groups are visible to people in the 3×3 area block. A private group's posts, tagged items, images and member list are for active members only, and pending requests are visible only to moderators and the person asking. Nobody outside a group can list who's in it.
+- **Group posts stay in the group.** They never appear in Nearby, Everywhere or search, and are never globally searchable (a database constraint).
+- **Moderation.** Removing a member bans them from rejoining. Nobody can remove the owner, and only the owner can promote, demote or remove moderators.
+
 ## Before public launch (from the trust reviews)
+
+- **Stronger gates for kids' groups.** Approval is currently the only barrier, and moderators see just a handle and name. Before launch, give moderators more signal (account age, groups in common, reports) and give them guidance; consider verified-parent badges.
 
 - **Image safety scanning.** Hash-match every upload against known child-abuse imagery, via an industry hash-matching service, inside `publish-post` before anything is published. Required for an app with family content and photo uploads.
 - **Malicious-link screening.** Check item links against a URL reputation service (e.g. Google Web Risk) in `publish-post`. The current rules stop disguised links, not bad sites.
