@@ -3,11 +3,15 @@ import Feed from '@/app/(app)/index';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { useDeletePost, useFeed } from '@/features/posts/hooks';
 
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a) } }));
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }));
 jest.mock('@/features/auth/api', () => ({ signOut: jest.fn() }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
 jest.mock('@/features/posts/hooks', () => ({ useFeed: jest.fn(), useDeletePost: jest.fn() }));
+jest.mock('@/features/messages/hooks', () => ({
+  useConversations: (requests: boolean) => ({ data: requests ? [{ id: 'r1' }] : [{ id: 'c1', unread: 2 }] }),
+}));
 jest.mock('@/features/safety/hooks', () => ({
   useBlockUser: () => ({ mutate: jest.fn() }),
   useReport: () => ({ mutateAsync: jest.fn(), isPending: false }),
@@ -68,6 +72,9 @@ describe('Feed', () => {
     expect(screen.getByRole('button', { name: 'Block @ben' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Report post' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Delete post' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
+    await fireEvent.press(screen.getByRole('link', { name: 'Open Ben’s profile' }));
+    expect(mockPush).toHaveBeenCalledWith('/profile/other');
   });
 
   it('filters by one of my interests', async () => {
@@ -76,6 +83,21 @@ describe('Feed', () => {
     expect(useFeed).toHaveBeenLastCalledWith('nearby', null);
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Coffee' }));
     expect(useFeed).toHaveBeenLastCalledWith('nearby', 2);
+  });
+
+  it('shows unread messages and requests on the Messages link', async () => {
+    (useFeed as jest.Mock).mockReturnValue(feedResult());
+    await render(<Feed />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Messages (3)' }));
+    expect(mockPush).toHaveBeenCalledWith('/messages');
+  });
+
+  it('has a Following tab', async () => {
+    (useFeed as jest.Mock).mockReturnValue(feedResult({ data: { pages: [[]] } }));
+    await render(<Feed />);
+    await fireEvent.press(screen.getByRole('tab', { name: 'Following' }));
+    expect(useFeed).toHaveBeenLastCalledWith('following', null);
+    expect(screen.getByText(/Posts from people you follow show up here/)).toBeTruthy();
   });
 
   it('switches to the Everywhere feed, which has no interest filter', async () => {

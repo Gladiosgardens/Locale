@@ -11,6 +11,10 @@ jest.mock('@/features/onboarding/hooks', () => ({
   useMyProfile: () => ({ data: { display_name: 'Maya', handle: 'maya', area: { id: 'a', name: 'Downtown' } } }),
 }));
 jest.mock('@/features/safety/hooks', () => ({ useBlocked: jest.fn(), useUnblockUser: jest.fn(), useReport: jest.fn() }));
+const mockPolicyUpdate = jest.fn();
+jest.mock('@/features/messages/hooks', () => ({
+  useDmPolicy: () => ({ query: { data: 'everyone' }, update: { mutate: mockPolicyUpdate } }),
+}));
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -55,6 +59,15 @@ describe('Settings', () => {
     const buttons = alert.mock.calls[0][2]!;
     buttons.find((b) => b.text === 'Unblock')!.onPress!();
     expect(mutate).toHaveBeenCalledWith('u2', expect.anything());
+  });
+
+  it('lets people limit messages to connections', async () => {
+    (useUnblockUser as jest.Mock).mockReturnValue({ mutate: jest.fn() });
+    (useBlocked as jest.Mock).mockReturnValue({ isPending: false, isError: false, data: [] });
+    await render(<Settings />);
+    expect(screen.getByRole('checkbox', { name: 'Everyone' })).toBeChecked();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Connections only' }));
+    expect(mockPolicyUpdate).toHaveBeenCalledWith('connections', expect.anything());
   });
 
   it('explains how to block when the list is empty', async () => {

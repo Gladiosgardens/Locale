@@ -33,6 +33,17 @@ export function useGroupFeed(groupId: string | undefined, enabled: boolean) {
   });
 }
 
+export function useAuthorFeed(authorId: string | undefined) {
+  return useInfiniteQuery({
+    queryKey: ['feed', 'author', authorId],
+    queryFn: ({ pageParam }) => api.fetchAuthorPage(authorId!, pageParam),
+    initialPageParam: null as api.FeedCursor,
+    getNextPageParam: nextCursor,
+    enabled: !!authorId,
+    staleTime: STALE_MS,
+  });
+}
+
 export function useSearch(query: string) {
   const q = query.trim();
   return useInfiniteQuery({

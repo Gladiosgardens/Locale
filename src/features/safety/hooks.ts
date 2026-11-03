@@ -3,7 +3,7 @@ import * as api from './api';
 
 // Anything that shows other people's content must refetch after a block change.
 function refreshContent(qc: QueryClient) {
-  for (const key of ['feed', 'search', 'group-feed', 'group-roster', 'blocked']) {
+  for (const key of ['feed', 'search', 'group-feed', 'group-roster', 'blocked', 'profile']) {
     qc.invalidateQueries({ queryKey: [key] });
   }
 }

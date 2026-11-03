@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { memo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { colors } from '@/components/ui';
@@ -86,12 +87,17 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
   return (
     <View style={styles.card} accessibilityLabel={`Post by ${post.author.displayName}`}>
       <View style={styles.header}>
-        <View style={styles.headerText}>
+        <Pressable
+          style={styles.headerText}
+          accessibilityRole="link"
+          accessibilityLabel={`Open ${post.author.displayName}’s profile`}
+          onPress={() => router.push(`/profile/${post.author.id}`)}
+        >
           <Text style={styles.name}>{post.author.displayName}</Text>
           <Text style={styles.meta}>
             {[`@${post.author.handle}`, post.areaName, timeAgo(post.publishedAt)].filter(Boolean).join(' · ')}
           </Text>
-        </View>
+        </Pressable>
         <Pressable accessibilityRole="button" accessibilityLabel="Post options" onPress={() => onMenu(post)} hitSlop={10}>
           <Text style={styles.more}>•••</Text>
         </Pressable>

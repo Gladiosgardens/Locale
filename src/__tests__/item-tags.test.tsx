@@ -5,6 +5,7 @@ import type { FeedPost, Item } from '@/features/posts/api';
 import { PostCard } from '@/features/posts/PostCard';
 
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn() }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 const sofa: Item = {
   id: 'i1', title: 'Linen sofa', brand: 'IKEA', storeName: 'IKEA', url: 'https://www.ikea.com/sofa',

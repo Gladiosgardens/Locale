@@ -40,7 +40,7 @@ export type FeedPost = {
 };
 
 export type FeedCursor = { publishedAt: string; id: string } | null;
-export type FeedScope = 'nearby' | 'everywhere';
+export type FeedScope = 'nearby' | 'following' | 'everywhere';
 
 type RawItem = {
   id: string; title: string; brand: string | null; store_name: string | null; url: string | null;
@@ -108,9 +108,15 @@ export async function fetchFeedPage(
   cursor: FeedCursor,
   interestId: number | null,
 ): Promise<FeedPost[]> {
-  if (scope === 'everywhere') {
+  if (scope === 'everywhere' || scope === 'following') {
     return toFeedPosts(
-      unwrap(await supabase.rpc('discover_posts', { p_limit: FEED_PAGE_SIZE, ...cursorArgs(cursor) })),
+      unwrap(
+        await supabase.rpc('discover_posts', {
+          p_limit: FEED_PAGE_SIZE,
+          ...(scope === 'following' ? { p_following: true } : {}),
+          ...cursorArgs(cursor),
+        }),
+      ),
     );
   }
   return toFeedPosts(
@@ -128,6 +134,14 @@ export async function fetchGroupFeedPage(groupId: string, cursor: FeedCursor): P
   return toFeedPosts(
     unwrap(
       await supabase.rpc('nearby_feed', { p_limit: FEED_PAGE_SIZE, p_group_id: groupId, ...cursorArgs(cursor) }),
+    ),
+  );
+}
+
+export async function fetchAuthorPage(authorId: string, cursor: FeedCursor): Promise<FeedPost[]> {
+  return toFeedPosts(
+    unwrap(
+      await supabase.rpc('discover_posts', { p_author_id: authorId, p_limit: FEED_PAGE_SIZE, ...cursorArgs(cursor) }),
     ),
   );
 }

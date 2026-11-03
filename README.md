@@ -15,7 +15,9 @@ Built so far:
 
 5. **Reporting and blocking:** every post has a ••• menu (Delete for yours; Report post, Report person or Block for others), groups can be reported, and Settings lists blocked accounts.
 
-Next up: follows and messaging (core-loop step 6).
+6. **Follows and messaging:** open follows, a **Following** tab and profile pages. One-to-one messages with text and shared posts, where strangers' first messages arrive as **requests**, plus a "who can message me" setting.
+
+The six core-loop steps are done. Before a public launch, work through the list at the bottom of this file.
 
 ## Stack
 
@@ -88,7 +90,20 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Review.** In the Supabase SQL editor, `select * from moderation_queue;` lists open reports, child-safety first. `select resolve_report('post', '<id>', 'remove' | 'dismiss');` acts on one: dismissing restores a hidden post, removing takes it down.
 - **Known limitation.** A moderator who blocks a group member can't see them in the member list to remove them. Unblock, remove, then re-block.
 
+## Follows and messaging (step 6)
+
+- **Follows are open.** Profiles show counts but never follower or following lists, so nobody can scrape someone's graph. The Following feed and profile post lists go through `discover_posts()`, so nearby-only and kid-tagged posts stay local and far viewers never see an area.
+- **Connections message freely.** That means mutual follows, or members of the same group.
+- **Strangers send one request.** Anyone else's first message lands in Requests, and the sender can't send another until it's accepted (replying accepts). Deleting a request is silent: the sender keeps seeing "Request sent". Settings → *Who can message me* → *Connections only* turns stranger requests off entirely.
+- **Limits:** 20 new conversations a day and 30 messages a minute.
+- **Blocks** hide the conversation and stop messaging both ways.
+- **Shared posts respect visibility.** A kid-tagged or nearby-only post shared with someone who can't see it shows as "Post unavailable", image included.
+- **Reporting a message** (long-press) copies that one message into the report for reviewers. `resolve_report('message', id, 'remove')` clears it.
+- **Live delivery** uses Supabase Realtime on `messages`; RLS decides who receives each insert. The migration adds the table to the `supabase_realtime` publication. The app polls every 20 s as a fallback.
+
 ## Before public launch (from the trust reviews)
+
+- **Push notifications** for messages and requests (Expo Notifications + an Edge Function or database webhook). Today you only see new messages with the app open.
 
 - **Child-safety reporting process.** US providers have legal obligations when they become aware of apparent child sexual abuse material (reporting to NCMEC's CyberTipline, preserving evidence). Set up the human process, response times and legal review before launch. The `child_safety` reason and the auto-hide are the technical hooks, not the process.
 - **A real moderator console** to replace SQL-editor review. It needs reviewer accounts, an audit log, and actions on profiles and groups (today only posts can be taken down).

@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/components/ui';
 import type { FeedPost } from './api';
 
-export type PostAction = 'delete' | 'report-post' | 'report-user' | 'block';
+export type PostAction = 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
 
 export function PostActions({
   post,
@@ -18,8 +18,12 @@ export function PostActions({
   const actions: { action: PostAction; label: string; danger?: boolean }[] = !post
     ? []
     : isMine
-      ? [{ action: 'delete', label: 'Delete post', danger: true }]
+      ? [
+          { action: 'share', label: 'Send in a message' },
+          { action: 'delete', label: 'Delete post', danger: true },
+        ]
       : [
+          { action: 'share', label: 'Send in a message' },
           { action: 'report-post', label: 'Report post' },
           { action: 'report-user', label: `Report @${post.author.handle}` },
           { action: 'block', label: `Block @${post.author.handle}`, danger: true },

@@ -1,9 +1,10 @@
 import { router } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, colors } from '@/components/ui';
+import { Button, Chip, colors } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { signOut } from '@/features/auth/api';
+import { useDmPolicy } from '@/features/messages/hooks';
 import { useMyProfile } from '@/features/onboarding/hooks';
 import { useBlocked, useUnblockUser } from '@/features/safety/hooks';
 import { friendlyError } from '@/lib/errors';
@@ -13,6 +14,8 @@ export default function Settings() {
   const profile = useMyProfile();
   const blocked = useBlocked();
   const unblock = useUnblockUser();
+  const dm = useDmPolicy();
+  const policy = dm.query.data;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -30,6 +33,27 @@ export default function Settings() {
           </Text>
           <Text style={styles.muted}>{session?.user.email}</Text>
           {profile.data?.area ? <Text style={styles.muted}>Area: {profile.data.area.name}</Text> : null}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Who can message me</Text>
+          <View style={styles.chips}>
+            <Chip
+              label="Everyone"
+              selected={policy === 'everyone'}
+              onPress={() => dm.update.mutate('everyone', { onError: (e) => Alert.alert(friendlyError(e)) })}
+            />
+            <Chip
+              label="Connections only"
+              selected={policy === 'connections'}
+              onPress={() => dm.update.mutate('connections', { onError: (e) => Alert.alert(friendlyError(e)) })}
+            />
+          </View>
+          <Text style={styles.muted}>
+            {policy === 'connections'
+              ? 'Only people you follow each other with, or share a group with, can message you.'
+              : 'People you’re not connected with can send one message request, which waits in Requests until you accept.'}
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -83,6 +107,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
   text: { fontSize: 16, color: colors.text },
   muted: { fontSize: 14, color: colors.muted },
+  chips: { flexDirection: 'row', gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
   action: { color: colors.accent, fontSize: 15, fontWeight: '600' },
 });

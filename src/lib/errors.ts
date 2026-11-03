@@ -39,6 +39,18 @@ const MESSAGES: Record<string, string> = {
   report_rate_limited: 'You’ve sent a lot of reports today. Try again tomorrow.',
   report_target_not_found: 'That’s no longer available to report.',
   invalid_report: 'Please choose a reason.',
+  cannot_follow_self: 'You can’t follow yourself.',
+  follow_rate_limited: 'You’ve followed a lot of people today. Try again tomorrow.',
+  empty_message: 'Write something first.',
+  message_too_long: 'Messages can be up to 2,000 characters.',
+  post_unavailable: 'That post isn’t available to share.',
+  message_rate_limited: 'You’re sending messages too fast. Wait a moment.',
+  conversation_not_found: 'That conversation isn’t available.',
+  cannot_message: 'You can’t message this person.',
+  request_rate_limited: 'You’ve started a lot of new conversations today. Try again tomorrow.',
+  messages_closed: 'This person only accepts messages from people they’re connected with.',
+  awaiting_acceptance: 'You can send more once they accept your message request.',
+  invalid_setting: 'That setting isn’t available.',
   publish_failed: "We couldn't publish your post. Please try again.",
 };
 

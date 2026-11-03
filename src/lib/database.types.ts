@@ -47,6 +47,7 @@ export type Database = {
         Row: {
           adult_confirmed_at: string | null;
           area_id: string | null;
+          dm_policy: string;
           profile_id: string;
           updated_at: string;
         };
@@ -147,6 +148,8 @@ export type Database = {
         Args: {
           p_before_id?: string;
           p_before_published_at?: string;
+          p_author_id?: string;
+          p_following?: boolean;
           p_limit?: number;
           p_query?: string;
         };
@@ -201,6 +204,62 @@ export type Database = {
       };
       remove_group_member: { Args: { p_group_id: string; p_profile_id: string }; Returns: undefined };
       set_group_role: { Args: { p_group_id: string; p_profile_id: string; p_role: string }; Returns: undefined };
+      follow_user: { Args: { p_profile_id: string }; Returns: undefined };
+      unfollow_user: { Args: { p_profile_id: string }; Returns: undefined };
+      profile_summary: {
+        Args: { p_profile_id: string };
+        Returns: {
+          bio: string | null;
+          display_name: string;
+          follower_count: number;
+          following_count: number;
+          follows_me: boolean;
+          handle: string;
+          i_follow: boolean;
+          id: string;
+          is_me: boolean;
+        }[];
+      };
+      set_dm_policy: { Args: { p_policy: string }; Returns: undefined };
+      send_message: {
+        Args: { p_body?: string; p_conversation_id?: string; p_shared_post_id?: string; p_to?: string };
+        Returns: string;
+      };
+      respond_to_message_request: { Args: { p_accept: boolean; p_conversation_id: string }; Returns: undefined };
+      hide_conversation: { Args: { p_conversation_id: string }; Returns: undefined };
+      mark_conversation_read: { Args: { p_conversation_id: string }; Returns: undefined };
+      message_status: {
+        Args: { p_profile_id: string };
+        Returns: { conversation_id: string | null; status: string }[];
+      };
+      my_conversations: {
+        Args: { p_requests?: boolean };
+        Returns: {
+          awaiting_reply: boolean;
+          conversation_id: string;
+          last_message: string | null;
+          last_message_at: string;
+          other_display_name: string;
+          other_handle: string;
+          other_id: string;
+          unread_count: number;
+        }[];
+      };
+      conversation_messages: {
+        Args: { p_before_created_at?: string; p_before_id?: string; p_conversation_id: string; p_limit?: number };
+        Returns: { body: string | null; created_at: string; id: string; removed: boolean; sender_id: string; shared_post: Json | null }[];
+      };
+      conversation_summary: {
+        Args: { p_conversation_id: string };
+        Returns: {
+          awaiting_reply: boolean;
+          conversation_id: string;
+          my_state: string;
+          other_display_name: string;
+          other_handle: string;
+          other_id: string;
+        }[];
+      };
       block_user: { Args: { p_profile_id: string }; Returns: undefined };
       unblock_user: { Args: { p_profile_id: string }; Returns: undefined };
       my_blocked_profiles: {

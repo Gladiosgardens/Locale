@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { ActivityIndicator, Alert, FlatList, RefreshControl, StyleSheet } from 'react-native';
 import { colors } from '@/components/ui';
@@ -37,6 +38,8 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   function onPick(action: PostAction, post: FeedPost) {
     const fail = (e: unknown) => Alert.alert(friendlyError(e));
     switch (action) {
+      case 'share':
+        return router.push({ pathname: '/messages/share', params: { postId: post.id } });
       case 'delete':
         return Alert.alert('Delete this post?', 'It will disappear for everyone right away.', [
           { text: 'Cancel', style: 'cancel' },
