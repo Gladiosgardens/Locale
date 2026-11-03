@@ -139,15 +139,3 @@ export async function hideConversation(conversationId: string): Promise<void> {
 export async function markRead(conversationId: string): Promise<void> {
   check(await supabase.rpc('mark_conversation_read', { p_conversation_id: conversationId }));
 }
-
-export type DmPolicy = 'everyone' | 'connections';
-
-export async function getDmPolicy(userId: string): Promise<DmPolicy> {
-  const result = await supabase.from('profile_private').select('dm_policy').eq('profile_id', userId).maybeSingle();
-  const row = unwrap(result) as { dm_policy: string } | null;
-  return (row?.dm_policy ?? 'everyone') as DmPolicy;
-}
-
-export async function setDmPolicy(policy: DmPolicy): Promise<void> {
-  check(await supabase.rpc('set_dm_policy', { p_policy: policy }));
-}

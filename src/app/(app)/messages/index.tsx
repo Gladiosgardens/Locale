@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, colors } from '@/components/ui';
 import type { ConversationRow } from '@/features/messages/api';
 import { useConversations } from '@/features/messages/hooks';
+import { PushPrompt } from '@/features/notifications/PushPrompt';
 import { timeAgo } from '@/lib/time';
 
 function Row({ c, request }: { c: ConversationRow; request: boolean }) {
@@ -57,6 +58,7 @@ export default function Inbox() {
         ))}
       </View>
       <FlatList
+        ListHeaderComponent={<PushPrompt />}
         data={current.data ?? []}
         keyExtractor={(c) => c.id}
         renderItem={({ item }) => <Row c={item} request={tab === 'requests'} />}

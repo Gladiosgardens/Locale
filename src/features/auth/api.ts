@@ -18,5 +18,8 @@ export async function verifySignInCode(email: string, token: string): Promise<vo
 }
 
 export async function signOut(): Promise<void> {
+  // Imported lazily so the auth module doesn't pull in native notification code at startup.
+  const { unregisterThisDevice } = await import('@/features/notifications/push');
+  await unregisterThisDevice();
   await supabase.auth.signOut();
 }

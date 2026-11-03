@@ -12,8 +12,19 @@ jest.mock('@/features/onboarding/hooks', () => ({
 }));
 jest.mock('@/features/safety/hooks', () => ({ useBlocked: jest.fn(), useUnblockUser: jest.fn(), useReport: jest.fn() }));
 const mockPolicyUpdate = jest.fn();
-jest.mock('@/features/messages/hooks', () => ({
-  useDmPolicy: () => ({ query: { data: 'everyone' }, update: { mutate: mockPolicyUpdate } }),
+const mockNotifyUpdate = jest.fn();
+const mockEnable = jest.fn();
+let mockPermission = 'undetermined';
+jest.mock('@/features/settings/hooks', () => ({
+  usePrivateSettings: () => ({
+    query: { data: { dmPolicy: 'everyone', notifyMessages: true, notifyGroups: true } },
+    setDmPolicy: { mutate: mockPolicyUpdate },
+    setNotifications: { mutate: mockNotifyUpdate },
+  }),
+}));
+jest.mock('@/features/notifications/PushPrompt', () => ({
+  usePushPermission: () => ({ data: mockPermission }),
+  useEnablePush: () => ({ enable: mockEnable, busy: false }),
 }));
 
 beforeEach(() => jest.clearAllMocks());
@@ -68,6 +79,26 @@ describe('Settings', () => {
     expect(screen.getByRole('checkbox', { name: 'Everyone' })).toBeChecked();
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Connections only' }));
     expect(mockPolicyUpdate).toHaveBeenCalledWith('connections', expect.anything());
+  });
+
+  it('turns on notifications and mutes categories', async () => {
+    mockPermission = 'undetermined';
+    (useUnblockUser as jest.Mock).mockReturnValue({ mutate: jest.fn() });
+    (useBlocked as jest.Mock).mockReturnValue({ isPending: false, isError: false, data: [] });
+    await render(<Settings />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Turn on notifications' }));
+    expect(mockEnable).toHaveBeenCalled();
+    await fireEvent(screen.getByLabelText('Notify me about messages'), 'valueChange', false);
+    expect(mockNotifyUpdate).toHaveBeenCalledWith({ messages: false }, expect.anything());
+  });
+
+  it('says when notifications are on, without offering the button', async () => {
+    mockPermission = 'granted';
+    (useUnblockUser as jest.Mock).mockReturnValue({ mutate: jest.fn() });
+    (useBlocked as jest.Mock).mockReturnValue({ isPending: false, isError: false, data: [] });
+    await render(<Settings />);
+    expect(screen.getByText(/On for this phone/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Turn on notifications' })).toBeNull();
   });
 
   it('explains how to block when the list is empty', async () => {

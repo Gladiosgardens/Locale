@@ -21,6 +21,7 @@ jest.mock('expo-router', () => ({
 }));
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }));
 jest.mock('@/features/messages/hooks');
+jest.mock('@/features/notifications/PushPrompt', () => ({ PushPrompt: () => null }));
 jest.mock('@/features/safety/hooks', () => ({
   useBlockUser: () => ({ mutate: jest.fn() }),
   useReport: () => ({ mutateAsync: jest.fn(), isPending: false }),

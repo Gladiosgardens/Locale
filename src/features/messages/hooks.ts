@@ -1,6 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { useAuth } from '@/features/auth/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import * as api from './api';
 
@@ -90,19 +89,4 @@ export function useMessageStatus(profileId: string | undefined) {
     queryFn: () => api.getMessageStatus(profileId!),
     enabled: !!profileId,
   });
-}
-
-export function useDmPolicy() {
-  const { session } = useAuth();
-  const qc = useQueryClient();
-  const query = useQuery({
-    queryKey: ['dm-policy', session?.user.id],
-    queryFn: () => api.getDmPolicy(session!.user.id),
-    enabled: !!session,
-  });
-  const update = useMutation({
-    mutationFn: api.setDmPolicy,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['dm-policy'] }),
-  });
-  return { query, update };
 }

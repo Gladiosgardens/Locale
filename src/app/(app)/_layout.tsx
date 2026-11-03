@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router';
+import { useNotificationRouting } from '@/features/notifications/useNotificationRouting';
 
 export default function Layout() {
+  useNotificationRouting();
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />

@@ -17,7 +17,9 @@ Built so far:
 
 6. **Follows and messaging:** open follows, a **Following** tab and profile pages. One-to-one messages with text and shared posts, where strangers' first messages arrive as **requests**, plus a "who can message me" setting.
 
-The six core-loop steps are done. Before a public launch, work through the list at the bottom of this file.
+7. **Push notifications:** new messages, message requests, group join requests (to moderators) and approvals. Notifications never contain message text. Settings has an on/off switch per category, and tapping a notification opens the conversation or group.
+
+The six core-loop steps and push notifications are done. Before a public launch, work through the list at the bottom of this file.
 
 ## Stack
 
@@ -51,7 +53,7 @@ supabase/templates/   auth email templates
 npm run typecheck   # tsc --noEmit
 npm run lint        # expo lint
 npm test            # Jest + RNTL
-deno check supabase/functions/publish-post/index.ts
+deno check supabase/functions/publish-post/index.ts supabase/functions/deliver-notifications/index.ts
 npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 ```
 
@@ -101,9 +103,40 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Reporting a message** (long-press) copies that one message into the report for reviewers. `resolve_report('message', id, 'remove')` clears it.
 - **Live delivery** uses Supabase Realtime on `messages`; RLS decides who receives each insert. The migration adds the table to the `supabase_realtime` publication. The app polls every 20 s as a fallback.
 
-## Before public launch (from the trust reviews)
+## Push notifications (step 7)
 
-- **Push notifications** for messages and requests (Expo Notifications + an Edge Function or database webhook). Today you only see new messages with the app open.
+**How it works.** Database triggers write to a `notifications` outbox, keeping the rules in tested SQL: blocks, per-category preferences, declined requests, who moderates. While one notification for a conversation or group is unsent, more events don't add more. The `deliver-notifications` Edge Function claims rows, sends them through Expo's push service in batches of 100, removes tokens Expo reports as dead, and marks rows sent. A failed send is retried after 5 minutes. Sent rows are pruned after 7 days.
+
+**Privacy.** A push carries only who and what kind of event ("Ben sent you a message", "New message request"), never message text. Push content passes through Apple and Google and shows on lock screens. The app asks for permission from a card in Messages or from Settings, never at launch, and signing out removes the device's token.
+
+### One-time setup
+
+1. **EAS project id**, which Expo push needs. On your machine, in this folder, run `npx eas-cli@latest login`, then `npx eas-cli@latest init`. That writes `extra.eas.projectId` into `app.json`; commit it.
+2. **Device credentials.**
+   - iOS needs a paid Apple Developer account; `npx eas-cli build --profile development --platform ios` offers to create the push key.
+   - Android needs a Firebase project, with its FCM service-account key uploaded via `npx eas-cli credentials`.
+3. **Secret and deploy.**
+   ```bash
+   npx supabase secrets set NOTIFY_SECRET=$(openssl rand -hex 32)   # note the value
+   npx supabase functions deploy deliver-notifications --no-verify-jwt
+   ```
+   Optionally, also set `EXPO_ACCESS_TOKEN` if you turn on Expo's enhanced push security.
+4. **Webhook, for instant delivery.** In the dashboard, go to **Database → Webhooks → Create** (labels may differ slightly). Use table `public.notifications`, event *Insert*, type *Supabase Edge Function* → `deliver-notifications`, method POST, and add the header `x-notify-secret: <your secret>`.
+5. **Cron, as a safety net.** Enable the `pg_cron` and `pg_net` extensions, then run in the SQL editor:
+   ```sql
+   select vault.create_secret('<your secret>', 'notify_secret');
+   select cron.schedule('deliver-notifications', '* * * * *', $$
+     select net.http_post(
+       url := 'https://<project-ref>.supabase.co/functions/v1/deliver-notifications',
+       headers := jsonb_build_object('Content-Type', 'application/json', 'x-notify-secret',
+         (select decrypted_secret from vault.decrypted_secrets where name = 'notify_secret')),
+       body := '{}'::jsonb);
+   $$);
+   ```
+
+**Not yet done.** Expo push *receipts*, a second check minutes after sending that catches a few more dead tokens, aren't polled. Unread badges on the app icon aren't set.
+
+## Before public launch (from the trust reviews)
 
 - **Child-safety reporting process.** US providers have legal obligations when they become aware of apparent child sexual abuse material (reporting to NCMEC's CyberTipline, preserving evidence). Set up the human process, response times and legal review before launch. The `child_safety` reason and the auto-hide are the technical hooks, not the process.
 - **A real moderator console** to replace SQL-editor review. It needs reviewer accounts, an audit log, and actions on profiles and groups (today only posts can be taken down).

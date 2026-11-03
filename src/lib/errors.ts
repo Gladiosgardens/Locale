@@ -51,6 +51,7 @@ const MESSAGES: Record<string, string> = {
   messages_closed: 'This person only accepts messages from people they’re connected with.',
   awaiting_acceptance: 'You can send more once they accept your message request.',
   invalid_setting: 'That setting isn’t available.',
+  invalid_push_token: 'This device couldn’t be registered for notifications.',
   publish_failed: "We couldn't publish your post. Please try again.",
 };
 

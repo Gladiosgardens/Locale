@@ -48,6 +48,8 @@ export type Database = {
           adult_confirmed_at: string | null;
           area_id: string | null;
           dm_policy: string;
+          notify_groups: boolean;
+          notify_messages: boolean;
           profile_id: string;
           updated_at: string;
         };
@@ -260,6 +262,9 @@ export type Database = {
           other_id: string;
         }[];
       };
+      set_notification_preferences: { Args: { p_groups?: boolean; p_messages?: boolean }; Returns: undefined };
+      register_push_token: { Args: { p_platform: string; p_token: string }; Returns: undefined };
+      unregister_push_token: { Args: { p_token: string }; Returns: undefined };
       block_user: { Args: { p_profile_id: string }; Returns: undefined };
       unblock_user: { Args: { p_profile_id: string }; Returns: undefined };
       my_blocked_profiles: {

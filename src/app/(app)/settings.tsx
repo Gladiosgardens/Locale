@@ -1,12 +1,13 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Chip, colors } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { signOut } from '@/features/auth/api';
-import { useDmPolicy } from '@/features/messages/hooks';
+import { useEnablePush, usePushPermission } from '@/features/notifications/PushPrompt';
 import { useMyProfile } from '@/features/onboarding/hooks';
 import { useBlocked, useUnblockUser } from '@/features/safety/hooks';
+import { usePrivateSettings } from '@/features/settings/hooks';
 import { friendlyError } from '@/lib/errors';
 
 export default function Settings() {
@@ -14,8 +15,12 @@ export default function Settings() {
   const profile = useMyProfile();
   const blocked = useBlocked();
   const unblock = useUnblockUser();
-  const dm = useDmPolicy();
-  const policy = dm.query.data;
+  const settings = usePrivateSettings();
+  const prefs = settings.query.data;
+  const policy = prefs?.dmPolicy;
+  const permission = usePushPermission();
+  const push = useEnablePush();
+  const fail = (e: unknown) => Alert.alert(friendlyError(e));
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -41,12 +46,12 @@ export default function Settings() {
             <Chip
               label="Everyone"
               selected={policy === 'everyone'}
-              onPress={() => dm.update.mutate('everyone', { onError: (e) => Alert.alert(friendlyError(e)) })}
+              onPress={() => settings.setDmPolicy.mutate('everyone', { onError: fail })}
             />
             <Chip
               label="Connections only"
               selected={policy === 'connections'}
-              onPress={() => dm.update.mutate('connections', { onError: (e) => Alert.alert(friendlyError(e)) })}
+              onPress={() => settings.setDmPolicy.mutate('connections', { onError: fail })}
             />
           </View>
           <Text style={styles.muted}>
@@ -54,6 +59,40 @@ export default function Settings() {
               ? 'Only people you follow each other with, or share a group with, can message you.'
               : 'People you’re not connected with can send one message request, which waits in Requests until you accept.'}
           </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Notifications</Text>
+          {permission.data === 'granted' ? (
+            <Text style={styles.muted}>On for this phone. Notifications say who and what, never message text.</Text>
+          ) : (
+            <>
+              <Text style={styles.muted}>
+                {permission.data === 'denied'
+                  ? 'Notifications are off for Locale in your phone’s Settings.'
+                  : 'Notifications are off on this phone.'}
+              </Text>
+              {permission.data === 'undetermined' ? (
+                <Button label="Turn on notifications" variant="secondary" onPress={push.enable} loading={push.busy} />
+              ) : null}
+            </>
+          )}
+          <View style={styles.row}>
+            <Text style={styles.text}>Messages and requests</Text>
+            <Switch
+              accessibilityLabel="Notify me about messages"
+              value={prefs?.notifyMessages ?? true}
+              onValueChange={(messages) => settings.setNotifications.mutate({ messages }, { onError: fail })}
+            />
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.text}>Group requests and approvals</Text>
+            <Switch
+              accessibilityLabel="Notify me about groups"
+              value={prefs?.notifyGroups ?? true}
+              onValueChange={(groups) => settings.setNotifications.mutate({ groups }, { onError: fail })}
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
