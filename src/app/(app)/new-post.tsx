@@ -1,0 +1,187 @@
+import { Image } from 'expo-image';
+import * as ImagePicker from 'expo-image-picker';
+import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Button, Chip, colors, ErrorText } from '@/components/ui';
+import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
+import { MAX_PHOTOS, MAX_POST_INTERESTS, type PickedPhoto } from '@/features/posts/api';
+import { usePublishPost, type PublishStage } from '@/features/posts/hooks';
+import { friendlyError } from '@/lib/errors';
+
+const MAX_CAPTION = 2200;
+
+function stageText(stage: PublishStage, done: number, total: number) {
+  if (stage === 'publishing') return 'Publishing…';
+  const n = Math.min(done + 1, total);
+  return stage === 'preparing' ? `Preparing photo ${n} of ${total}…` : `Uploading photo ${n} of ${total}…`;
+}
+
+export default function NewPost() {
+  const profile = useMyProfile();
+  const interests = useInterests();
+  const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+  const [caption, setCaption] = useState('');
+  const [tags, setTags] = useState<number[]>([]);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const publish = usePublishPost((stage, done, total) => setProgress(stageText(stage, done, total)));
+
+  const familySelected = useMemo(
+    () => tags.some((id) => interests.data?.find((i) => i.id === id)?.is_family),
+    [tags, interests.data],
+  );
+
+  async function pickPhotos() {
+    setError(null);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      selectionLimit: MAX_PHOTOS - photos.length,
+      orderedSelection: true,
+      exif: false,
+      quality: 1,
+    });
+    if (result.canceled) return;
+    const picked = result.assets.map((a) => ({ uri: a.uri, width: a.width, height: a.height }));
+    setPhotos((prev) => [...prev, ...picked].slice(0, MAX_PHOTOS));
+  }
+
+  function toggleTag(id: number) {
+    setTags((prev) =>
+      prev.includes(id) ? prev.filter((t) => t !== id) : prev.length < MAX_POST_INTERESTS ? [...prev, id] : prev,
+    );
+  }
+
+  async function submit() {
+    setError(null);
+    try {
+      await publish.mutateAsync({ photos, caption, interestIds: tags });
+      router.back();
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setProgress(null);
+    }
+  }
+
+  const busy = publish.isPending;
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.header}>
+        <Pressable accessibilityRole="button" onPress={() => router.back()} disabled={busy} hitSlop={8}>
+          <Text style={styles.cancel}>Cancel</Text>
+        </Pressable>
+        <Text style={styles.title} accessibilityRole="header">New post</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
+          {photos.map((p, i) => (
+            <View key={`${p.uri}-${i}`}>
+              <Image source={{ uri: p.uri }} style={styles.thumb} contentFit="cover" />
+              {!busy ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove photo ${i + 1}`}
+                  style={styles.remove}
+                  onPress={() => setPhotos((prev) => prev.filter((_, j) => j !== i))}
+                >
+                  <Text style={styles.removeText}>×</Text>
+                </Pressable>
+              ) : null}
+            </View>
+          ))}
+          {photos.length < MAX_PHOTOS && !busy ? (
+            <Pressable accessibilityRole="button" style={[styles.thumb, styles.add]} onPress={pickPhotos}>
+              <Text style={styles.addText}>{photos.length ? '+ More' : '+ Add photos'}</Text>
+            </Pressable>
+          ) : null}
+        </ScrollView>
+
+        <TextInput
+          accessibilityLabel="Caption"
+          style={styles.caption}
+          value={caption}
+          onChangeText={setCaption}
+          placeholder="Say something about it…"
+          placeholderTextColor={colors.muted}
+          multiline
+          maxLength={MAX_CAPTION}
+          editable={!busy}
+        />
+
+        <Text style={styles.label}>Tags (up to {MAX_POST_INTERESTS})</Text>
+        <View style={styles.chips}>
+          {(interests.data ?? []).map((i) => (
+            <Chip key={i.id} label={i.label} selected={tags.includes(i.id)} onPress={() => !busy && toggleTag(i.id)} />
+          ))}
+        </View>
+
+        {familySelected ? (
+          <View style={styles.warning} accessibilityRole="alert">
+            <Text style={styles.warningTitle}>Please avoid showing children’s faces</Text>
+            <Text style={styles.warningText}>
+              This post is public to everyone nearby. Shoot from behind, crop faces out, or share kid photos
+              in a members-only group once groups are available.
+            </Text>
+          </View>
+        ) : null}
+
+        <Text style={styles.notice}>
+          Visible to people within about 15 km of {profile.data?.area?.name ?? 'your area'}, and shows your area name.
+        </Text>
+
+        <ErrorText>{error}</ErrorText>
+        {progress ? <Text style={styles.progress}>{progress}</Text> : null}
+        <Button label="Post" onPress={submit} disabled={photos.length === 0} loading={busy} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.bg },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
+  cancel: { color: colors.muted, fontSize: 16, width: 60 },
+  title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '600', color: colors.text },
+  headerSpacer: { width: 60 },
+  body: { padding: 16, gap: 14 },
+  thumbs: { gap: 10 },
+  thumb: { width: 96, height: 96, borderRadius: 10, backgroundColor: colors.chip },
+  add: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed' },
+  addText: { color: colors.accent, fontWeight: '600' },
+  remove: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeText: { color: '#FFFFFF', fontSize: 16, lineHeight: 18 },
+  caption: {
+    minHeight: 90,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    color: colors.text,
+    backgroundColor: '#FFFFFF',
+    textAlignVertical: 'top',
+  },
+  label: { fontSize: 14, fontWeight: '600', color: colors.text },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  warning: { backgroundColor: '#FFF4E5', borderRadius: 12, padding: 12, gap: 4 },
+  warningTitle: { fontWeight: '600', color: '#7A4B00', fontSize: 15 },
+  warningText: { color: '#7A4B00', fontSize: 14, lineHeight: 20 },
+  notice: { color: colors.muted, fontSize: 13, lineHeight: 18 },
+  progress: { color: colors.muted, fontSize: 14, textAlign: 'center' },
+});

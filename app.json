@@ -33,6 +33,14 @@
           "locationWhenInUsePermission": "Locale uses your approximate location once to find your neighborhood. Only the neighborhood is saved.",
           "isIosReducedAccuracyByDefault": true
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Locale needs access to the photos you choose to post.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

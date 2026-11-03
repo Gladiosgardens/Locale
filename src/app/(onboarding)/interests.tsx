@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Chip, colors, ErrorText, Screen } from '@/components/ui';
 import { useInterests, useMyProfile, useSetInterests } from '@/features/onboarding/hooks';
@@ -12,18 +12,14 @@ export default function InterestsStep() {
   const interests = useInterests();
   const profile = useMyProfile();
   const save = useSetInterests();
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  // null until the user touches a chip; until then show what they saved before.
+  const [edited, setEdited] = useState<Set<number> | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Pre-select anything the user already chose (e.g. coming back to this step).
-  const savedIds = profile.data?.interestIds;
-  useEffect(() => {
-    if (savedIds?.length) setSelected(new Set(savedIds));
-  }, [savedIds]);
+  const selected = edited ?? new Set(profile.data?.interestIds ?? []);
 
   function toggle(id: number) {
-    setSelected((prev) => {
-      const next = new Set(prev);
+    setEdited(() => {
+      const next = new Set(selected);
       if (next.has(id)) next.delete(id);
       else if (next.size < MAX_INTERESTS) next.add(id);
       return next;
@@ -48,7 +44,7 @@ export default function InterestsStep() {
         <ActivityIndicator color={colors.accent} />
       ) : interests.isError ? (
         <>
-          <ErrorText>Couldn't load interests.</ErrorText>
+          <ErrorText>Couldn’t load interests.</ErrorText>
           <Button label="Try again" variant="secondary" onPress={() => interests.refetch()} />
         </>
       ) : interests.data.length === 0 ? (

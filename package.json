@@ -8,6 +8,11 @@
     "@tanstack/react-query": "^5.105.3",
     "expo": "~58.0.23",
     "expo-constants": "~58.0.15",
+    "expo-crypto": "~58.0.7",
+    "expo-file-system": "~58.0.13",
+    "expo-image": "~58.0.18",
+    "expo-image-manipulator": "~58.0.16",
+    "expo-image-picker": "~58.0.10",
     "expo-linking": "~58.0.16",
     "expo-location": "~58.0.20",
     "expo-router": "~58.0.30",
@@ -22,7 +27,10 @@
   "devDependencies": {
     "@testing-library/react-native": "^14.1.0",
     "@types/jest": "^30.0.0",
+    "@types/node": "^22.20.5",
     "@types/react": "~19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~58.0.4",
     "jest": "^30.5.2",
     "jest-expo": "~58.0.14",
     "supabase": "^3.0.0",
@@ -36,7 +44,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "db:types": "supabase gen types typescript --linked > src/lib/database.types.ts",
-    "db:test": "supabase test db"
+    "db:test": "supabase test db",
+    "lint": "expo lint"
   },
   "private": true,
   "jest": {

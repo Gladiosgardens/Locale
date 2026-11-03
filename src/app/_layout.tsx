@@ -38,7 +38,7 @@ function RootNavigator() {
   if (signedIn && profile.isError) {
     return (
       <Centered>
-        <Text>We couldn't load your profile.</Text>
+        <Text>We couldn’t load your profile.</Text>
         <Button label="Try again" onPress={() => profile.refetch()} />
         <Button label="Sign out" variant="secondary" onPress={signOut} />
       </Centered>

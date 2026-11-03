@@ -55,7 +55,7 @@ export default function AreaStep() {
     >
       {current && !picking ? (
         <>
-          <Text style={styles.current}>You're in {current.name}.</Text>
+          <Text style={styles.current}>You’re in {current.name}.</Text>
           <Button label="Continue" onPress={next} />
           <Button label="Change area" variant="secondary" onPress={useLocation} loading={locating} />
         </>
@@ -74,7 +74,7 @@ export default function AreaStep() {
           {areas.isPending ? (
             <ActivityIndicator color={colors.accent} />
           ) : areas.isError ? (
-            <ErrorText>Couldn't load areas.</ErrorText>
+            <ErrorText>Couldn’t load areas.</ErrorText>
           ) : (
             <FlatList
               data={areas.data}

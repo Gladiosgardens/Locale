@@ -32,7 +32,7 @@ export type Database = {
         Relationships: [];
       };
       interests: {
-        Row: { id: number; label: string; slug: string; sort_order: number };
+        Row: { id: number; is_family: boolean; label: string; slug: string; sort_order: number };
         Insert: never;
         Update: never;
         Relationships: [];
@@ -83,6 +83,32 @@ export type Database = {
           },
         ];
       };
+      posts: {
+        Row: {
+          area_id: string;
+          author_id: string;
+          caption: string | null;
+          id: string;
+          published_at: string;
+          removed_at: string | null;
+          status: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      post_media: {
+        Row: { height: number; id: string; position: number; post_id: string; storage_path: string; width: number };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
+      post_interests: {
+        Row: { interest_id: number; post_id: string };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -90,6 +116,26 @@ export type Database = {
       complete_onboarding: {
         Args: { p_confirm_adult: boolean; p_display_name: string; p_handle: string };
         Returns: ProfileRow;
+      };
+      delete_my_post: { Args: { p_post_id: string }; Returns: undefined };
+      nearby_feed: {
+        Args: {
+          p_before_id?: string;
+          p_before_published_at?: string;
+          p_interest_id?: number;
+          p_limit?: number;
+        };
+        Returns: {
+          area_name: string;
+          author_display_name: string;
+          author_handle: string;
+          author_id: string;
+          caption: string | null;
+          id: string;
+          interest_ids: number[];
+          media: Json;
+          published_at: string;
+        }[];
       };
       geohash_center: { Args: { p_hash: string }; Returns: { lat: number; lng: number } };
       set_my_area: { Args: { p_geohash5: string; p_name: string }; Returns: AreaRow };

@@ -11,6 +11,14 @@ const MESSAGES: Record<string, string> = {
   area_not_found: 'That area no longer exists.',
   area_rate_limited: "You've changed your area several times today. Try again tomorrow.",
   not_authenticated: 'Your session expired. Sign in again.',
+  post_rate_limited: "You've reached today's posting limit. Try again tomorrow.",
+  invalid_image: "One of those photos couldn't be processed. Try a different one.",
+  upload_missing: "A photo didn't finish uploading. Please try again.",
+  media_count: 'Add between 1 and 10 photos.',
+  too_many_interests: 'Pick up to 3 interests for a post.',
+  not_onboarded: 'Finish setting up your profile first.',
+  post_not_found: 'That post is already gone.',
+  publish_failed: "We couldn't publish your post. Please try again.",
 };
 
 export function friendlyError(error: unknown): string {
