@@ -111,7 +111,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 
 ### One-time setup
 
-1. **EAS project id**, which Expo push needs. On your machine, in this folder, run `npx eas-cli@latest login`, then `npx eas-cli@latest init`. That writes `extra.eas.projectId` into `app.json`; commit it.
+1. **EAS project id** ✅ already set in `app.json` (`extra.eas.projectId`). Running `npx eas-cli@latest init` later will link to this same project.
 2. **Device credentials.**
    - iOS needs a paid Apple Developer account; `npx eas-cli build --profile development --platform ios` offers to create the push key.
    - Android needs a Firebase project, with its FCM service-account key uploaded via `npx eas-cli credentials`.
