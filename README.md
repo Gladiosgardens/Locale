@@ -40,7 +40,7 @@ supabase/templates/   auth email templates
 
 1. `npm install`
 2. Create a Supabase **dev** project and link it: `npx supabase link --project-ref <ref>`
-3. Apply the schema (this also creates the two private storage buckets): `npx supabase db push`
+3. Apply the schema (this also creates the two private storage buckets): `npx supabase db push --remote` (without `--remote`, newer CLIs target a local Docker database)
    Deploy the Edge Function: `npx supabase functions deploy publish-post`
 4. Sign-in uses a 6-digit code, not a link. In the dashboard, open **Authentication → Emails**. Make the *Magic Link* and *Confirm signup* templates show `{{ .Token }}` (copy `supabase/templates/otp.html`), and set OTP expiry to 600 seconds. Local `supabase start` picks this up from `config.toml` automatically.
 5. `cp .env.example .env.local` and fill in the project URL and **anon** key.
