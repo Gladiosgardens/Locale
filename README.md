@@ -45,7 +45,8 @@ supabase/templates/   auth email templates
 4. Sign-in uses a 6-digit code, not a link. In the dashboard, open **Authentication → Emails**. Make the *Magic Link* and *Confirm signup* templates show `{{ .Token }}` (copy `supabase/templates/otp.html`), and set OTP expiry to 600 seconds. Local `supabase start` picks this up from `config.toml` automatically.
 5. `cp .env.example .env.local` and fill in the project URL and **anon** key.
 6. `npm run db:types` to regenerate `src/lib/database.types.ts` from the real schema. The checked-in file was written by hand because the generator needs Docker.
-7. `npx expo start`. Location and the photo picker need a development build (`npx expo run:ios` or `eas build --profile development`).
+7. **Development build** (location, photos and notifications need one; Expo Go won't work). Run `npx eas-cli@latest build --profile development --platform android`, which builds in Expo's cloud and gives you an APK to install on an Android phone. iOS needs a paid Apple Developer account.
+8. `npx expo start --dev-client`, then open the Locale app on the phone. Phone and Mac must be on the same Wi-Fi.
 
 ## Checks
 
@@ -137,6 +138,8 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 **Not yet done.** Expo push *receipts*, a second check minutes after sending that catches a few more dead tokens, aren't polled. Unread badges on the app icon aren't set.
 
 ## Before public launch (from the trust reviews)
+
+- **Production email sender.** Replace the testing Gmail SMTP with a sending service on your own domain, with SPF/DKIM set up, so sign-in codes don't land in spam.
 
 - **Child-safety reporting process.** US providers have legal obligations when they become aware of apparent child sexual abuse material (reporting to NCMEC's CyberTipline, preserving evidence). Set up the human process, response times and legal review before launch. The `child_safety` reason and the auto-hide are the technical hooks, not the process.
 - **A real moderator console** to replace SQL-editor review. It needs reviewer accounts, an audit log, and actions on profiles and groups (today only posts can be taken down).
