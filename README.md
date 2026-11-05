@@ -86,6 +86,18 @@ supabase/templates/   auth email templates
 7. **Development build** (location, photos and notifications need one; Expo Go won't work). Run `npx eas-cli@latest build --profile development --platform android`, which builds in Expo's cloud and gives you an APK to install on an Android phone. iOS needs a paid Apple Developer account.
 8. `npx expo start --dev-client`, then open the Locale app on the phone. Phone and Mac must be on the same Wi-Fi.
 
+## Test builds for other people
+
+Testers' builds run without your Mac, so the app's two public settings must live in EAS (they are not secret; never add the service-role key):
+
+```
+npx eas-cli@27.4.1 env:create --environment preview --environment production --name EXPO_PUBLIC_SUPABASE_URL --value https://YOUR-REF.supabase.co --visibility plaintext
+npx eas-cli@27.4.1 env:create --environment preview --environment production --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value YOUR-ANON-KEY --visibility plaintext
+```
+
+- **Android:** `npx eas-cli@27.4.1 build --profile preview --platform android` makes an installable APK with a link to share. Testers allow "install unknown apps" once. Google Play internal testing ($25 one-time developer account) comes later.
+- **iPhone:** needs an Apple Developer account ($99/year). Then `npx eas-cli@27.4.1 build --profile production --platform ios` and `npx eas-cli@27.4.1 submit --platform ios` put it in TestFlight, where you invite testers by email.
+
 ## Checks
 
 ```
