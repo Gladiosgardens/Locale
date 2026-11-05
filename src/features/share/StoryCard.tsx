@@ -5,7 +5,7 @@ import { formatPrice } from '@/features/items/link';
 import type { FeedPost, Item } from '@/features/posts/api';
 import { colors, fonts } from '@/theme';
 
-// A 9:16 image of a post for Instagram Stories: the photo with numbered tag
+// A 9:16 story image of a post (Instagram, Snapchat, TikTok, Facebook): the photo with numbered tag
 // dots, the tagged pieces with prices, and who posted it. Everything is
 // sized from `width`, so the preview and the exported 1080x1920 image match.
 
@@ -31,7 +31,7 @@ export const StoryCard = forwardRef<StoryCardHandle, StoryCardProps>(function St
   // The photo fills its frame ("cover"); work out the crop so dots land on the right spot.
   const frameW = width;
   const frameH = items.length ? Math.round(height * 0.58) : Math.round(height * 0.7);
-  // Instagram draws its reply bar over the bottom ~10% of a story; keep the footer above it.
+  // Story apps draw their reply bars over the bottom ~10%; keep the footer above that.
   const safeBottom = Math.round(height * 0.1);
   const dots = useMemo(() => {
     if (!media) return [];

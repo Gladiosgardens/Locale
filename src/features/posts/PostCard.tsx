@@ -127,7 +127,7 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
         {onShare ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Share to Instagram Stories"
+            accessibilityLabel="Share to Stories"
             onPress={() => onShare(post)}
             hitSlop={10}
             style={styles.shareButton}

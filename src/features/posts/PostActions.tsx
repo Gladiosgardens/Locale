@@ -20,12 +20,12 @@ export function PostActions({
     ? []
     : isMine
       ? [
-          { action: 'story', label: 'Share to Instagram Stories' },
+          { action: 'story', label: 'Share to Stories' },
           { action: 'share', label: 'Send in a message' },
           { action: 'delete', label: 'Delete post', danger: true },
         ]
       : [
-          { action: 'story', label: 'Share to Instagram Stories' },
+          { action: 'story', label: 'Share to Stories' },
           { action: 'share', label: 'Send in a message' },
           { action: 'report-post', label: 'Report post' },
           { action: 'report-user', label: `Report @${post.author.handle}` },

@@ -10,10 +10,11 @@ export function captureStory(view: Parameters<typeof captureRef>[0]): Promise<st
 
 export type ShareResult = 'shared' | 'unavailable';
 
-// Opens the phone's share sheet with the image. Instagram appears there, and
-// choosing it offers Story. (Opening Stories directly would need a Meta app ID.)
+// Opens the phone's share sheet with the image: Instagram, Snapchat, TikTok,
+// Facebook and any other installed app that takes photos. Opening one of them
+// directly would need that company's developer kit and app ID.
 export async function shareStoryImage(uri: string): Promise<ShareResult> {
   if (!(await Sharing.isAvailableAsync())) return 'unavailable';
-  await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: 'Share to Instagram Stories' });
+  await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: 'Share to Stories' });
   return 'shared';
 }

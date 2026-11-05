@@ -59,10 +59,10 @@ describe('StoryShareSheet', () => {
     (Sharing.isAvailableAsync as jest.Mock).mockResolvedValue(true);
     const onClose = jest.fn();
     await render(<StoryShareSheet post={post([{ x: 0.5, y: 0.5, item: keyboard }])} interests={new Map()} onClose={onClose} />);
-    const button = screen.getByRole('button', { name: 'Share to Instagram' });
+    const button = screen.getByRole('button', { name: 'Share' });
     expect(button).toBeDisabled(); // waits for the photo to load
     await fireEvent(screen.getByTestId('story-photo'), 'load', { nativeEvent: { source: { width: 1000, height: 1000, url: 'https://s/0' }, cacheType: 'none' } });
-    await fireEvent.press(screen.getByRole('button', { name: 'Share to Instagram' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Share' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(captureRef).toHaveBeenCalledWith(expect.anything(), { format: 'png', result: 'tmpfile', width: 1080, height: 1920 });
     expect(Sharing.shareAsync).toHaveBeenCalledWith('file:///story.png', expect.objectContaining({ mimeType: 'image/png' }));
@@ -74,7 +74,7 @@ describe('StoryShareSheet', () => {
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     await render(<StoryShareSheet post={post([])} interests={new Map()} onClose={jest.fn()} />);
     await fireEvent(screen.getByTestId('story-photo'), 'load', { nativeEvent: { source: { width: 1000, height: 1000, url: 'https://s/0' }, cacheType: 'none' } });
-    await fireEvent.press(screen.getByRole('button', { name: 'Share to Instagram' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Share' }));
     await waitFor(() => expect(alert).toHaveBeenCalledWith('Sharing isn’t available on this device.'));
     expect(Sharing.shareAsync).not.toHaveBeenCalled();
   });

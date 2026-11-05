@@ -66,9 +66,9 @@ function SheetBody({ post, interests, onClose }: { post: FeedPost; interests: Ma
         <StoryCard ref={card} post={post} width={cardWidth} title={title} onImageReady={() => setImageReady(true)} />
       </View>
       <Text style={[type.small, styles.tip]}>
-        In the share menu, pick Instagram, then Story.
+        Pick Instagram, Snapchat, TikTok or Facebook from the share menu, then post it to your story.
       </Text>
-      <Button label="Share to Instagram" onPress={share} loading={busy} disabled={!imageReady} />
+      <Button label="Share" onPress={share} loading={busy} disabled={!imageReady} />
       <Button label="Cancel" variant="quiet" onPress={onClose} />
     </View>
   );
