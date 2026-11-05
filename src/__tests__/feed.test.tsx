@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import Feed from '@/app/(app)/index';
+import Feed from '@/app/(app)/home';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { useDeletePost, useFeed } from '@/features/posts/hooks';
 
