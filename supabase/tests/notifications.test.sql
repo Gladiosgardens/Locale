@@ -26,6 +26,8 @@ where p.id = v.id;
 insert into public.follows values
   ('00000000-0000-0000-0000-00000000050a', '00000000-0000-0000-0000-00000000050b', now()),
   ('00000000-0000-0000-0000-00000000050b', '00000000-0000-0000-0000-00000000050a', now());
+-- Fixture follows notify; start these tests from an empty outbox.
+delete from public.notifications;
 
 create temp table ids (k text primary key, v uuid);
 grant all on ids to authenticated, service_role;

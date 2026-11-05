@@ -4,14 +4,13 @@ import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { useDeletePost, useFeed } from '@/features/posts/hooks';
 
 const mockPush = jest.fn();
-const mockNavigate = jest.fn();
-jest.mock('expo-router', () => ({
-  router: { push: (...a: unknown[]) => mockPush(...a), navigate: (...a: unknown[]) => mockNavigate(...a) },
-}));
+jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a) } }));
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }));
 jest.mock('@/features/auth/api', () => ({ signOut: jest.fn() }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
 jest.mock('@/features/posts/hooks', () => ({ useFeed: jest.fn(), useDeletePost: jest.fn() }));
+let mockFollowing = 4;
+jest.mock('@/features/profiles/hooks', () => ({ useProfile: () => ({ data: { followingCount: mockFollowing } }) }));
 jest.mock('@/features/messages/hooks', () => ({
   useConversations: (requests: boolean) => ({ data: requests ? [{ id: 'r1' }] : [{ id: 'c1', unread: 2 }] }),
 }));
@@ -47,6 +46,7 @@ function feedResult(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockFollowing = 4;
   (useInterests as jest.Mock).mockReturnValue({
     data: [
       { id: 1, slug: 'dogs', label: 'Dogs', sort_order: 1, is_family: false },
@@ -106,8 +106,8 @@ describe('Feed', () => {
     await fireEvent.press(screen.getByRole('tab', { name: 'Following' }));
     expect(useFeed).toHaveBeenLastCalledWith('following', null);
     expect(screen.getByText(/Posts from people you follow show up here/)).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'Go to Explore' }));
-    expect(mockNavigate).toHaveBeenCalledWith('/explore');
+    await fireEvent.press(screen.getByRole('button', { name: 'Find friends' }));
+    expect(mockPush).toHaveBeenCalledWith('/find-friends');
   });
 
   it('shows an empty state that invites the first post', async () => {
@@ -116,6 +116,17 @@ describe('Feed', () => {
     expect(screen.getByText('Start the feed')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Create a post' }));
     expect(mockPush).toHaveBeenCalledWith('/new-post');
+  });
+
+  it('invites people who follow nobody to find friends, and can be dismissed', async () => {
+    mockFollowing = 0;
+    (useFeed as jest.Mock).mockReturnValue(feedResult());
+    await render(<Feed />);
+    expect(screen.getByText('Find your friends')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Find' }));
+    expect(mockPush).toHaveBeenCalledWith('/find-friends');
+    await fireEvent.press(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText('Find your friends')).toBeNull();
   });
 
   it('shows a retry on error', async () => {

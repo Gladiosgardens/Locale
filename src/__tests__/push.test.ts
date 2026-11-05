@@ -17,6 +17,15 @@ describe('push messages', () => {
       .toEqual({ title: 'Runners', body: 'Your request to join was approved', url: '/groups/g2' });
   });
 
+  it('links a new follower to their profile', () => {
+    expect(describeRow(row({ kind: 'new_follower', actor_id: 'u9', actor_name: 'Ana', conversation_id: null }))).toEqual({
+      title: 'Ana',
+      body: 'Started following you',
+      url: '/profile/u9',
+    });
+    expect(describeRow(row({ kind: 'new_follower', actor_id: null, conversation_id: null }))).toBeNull();
+  });
+
   it('clips long names and falls back when missing', () => {
     const long = 'x'.repeat(100);
     expect(describeRow(row({ actor_name: long }))!.title).toHaveLength(60);

@@ -59,8 +59,9 @@ it('hides follow and message on your own profile', async () => {
   await render(<ProfileScreen />);
   expect(screen.queryByRole('button', { name: 'Follow' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Message' })).toBeNull();
-  await fireEvent.press(screen.getByRole('button', { name: 'Settings' }));
-  expect(mockPush).toHaveBeenCalledWith('/settings');
+  await fireEvent.press(screen.getByRole('button', { name: 'Find friends' }));
+  expect(mockPush).toHaveBeenCalledWith('/find-friends');
+  expect(screen.getByRole('button', { name: 'Share profile' })).toBeTruthy();
 });
 
 it('shows posts as a grid that opens each post', async () => {

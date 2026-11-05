@@ -155,7 +155,7 @@ export default function NewPost() {
           editable={!busy}
         />
 
-        <Text style={styles.label}>Style tags, up to {MAX_POST_INTERESTS}</Text>
+        <Text style={styles.label}>Topics, up to {MAX_POST_INTERESTS}</Text>
         <View style={styles.chips}>
           {(interests.data ?? []).map((i) => (
             <Chip key={i.id} label={i.label} selected={tags.includes(i.id)} onPress={() => !busy && toggleTag(i.id)} />

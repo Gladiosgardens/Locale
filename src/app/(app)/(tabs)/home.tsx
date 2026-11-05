@@ -1,14 +1,17 @@
+import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Chip, Wordmark } from '@/components/ui';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import type { FeedScope } from '@/features/posts/api';
 import { useFeed } from '@/features/posts/hooks';
 import { PostList } from '@/features/posts/PostList';
+import { useProfile } from '@/features/profiles/hooks';
 import { LOCAL_FEATURES } from '@/lib/features';
-import { colors, fonts, space, type } from '@/theme';
+import { colors, fonts, radius, space, type } from '@/theme';
 
 const SCOPES: { scope: FeedScope; label: string }[] = [
   { scope: 'everywhere', label: 'For you' },
@@ -22,6 +25,10 @@ export default function Home() {
   const [scope, setScope] = useState<FeedScope>('everywhere');
   const [interestId, setInterestId] = useState<number | null>(null);
   const feed = useFeed(scope, interestId);
+  const { session } = useAuth();
+  const me = useProfile(session?.user.id);
+  const [hideInvite, setHideInvite] = useState(false);
+  const followsNobody = me.data?.followingCount === 0;
 
   const myInterests = useMemo(
     () => (interests.data ?? []).filter((i) => profile.data?.interestIds.includes(i.id)),
@@ -40,13 +47,13 @@ export default function Home() {
       <Text style={type.title}>{scope === 'following' ? 'Nobody to follow yet' : 'Start the feed'}</Text>
       <Text style={type.bodyMuted}>
         {scope === 'following'
-          ? 'Posts from people you follow show up here. Find people in Explore and tap Follow on their profile.'
+          ? 'Posts from people you follow show up here. Find your friends by name, from your contacts or with an invite link.'
           : scope === 'nearby'
             ? 'No posts within about 15 km yet.'
-            : 'Post an outfit or a room you love and tag what’s in it, so people can shop it.'}
+            : 'Share a moment, an outfit or a room you love. Tag what’s in it so people can find it.'}
       </Text>
       {scope === 'following' ? (
-        <Button label="Go to Explore" variant="secondary" onPress={() => router.navigate('/explore')} />
+        <Button label="Find friends" onPress={() => router.push('/find-friends')} />
       ) : (
         <Button label="Create a post" onPress={() => router.push('/new-post')} />
       )}
@@ -85,7 +92,24 @@ export default function Home() {
         </ScrollView>
       ) : null}
 
-      <PostList query={feed} empty={empty} />
+      <PostList
+        query={feed}
+        empty={empty}
+        header={
+          followsNobody && !hideInvite && scope !== 'following' ? (
+            <View style={styles.invite}>
+              <View style={styles.inviteText}>
+                <Text style={styles.inviteTitle}>Find your friends</Text>
+                <Text style={type.small}>Follow people you know to see their posts in Following.</Text>
+              </View>
+              <Button label="Find" style={styles.inviteButton} onPress={() => router.push('/find-friends')} />
+              <Pressable accessibilityRole="button" accessibilityLabel="Dismiss" onPress={() => setHideInvite(true)} hitSlop={10}>
+                <Feather name="x" size={18} color={colors.muted} />
+              </Pressable>
+            </View>
+          ) : undefined
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -108,4 +132,16 @@ const styles = StyleSheet.create({
   filters: { gap: space.sm, padding: space.lg },
   loading: { marginVertical: space.xxl },
   empty: { padding: space.xl, paddingTop: 48, gap: space.lg, maxWidth: 480 },
+  invite: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    margin: space.lg,
+    padding: space.lg,
+    backgroundColor: colors.wash,
+    borderRadius: radius.tag,
+  },
+  inviteText: { flex: 1, gap: 2 },
+  inviteTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.ink },
+  inviteButton: { paddingVertical: 9, paddingHorizontal: space.lg },
 });

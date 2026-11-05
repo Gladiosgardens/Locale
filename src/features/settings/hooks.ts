@@ -13,5 +13,6 @@ export function usePrivateSettings() {
   const refresh = () => qc.invalidateQueries({ queryKey: ['private-settings'] });
   const setDmPolicy = useMutation({ mutationFn: api.setDmPolicy, onSuccess: refresh });
   const setNotifications = useMutation({ mutationFn: api.setNotificationPreferences, onSuccess: refresh });
-  return { query, setDmPolicy, setNotifications };
+  const setFindable = useMutation({ mutationFn: api.setFindableByEmail, onSuccess: refresh });
+  return { query, setDmPolicy, setNotifications, setFindable };
 }

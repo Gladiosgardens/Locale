@@ -1,8 +1,11 @@
 import Feather from '@expo/vector-icons/Feather';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui';
+import { usePeopleSearch } from '@/features/people/hooks';
+import { PersonRow } from '@/features/people/PersonRow';
 import { MIN_QUERY_LENGTH } from '@/features/posts/api';
 import { useFeed, useSearch } from '@/features/posts/hooks';
 import { PostGrid } from '@/features/posts/PostGrid';
@@ -18,13 +21,15 @@ function useDebounced(value: string, ms: number) {
 }
 
 // Quick searches people can tap instead of typing.
-const SUGGESTIONS = ['Linen', 'Denim', 'Loafers', 'Gold hoops', 'Trench coat', 'Lamp', 'Rug', 'Vintage'];
+const SUGGESTIONS = ['Sneakers', 'Linen', 'Coffee', 'Lamp', 'Running', 'Vintage', 'Plants', 'Camera'];
 
 export default function Explore() {
   const [text, setText] = useState('');
   const query = useDebounced(text, 350);
   const searching = query.trim().length >= MIN_QUERY_LENGTH;
   const results = useSearch(query);
+  const people = usePeopleSearch(searching ? query : '');
+  const peopleFound = searching ? (people.data ?? []) : [];
   const discover = useFeed('everywhere', null);
   const active = searching ? results : discover;
 
@@ -48,6 +53,24 @@ export default function Explore() {
       <Text style={type.title} accessibilityRole="header">
         {searching ? `“${query.trim()}”` : 'Explore'}
       </Text>
+      {peopleFound.length ? (
+        <View style={styles.people}>
+          <Text style={styles.peopleTitle}>People</Text>
+          {peopleFound.slice(0, 3).map((p) => (
+            <PersonRow key={p.id} person={p} />
+          ))}
+          {peopleFound.length > 3 ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/find-friends', params: { q: query.trim() } })}
+              hitSlop={6}
+            >
+              <Text style={styles.seeAll}>See all people</Text>
+            </Pressable>
+          ) : null}
+          <Text style={styles.peopleTitle}>Posts</Text>
+        </View>
+      ) : null}
       {!searching ? (
         <View style={styles.suggestions}>
           {SUGGESTIONS.map((s) => (
@@ -66,11 +89,11 @@ export default function Explore() {
         <View style={styles.search}>
           <Feather name="search" size={18} color={colors.muted} />
           <TextInput
-            accessibilityLabel="Search items, brands and stores"
+            accessibilityLabel="Search people, items, brands and stores"
             style={styles.input}
             value={text}
             onChangeText={setText}
-            placeholder="Search items, brands, stores"
+            placeholder="Search people, items, brands"
             placeholderTextColor={colors.muted}
             autoCorrect={false}
             returnKeyType="search"
@@ -110,5 +133,8 @@ const styles = StyleSheet.create({
   },
   suggestionText: { fontFamily: fonts.medium, fontSize: 13, color: colors.ink },
   message: { padding: space.xl, gap: space.md },
+  people: { marginHorizontal: -space.lg, gap: 0 },
+  peopleTitle: { fontFamily: fonts.displayItalic, fontSize: 20, color: colors.ink, paddingHorizontal: space.lg, paddingTop: space.sm },
+  seeAll: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ultramarine, paddingHorizontal: space.lg, paddingVertical: space.sm },
   loading: { marginVertical: space.xxl },
 });

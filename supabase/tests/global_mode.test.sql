@@ -17,14 +17,14 @@ grant all on ids to authenticated, service_role;
 select ok((select count(*) from public.interests where active) >= 20, 'there are at least 20 active interests');
 select is((select count(*)::int from public.interests where active and is_family), 0, 'no kid-related interest is active');
 select ok(exists (select 1 from public.interests where slug = 'streetwear' and active), 'fashion interests exist');
-select ok(not (select active from public.interests where slug = 'dogs'), 'local interests are retired, not deleted');
+select ok(not (select active from public.interests where slug = 'remote-work'), 'local interests are retired, not deleted');
 
 ------------------------------------------------------------------------------
 -- Onboarding without an area
 ------------------------------------------------------------------------------
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000060a","role":"authenticated"}', true);
 set local role authenticated;
-select throws_ok($$select public.set_my_interests((select array_agg(id) from public.interests where slug in ('dogs','cats','yoga')))$$,
+select throws_ok($$select public.set_my_interests((select array_agg(id) from public.interests where slug in ('remote-work','new-in-town','teens')))$$,
   '22023', 'unknown_interest', 'retired interests cannot be chosen');
 select lives_ok($$select public.set_my_interests((select array_agg(id) from public.interests where slug in ('streetwear','sneakers','minimalist')))$$,
   'active fashion interests can be chosen');
@@ -52,7 +52,7 @@ select lives_ok($$select public.create_post_record('9a000000-0000-0000-0000-0000
   'a person without an area can post');
 select throws_ok($$select public.create_post_record('9a000000-0000-0000-0000-000000000002',
   '00000000-0000-0000-0000-00000000060a', null,
-  (select array_agg(id) from public.interests where slug = 'dogs'),
+  (select array_agg(id) from public.interests where slug = 'remote-work'),
   '[{"path":"9a000000-0000-0000-0000-000000000002/0.jpg","width":1,"height":1}]')$$,
   '22023', 'unknown_interest', 'retired interests cannot tag new posts');
 select throws_ok($$select public.create_post_record('9a000000-0000-0000-0000-000000000002',

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, Button, Centered } from '@/components/ui';
+import { shareInvite } from '@/features/people/invite';
 import { useAuthorFeed } from '@/features/posts/hooks';
 import { PostGrid } from '@/features/posts/PostGrid';
 import { friendlyError } from '@/lib/errors';
@@ -63,7 +64,10 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
       </View>
       {p.bio ? <Text style={type.body}>{p.bio}</Text> : null}
       {p.isMe ? (
-        <Button label="Settings" variant="quiet" onPress={() => router.push('/settings')} />
+        <View style={styles.actions}>
+          <Button style={styles.flex} label="Find friends" onPress={() => router.push('/find-friends')} />
+          <Button style={styles.flex} label="Share profile" variant="quiet" onPress={() => void shareInvite(p.handle)} />
+        </View>
       ) : (
         <View style={styles.actions}>
           <Button

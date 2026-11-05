@@ -23,7 +23,22 @@ Built so far:
 
 8. **Global fashion mode and redesign:** no area step at sign-up; fashion and design interests (the local and kids ones are retired, not deleted); bottom tabs (Home, Explore, New post, Messages, Profile). Home has **For you** and **Following**. Explore is a two-column photo grid with item search. Profiles are three-column grids, and a single post has its own page. Under each post, a **Shop the look** strip shows its tagged items as hang tags. The look: black and white with one ultramarine accent for anything shoppable, Bodoni Moda for names and headings, Instrument Sans for everything else.
 
+9. **Everyday posts and finding friends:** everyday topics (food, travel, pets, fitness, music and more) sit next to the style ones, so anyone can post anything and tag what's in it. Follows stay open. **Find friends** (from Profile, Home and Explore) has:
+   - search by name or @username, also shown in Explore results;
+   - **Suggested for you**: people who follow you, friends of friends, popular accounts, then new people;
+   - **Invite friends**: shares a `locale://u/<handle>` link (set `EXPO_PUBLIC_WEB_URL` once there are web pages, so links work without the app);
+   - **Your QR code**: friends scan it with their camera to open your profile;
+   - **Contacts**: the phone hashes its contacts' email addresses (SHA-256) and sends only the hashes, which are matched against accounts and not stored. Limited to 5 checks a day, and anyone can opt out in Settings → Finding you.
+   New followers get a push notification (with its own switch in Settings).
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 9
+
+1. `git pull` and `npm install`.
+2. `npx supabase db push --remote` applies the new migrations.
+3. `npx supabase functions deploy deliver-notifications` (new-follower notifications).
+4. Make a new development build, since step 9 adds contacts access (native code): `npx eas-cli@latest build --profile development --platform android`.
 
 ### Updating an existing install to step 8
 
@@ -165,6 +180,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - CAPTCHA on sign-in (Supabase Auth supports hCaptcha/Turnstile) and a custom SMTP provider with sensible rate limits.
 - The 18+ gate is self-attested; get the age-rating questionnaire and COPPA position reviewed.
 - Moderation for area and display names.
+- **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License
 

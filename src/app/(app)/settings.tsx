@@ -1,3 +1,4 @@
+import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +10,8 @@ import { useMyProfile } from '@/features/onboarding/hooks';
 import { useBlocked, useUnblockUser } from '@/features/safety/hooks';
 import { usePrivateSettings } from '@/features/settings/hooks';
 import { friendlyError } from '@/lib/errors';
-import { fonts } from '@/theme';
+import { LOCAL_FEATURES } from '@/lib/features';
+import { fonts, space, type } from '@/theme';
 
 export default function Settings() {
   const { session } = useAuth();
@@ -26,10 +28,12 @@ export default function Settings() {
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" onPress={() => router.back()} hitSlop={8}>
-          <Text style={styles.link}>Back</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => router.back()} hitSlop={10}>
+          <Feather name="arrow-left" size={24} color={colors.ink} />
         </Pressable>
-        <Text style={styles.title} accessibilityRole="header">Settings</Text>
+        <Text style={type.title} accessibilityRole="header">
+          Settings
+        </Text>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.section}>
@@ -39,6 +43,21 @@ export default function Settings() {
           </Text>
           <Text style={styles.muted}>{session?.user.email}</Text>
           {profile.data?.area ? <Text style={styles.muted}>Area: {profile.data.area.name}</Text> : null}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Finding you</Text>
+          <View style={styles.row}>
+            <Text style={[styles.text, styles.flex]}>Let people who have my email find me</Text>
+            <Switch
+              accessibilityLabel="Let people who have my email find me"
+              value={prefs?.findableByEmail ?? true}
+              onValueChange={(v) => settings.setFindable.mutate(v, { onError: fail })}
+            />
+          </View>
+          <Text style={styles.muted}>
+            When someone uses Find friends with their contacts and has your email address saved, you show up for them.
+          </Text>
         </View>
 
         <View style={styles.section}>
@@ -87,13 +106,23 @@ export default function Settings() {
             />
           </View>
           <View style={styles.row}>
-            <Text style={styles.text}>Group requests and approvals</Text>
+            <Text style={styles.text}>New followers</Text>
             <Switch
-              accessibilityLabel="Notify me about groups"
-              value={prefs?.notifyGroups ?? true}
-              onValueChange={(groups) => settings.setNotifications.mutate({ groups }, { onError: fail })}
+              accessibilityLabel="Notify me about new followers"
+              value={prefs?.notifyFollows ?? true}
+              onValueChange={(follows) => settings.setNotifications.mutate({ follows }, { onError: fail })}
             />
           </View>
+          {LOCAL_FEATURES ? (
+            <View style={styles.row}>
+              <Text style={styles.text}>Group requests and approvals</Text>
+              <Switch
+                accessibilityLabel="Notify me about groups"
+                value={prefs?.notifyGroups ?? true}
+                onValueChange={(groups) => settings.setNotifications.mutate({ groups }, { onError: fail })}
+              />
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -103,7 +132,7 @@ export default function Settings() {
           ) : blocked.isError ? (
             <Text style={styles.muted}>Couldn’t load blocked accounts.</Text>
           ) : blocked.data.length === 0 ? (
-            <Text style={styles.muted}>You haven’t blocked anyone. You can block someone from the ••• menu on their post.</Text>
+            <Text style={styles.muted}>You haven’t blocked anyone. You can block someone from the menu on their post.</Text>
           ) : (
             blocked.data.map((b) => (
               <View key={b.profileId} style={styles.row}>
@@ -139,12 +168,11 @@ export default function Settings() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, paddingVertical: 10 },
-  title: { fontFamily: fonts.bold, fontSize: 22, color: colors.text },
-  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm },
   body: { padding: 16, gap: 24 },
   section: { gap: 8 },
-  sectionTitle: { fontFamily: fonts.bold, fontSize: 13, color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  sectionTitle: { fontFamily: fonts.displayItalic, fontSize: 20, color: colors.ink },
+  flex: { flex: 1, paddingRight: space.md },
   text: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
   muted: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
   chips: { flexDirection: 'row', gap: 8 },

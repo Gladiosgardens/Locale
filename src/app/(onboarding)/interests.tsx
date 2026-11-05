@@ -40,7 +40,7 @@ export default function InterestsStep() {
   const remaining = Math.max(0, MIN_INTERESTS - selected.size);
 
   return (
-    <Screen title="What’s your style?" subtitle="Pick at least 3. We use these to shape your feed.">
+    <Screen title="What are you into?" subtitle="Pick at least 3. We use these to shape your feed.">
       {interests.isPending ? (
         <ActivityIndicator color={colors.ink} />
       ) : interests.isError ? (

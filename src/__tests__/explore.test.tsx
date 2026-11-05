@@ -5,6 +5,11 @@ import { useFeed, useSearch } from '@/features/posts/hooks';
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a), back: jest.fn() } }));
 jest.mock('@/features/posts/hooks', () => ({ useSearch: jest.fn(), useFeed: jest.fn() }));
+let mockPeople: unknown[] = [];
+jest.mock('@/features/people/hooks', () => ({
+  usePeopleSearch: (q: string) => ({ data: q ? mockPeople : undefined }),
+  useFollowPerson: () => ({ mutate: jest.fn() }),
+}));
 
 const post = (id: string) => ({
   id, caption: null, publishedAt: new Date().toISOString(),
@@ -18,6 +23,7 @@ const result = (over: Record<string, unknown> = {}) => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockPeople = [];
   jest.useFakeTimers();
   (useSearch as jest.Mock).mockReturnValue(result());
   (useFeed as jest.Mock).mockReturnValue(result({ data: { pages: [[post('p1'), post('p2')]] } }));
@@ -36,7 +42,7 @@ it('shows public posts as a grid before searching', async () => {
 
 it('debounces the query and shows an empty result', async () => {
   await render(<Explore />);
-  await fireEvent.changeText(screen.getByLabelText('Search items, brands and stores'), 'linen');
+  await fireEvent.changeText(screen.getByLabelText('Search people, items, brands and stores'), 'linen');
   expect(useSearch).toHaveBeenLastCalledWith('');
   await act(async () => {
     jest.advanceTimersByTime(400);
@@ -47,9 +53,22 @@ it('debounces the query and shows an empty result', async () => {
 
 it('searches a suggestion when tapped', async () => {
   await render(<Explore />);
-  await fireEvent.press(screen.getByRole('button', { name: 'Denim' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Linen' }));
   await act(async () => {
     jest.advanceTimersByTime(400);
   });
-  expect(useSearch).toHaveBeenLastCalledWith('Denim');
+  expect(useSearch).toHaveBeenLastCalledWith('Linen');
+});
+
+it('shows matching people above posts, with a link to all of them', async () => {
+  mockPeople = ['a', 'b', 'c', 'd'].map((x) => ({ id: x, handle: `ana_${x}`, displayName: `Ana ${x}`, iFollow: false, note: null }));
+  await render(<Explore />);
+  await fireEvent.changeText(screen.getByLabelText('Search people, items, brands and stores'), 'ana');
+  await act(async () => {
+    jest.advanceTimersByTime(400);
+  });
+  expect(screen.getByText('People')).toBeTruthy();
+  expect(screen.getAllByRole('button', { name: /^Follow Ana/ })).toHaveLength(3);
+  await fireEvent.press(screen.getByRole('button', { name: 'See all people' }));
+  expect(mockPush).toHaveBeenCalledWith({ pathname: '/find-friends', params: { q: 'ana' } });
 });

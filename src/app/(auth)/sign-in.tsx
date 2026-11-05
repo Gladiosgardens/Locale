@@ -34,9 +34,9 @@ export default function SignIn() {
           <Text style={styles.wordmark} accessibilityRole="header">
             Locale
           </Text>
-          <Text style={styles.tagline}>See it. Tap it. Wear it.</Text>
+          <Text style={styles.tagline}>Share your life. Shop what you see.</Text>
           <Text style={[type.bodyMuted, styles.lede]}>
-            Outfits and rooms from real people, with every piece tagged so you can find where it’s from.
+            Photos from your friends and people you follow, with the things in them tagged so you can find where they’re from.
           </Text>
         </View>
         <View style={styles.form}>

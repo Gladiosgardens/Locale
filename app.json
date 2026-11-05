@@ -19,7 +19,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.WRITE_CONTACTS"
       ],
       "package": "com.gladiosgardens.locale"
     },
@@ -48,6 +49,12 @@
         "expo-notifications",
         {
           "color": "#2F6B4F"
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Locale checks your contacts’ email addresses to find friends who are already on Locale. They’re scrambled on your phone first and never stored."
         }
       ]
     ],

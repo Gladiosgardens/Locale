@@ -48,6 +48,8 @@ export type Database = {
           adult_confirmed_at: string | null;
           area_id: string | null;
           dm_policy: string;
+          findable_by_email: boolean;
+          notify_follows: boolean;
           notify_groups: boolean;
           notify_messages: boolean;
           profile_id: string;
@@ -263,7 +265,37 @@ export type Database = {
           other_id: string;
         }[];
       };
-      set_notification_preferences: { Args: { p_groups?: boolean; p_messages?: boolean }; Returns: undefined };
+      set_notification_preferences: {
+        Args: { p_follows?: boolean; p_groups?: boolean; p_messages?: boolean };
+        Returns: undefined;
+      };
+      set_findable_by_email: { Args: { p_findable: boolean }; Returns: undefined };
+      search_people: {
+        Args: { p_limit?: number; p_query: string };
+        Returns: {
+          display_name: string;
+          follower_count: number;
+          follows_me: boolean;
+          handle: string;
+          i_follow: boolean;
+          id: string;
+        }[];
+      };
+      suggested_people: {
+        Args: { p_limit?: number };
+        Returns: {
+          display_name: string;
+          handle: string;
+          id: string;
+          mutual_count: number;
+          mutual_name: string | null;
+          reason: string;
+        }[];
+      };
+      match_contacts: {
+        Args: { p_hashes: string[] };
+        Returns: { display_name: string; handle: string; i_follow: boolean; id: string }[];
+      };
       register_push_token: { Args: { p_platform: string; p_token: string }; Returns: undefined };
       unregister_push_token: { Args: { p_token: string }; Returns: undefined };
       block_user: { Args: { p_profile_id: string }; Returns: undefined };
