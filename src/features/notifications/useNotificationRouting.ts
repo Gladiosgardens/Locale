@@ -1,9 +1,13 @@
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { refreshPushRegistration, routeFromNotification } from './push';
 
-Notifications.setNotificationHandler({
+// Push is phone-only; the web build (used for previews and, later, shared links) skips it.
+const SUPPORTED = Platform.OS !== 'web';
+
+if (SUPPORTED) Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
@@ -16,6 +20,7 @@ Notifications.setNotificationHandler({
 // token fresh and opens the right screen when a notification is tapped.
 export function useNotificationRouting() {
   useEffect(() => {
+    if (!SUPPORTED) return;
     void refreshPushRegistration();
 
     const open = (data: unknown) => {

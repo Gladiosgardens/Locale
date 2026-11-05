@@ -1,10 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import Feed from '@/app/(app)/home';
+import Feed from '@/app/(app)/(tabs)/home';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { useDeletePost, useFeed } from '@/features/posts/hooks';
 
 const mockPush = jest.fn();
-jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a) } }));
+const mockNavigate = jest.fn();
+jest.mock('expo-router', () => ({
+  router: { push: (...a: unknown[]) => mockPush(...a), navigate: (...a: unknown[]) => mockNavigate(...a) },
+}));
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }));
 jest.mock('@/features/auth/api', () => ({ signOut: jest.fn() }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
@@ -54,13 +57,25 @@ beforeEach(() => {
   (useDeletePost as jest.Mock).mockReturnValue({ mutate: jest.fn() });
 });
 
+const tagged = () => {
+  const p = post('p3', 'other', 'Ben');
+  const item = {
+    id: 'i1', title: 'Linen shirt', brand: 'Arket', storeName: null, url: 'https://arket.com/x', urlHost: 'arket.com',
+    priceCents: 6900, currency: 'USD', isAffiliate: false,
+  };
+  p.media[0].tags = [{ id: 't1', x: 0.5, y: 0.5, item }];
+  return p;
+};
+
 describe('Feed', () => {
-  it('shows posts with authors and tags; delete for mine, report/block for others', async () => {
+  it('opens on For you, with posts, authors and tags; delete for mine, report/block for others', async () => {
     (useFeed as jest.Mock).mockReturnValue(feedResult());
     await render(<Feed />);
-    expect(screen.getByText('Downtown and around')).toBeTruthy();
-    expect(screen.getByText('Caption p1')).toBeTruthy();
-    expect(screen.getByText('Caption p2')).toBeTruthy();
+    expect(useFeed).toHaveBeenLastCalledWith('everywhere', null);
+    expect(screen.getByRole('tab', { name: 'For you', selected: true })).toBeTruthy();
+    expect(screen.queryByRole('tab', { name: 'Nearby' })).toBeNull();
+    expect(screen.getByText(/Caption p1/)).toBeTruthy();
+    expect(screen.getByText(/Caption p2/)).toBeTruthy();
     expect(screen.getAllByText('Dogs').length).toBeGreaterThan(0);
     const menus = screen.getAllByRole('button', { name: 'Post options' });
     expect(menus).toHaveLength(2);
@@ -77,43 +92,30 @@ describe('Feed', () => {
     expect(mockPush).toHaveBeenCalledWith('/profile/other');
   });
 
-  it('filters by one of my interests', async () => {
-    (useFeed as jest.Mock).mockReturnValue(feedResult());
+  it('shows tagged items as a Shop the look strip that opens the item', async () => {
+    (useFeed as jest.Mock).mockReturnValue(feedResult({ data: { pages: [[tagged()]] } }));
     await render(<Feed />);
-    expect(useFeed).toHaveBeenLastCalledWith('nearby', null);
-    await fireEvent.press(screen.getByRole('checkbox', { name: 'Coffee' }));
-    expect(useFeed).toHaveBeenLastCalledWith('nearby', 2);
+    expect(screen.getByText('Shop the look')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Linen shirt, Arket, $69.00' }));
+    expect(screen.getByRole('button', { name: 'Shop on arket.com' })).toBeTruthy();
   });
 
-  it('shows unread messages and requests on the Messages link', async () => {
-    (useFeed as jest.Mock).mockReturnValue(feedResult());
-    await render(<Feed />);
-    await fireEvent.press(screen.getByRole('button', { name: 'Messages (3)' }));
-    expect(mockPush).toHaveBeenCalledWith('/messages');
-  });
-
-  it('has a Following tab', async () => {
+  it('has a Following tab with its own empty state', async () => {
     (useFeed as jest.Mock).mockReturnValue(feedResult({ data: { pages: [[]] } }));
     await render(<Feed />);
     await fireEvent.press(screen.getByRole('tab', { name: 'Following' }));
     expect(useFeed).toHaveBeenLastCalledWith('following', null);
     expect(screen.getByText(/Posts from people you follow show up here/)).toBeTruthy();
-  });
-
-  it('switches to the Everywhere feed, which has no interest filter', async () => {
-    (useFeed as jest.Mock).mockReturnValue(feedResult());
-    await render(<Feed />);
-    await fireEvent.press(screen.getByRole('tab', { name: 'Everywhere' }));
-    expect(useFeed).toHaveBeenLastCalledWith('everywhere', null);
-    expect(screen.getByText('Public posts from everywhere')).toBeTruthy();
-    expect(screen.queryByRole('checkbox', { name: 'Coffee' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'Go to Explore' }));
+    expect(mockNavigate).toHaveBeenCalledWith('/explore');
   });
 
   it('shows an empty state that invites the first post', async () => {
     (useFeed as jest.Mock).mockReturnValue(feedResult({ data: { pages: [[]] } }));
     await render(<Feed />);
-    expect(screen.getByText(/no posts within about 15 km yet/i)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Create a post' })).toBeTruthy();
+    expect(screen.getByText('Start the feed')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Create a post' }));
+    expect(mockPush).toHaveBeenCalledWith('/new-post');
   });
 
   it('shows a retry on error', async () => {

@@ -5,12 +5,11 @@ export default function Layout() {
   useNotificationRouting();
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="home" />
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="new-post" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="search" />
+      <Stack.Screen name="post/[id]" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="profile/[id]" />
-      <Stack.Screen name="messages/index" />
       <Stack.Screen name="messages/[id]" />
       <Stack.Screen name="messages/new" options={{ presentation: 'modal' }} />
       <Stack.Screen name="messages/share" options={{ presentation: 'modal' }} />

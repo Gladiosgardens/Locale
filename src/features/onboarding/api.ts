@@ -24,7 +24,7 @@ export async function fetchMyProfile(userId: string): Promise<MyProfile> {
 }
 
 export async function fetchInterests(): Promise<Interest[]> {
-  return unwrap(await supabase.from('interests').select('*').order('sort_order'));
+  return unwrap(await supabase.from('interests').select('*').eq('active', true).order('sort_order'));
 }
 
 export async function searchAreas(query: string): Promise<Pick<Area, 'id' | 'name'>[]> {

@@ -37,13 +37,14 @@ it('shows a profile with counts, follows and opens a message', async () => {
   (useProfile as jest.Mock).mockReturnValue({ isPending: false, data: profile() });
   await render(<ProfileScreen />);
   expect(screen.getByText('Plants and coffee')).toBeTruthy();
-  expect(screen.getByText(/Follows you/)).toBeTruthy();
-  expect(screen.getByText(/followers/)).toBeTruthy();
+  expect(screen.getByText(/follows you/)).toBeTruthy();
+  expect(screen.getByLabelText('3 followers')).toBeTruthy();
+  expect(screen.getByLabelText('5 following')).toBeTruthy();
   await fireEvent.press(screen.getByRole('button', { name: 'Follow' }));
   expect(mutate).toHaveBeenCalledWith(true, expect.anything());
   await fireEvent.press(screen.getByRole('button', { name: 'Message' }));
   expect(mockPush).toHaveBeenCalledWith({ pathname: '/messages/new', params: { to: 'u2', name: 'Bex' } });
-  expect(screen.getByText('No posts you can see yet.')).toBeTruthy();
+  expect(screen.getByText('No posts yet.')).toBeTruthy();
 });
 
 it('offers unfollow when already following', async () => {
@@ -58,6 +59,26 @@ it('hides follow and message on your own profile', async () => {
   await render(<ProfileScreen />);
   expect(screen.queryByRole('button', { name: 'Follow' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Message' })).toBeNull();
+  await fireEvent.press(screen.getByRole('button', { name: 'Settings' }));
+  expect(mockPush).toHaveBeenCalledWith('/settings');
+});
+
+it('shows posts as a grid that opens each post', async () => {
+  (useProfile as jest.Mock).mockReturnValue({ isPending: false, data: profile() });
+  (useAuthorFeed as jest.Mock).mockReturnValue({
+    data: {
+      pages: [[{
+        id: 'p1', caption: null, publishedAt: new Date().toISOString(),
+        author: { id: 'u2', handle: 'bex', displayName: 'Bex' }, areaName: null, interestIds: [], matchedItemIds: [],
+        media: [{ path: 'p1/0.jpg', width: 100, height: 100, url: 'https://s/x', tags: [{ id: 't', x: 0.5, y: 0.5, item: {} }] }],
+      }]],
+    },
+    isPending: false, isRefetching: false, isFetchingNextPage: false, hasNextPage: false, refetch: jest.fn(), fetchNextPage: jest.fn(),
+  });
+  await render(<ProfileScreen />);
+  expect(screen.getByLabelText('1 post')).toBeTruthy();
+  await fireEvent.press(screen.getByRole('link', { name: 'Post by Bex, 1 shoppable items' }));
+  expect(mockPush).toHaveBeenCalledWith('/post/p1');
 });
 
 it('explains when a profile is unavailable (e.g. blocked)', async () => {

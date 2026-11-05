@@ -3,6 +3,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(38);
 
+-- These tests cover the local features, which use interests retired in global mode.
+update public.interests set active = true;
+
 -- Fixtures (as postgres): two users; the trigger creates their profiles.
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-00000000000a', 'a@example.com'),
@@ -62,7 +65,7 @@ select throws_ok($$insert into public.profile_interests (profile_id, interest_id
   'A cannot insert interests directly');
 
 select throws_ok($$select public.complete_onboarding('alice', 'Alice', true)$$, '22023',
-  'area_required', 'onboarding requires an area');
+  'interest_count', 'onboarding requires interests first');
 
 select throws_ok($$select public.set_my_area('9q9k!', 'Downtown')$$, '22023',
   'invalid_geohash', 'set_my_area rejects a malformed geohash');

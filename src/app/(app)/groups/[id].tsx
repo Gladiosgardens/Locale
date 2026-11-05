@@ -19,6 +19,7 @@ import { useGroupFeed } from '@/features/posts/hooks';
 import { PostList } from '@/features/posts/PostList';
 import { ReportSheet, type ReportSubject } from '@/features/safety/ReportSheet';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 const ROLE_LABEL = { owner: 'Owner', moderator: 'Moderator', member: '' } as const;
 
@@ -248,20 +249,20 @@ export default function GroupPage() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   topbar: { paddingHorizontal: 16, paddingVertical: 8 },
-  link: { color: colors.muted, fontSize: 15 },
+  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
   info: { paddingHorizontal: 16, paddingBottom: 16, gap: 10 },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  description: { fontSize: 15, color: colors.text, lineHeight: 21 },
-  muted: { color: colors.muted, fontSize: 14 },
+  title: { fontFamily: fonts.bold, fontSize: 24, color: colors.text },
+  description: { fontFamily: fonts.body, fontSize: 15, color: colors.text, lineHeight: 21 },
+  muted: { color: colors.muted, fontFamily: fonts.body, fontSize: 14  },
   actionRow: { gap: 8 },
   section: { gap: 6, paddingTop: 6 },
-  sectionTitle: { fontSize: 15, fontWeight: '600', color: colors.accent },
+  sectionTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.accent },
   personRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 6 },
-  person: { flex: 1, fontSize: 15, color: colors.text },
-  role: { fontSize: 12, color: colors.accent },
-  approve: { color: colors.accent, fontSize: 14, fontWeight: '600' },
-  decline: { color: colors.danger, fontSize: 14 },
-  reportLink: { color: colors.muted, fontSize: 13, textDecorationLine: 'underline' },
+  person: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text },
+  role: { fontFamily: fonts.body, fontSize: 12, color: colors.accent },
+  approve: { color: colors.accent, fontFamily: fonts.semibold, fontSize: 14, },
+  decline: { color: colors.danger, fontFamily: fonts.body, fontSize: 14  },
+  reportLink: { color: colors.muted, fontFamily: fonts.body, fontSize: 13, textDecorationLine: 'underline' },
   loading: { marginVertical: 24 },
-  emptyText: { padding: 16, fontSize: 15, color: colors.muted, lineHeight: 21 },
+  emptyText: { padding: 16, fontFamily: fonts.body, fontSize: 15, color: colors.muted, lineHeight: 21 },
 });

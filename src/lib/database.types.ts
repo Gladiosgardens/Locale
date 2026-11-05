@@ -32,7 +32,7 @@ export type Database = {
         Relationships: [];
       };
       interests: {
-        Row: { id: number; is_family: boolean; label: string; slug: string; sort_order: number };
+        Row: { active: boolean; id: number; is_family: boolean; label: string; slug: string; sort_order: number };
         Insert: never;
         Update: never;
         Relationships: [];
@@ -88,7 +88,7 @@ export type Database = {
       };
       posts: {
         Row: {
-          area_id: string;
+          area_id: string | null;
           author_id: string;
           caption: string | null;
           id: string;
@@ -153,6 +153,7 @@ export type Database = {
           p_author_id?: string;
           p_following?: boolean;
           p_limit?: number;
+          p_post_id?: string;
           p_query?: string;
         };
         Returns: {

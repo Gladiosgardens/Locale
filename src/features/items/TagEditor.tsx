@@ -17,6 +17,7 @@ import { Button, colors, ErrorText, Field } from '@/components/ui';
 import type { DraftTag, PickedPhoto } from '@/features/posts/api';
 import { friendlyError } from '@/lib/errors';
 import { checkItemLink, parsePriceCents } from './link';
+import { fonts } from '@/theme';
 
 export const MAX_TAGS_PER_PHOTO = 5;
 const DOT = 26;
@@ -178,8 +179,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  title: { flex: 1, fontSize: 17, fontWeight: '600', color: colors.text },
-  done: { color: colors.accent, fontSize: 16, fontWeight: '600' },
+  title: { flex: 1, fontFamily: fonts.semibold, fontSize: 17, color: colors.text },
+  done: { color: colors.accent, fontFamily: fonts.semibold, fontSize: 16, },
   body: { paddingBottom: 40 },
   panel: { padding: 16, gap: 12 },
   dot: {
@@ -194,12 +195,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dotPending: { backgroundColor: 'rgba(0,0,0,0.55)' },
-  dotText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
-  host: { color: colors.muted, fontSize: 13, marginTop: -6 },
+  dotText: { color: '#FFFFFF', fontFamily: fonts.bold, fontSize: 12, },
+  host: { color: colors.muted, fontFamily: fonts.body, fontSize: 13, marginTop: -6 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  rowText: { flex: 1, fontSize: 15, color: colors.text },
-  hint: { color: colors.muted, fontSize: 15 },
+  rowText: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text },
+  hint: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
   tagRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  tagText: { flex: 1, fontSize: 15, color: colors.text },
-  remove: { color: colors.danger, fontSize: 14 },
+  tagText: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.text },
+  remove: { color: colors.danger, fontFamily: fonts.body, fontSize: 14  },
 });

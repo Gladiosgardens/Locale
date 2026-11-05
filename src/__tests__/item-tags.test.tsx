@@ -45,8 +45,16 @@ describe('tags on a post', () => {
 
   it('omits the area for far-away posts', async () => {
     await render(<PostCard post={post()} interests={new Map()} onMenu={jest.fn()} onOpenItem={jest.fn()} />);
-    expect(screen.getByText(/^@amy · /)).toBeTruthy();
+    expect(screen.getByText('@amy')).toBeTruthy();
     expect(screen.queryByText(/Downtown/)).toBeNull();
+  });
+
+  it('numbers the items in a Shop the look strip', async () => {
+    const onOpenItem = jest.fn();
+    await render(<PostCard post={post()} interests={new Map()} onMenu={jest.fn()} onOpenItem={onOpenItem} />);
+    expect(screen.getByText('Shop the look')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Brass lamp, Flea market' }));
+    expect(onOpenItem).toHaveBeenCalledWith(lamp);
   });
 
   it('opens search results with their tags already showing', async () => {
@@ -60,16 +68,16 @@ describe('tags on a post', () => {
 describe('item sheet', () => {
   it('shows details, the affiliate label and a link that names the real site', async () => {
     await render(<ItemSheet item={sofa} onClose={jest.fn()} />);
-    expect(screen.getByText('IKEA · IKEA')).toBeTruthy();
+    expect(screen.getByText('IKEA')).toBeTruthy();
     expect(screen.getByText(/899/)).toBeTruthy();
     expect(screen.getByText(/Affiliate link/)).toBeTruthy();
-    await fireEvent.press(screen.getByRole('button', { name: 'View on www.ikea.com' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Shop on www.ikea.com' }));
     expect(WebBrowser.openBrowserAsync).toHaveBeenCalledWith('https://www.ikea.com/sofa', { dismissButtonStyle: 'close' });
   });
 
   it('shows only the store when there is no link to buy', async () => {
     await render(<ItemSheet item={lamp} onClose={jest.fn()} />);
     expect(screen.getByText('Available at Flea market. No link was added.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /View on/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Shop on/ })).toBeNull();
   });
 });

@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useMyProfile } from '@/features/onboarding/hooks';
+import { LOCAL_FEATURES } from '@/lib/features';
 
 // The app's start address ("/"). Sends people to the right place for where
 // they are: sign-in, onboarding, or the feed. The root layout only renders
@@ -9,6 +10,6 @@ export default function Start() {
   const { session } = useAuth();
   const profile = useMyProfile();
   if (!session) return <Redirect href="/sign-in" />;
-  if (!profile.data?.onboarded_at) return <Redirect href="/area" />;
+  if (!profile.data?.onboarded_at) return <Redirect href={LOCAL_FEATURES ? '/area' : '/interests'} />;
   return <Redirect href="/home" />;
 }

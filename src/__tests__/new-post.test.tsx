@@ -10,12 +10,19 @@ jest.mock('expo-router', () => ({ router: { back: () => mockBack() }, useLocalSe
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
 jest.mock('@/features/posts/hooks', () => ({ usePublishPost: jest.fn() }));
+let mockLocal = false;
+jest.mock('@/lib/features', () => ({
+  get LOCAL_FEATURES() {
+    return mockLocal;
+  },
+}));
 
 const mutateAsync = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
   mockParams = {};
+  mockLocal = false;
   (useMyProfile as jest.Mock).mockReturnValue({ data: { area: { id: 'a', name: 'Downtown' } } });
   (useInterests as jest.Mock).mockReturnValue({
     data: [
@@ -37,9 +44,10 @@ describe('New post', () => {
     mutateAsync.mockResolvedValue('post-id');
     await render(<NewPost />);
     expect(screen.getByRole('button', { name: 'Post' })).toBeDisabled();
-    expect(screen.getByText(/Only people near Downtown see your area name/)).toBeTruthy();
+    expect(screen.getByText(/anyone on Locale can see this post/)).toBeTruthy();
+    expect(screen.queryByLabelText('Nearby only')).toBeNull();
 
-    await fireEvent.press(screen.getByRole('button', { name: '+ Add photos' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Post' })).toBeEnabled());
 
     await fireEvent.changeText(screen.getByLabelText('Caption'), 'Morning walk');
@@ -65,7 +73,7 @@ describe('New post', () => {
     expect(screen.queryByLabelText('Nearby only')).toBeNull();
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Toddlers' }));
     expect(screen.queryByText(/avoid showing children’s faces/i)).toBeNull();
-    await fireEvent.press(screen.getByRole('button', { name: '+ Add photos' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Post' })).toBeEnabled());
     await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
     await waitFor(() =>
@@ -82,7 +90,8 @@ describe('New post', () => {
     expect(screen.getByRole('checkbox', { name: 'Books' })).toBeChecked();
   });
 
-  it('warns about children\'s faces when a family tag is picked', async () => {
+  it('local mode: warns about children\'s faces when a family tag is picked', async () => {
+    mockLocal = true;
     await render(<NewPost />);
     expect(screen.queryByText(/avoid showing children’s faces/i)).toBeNull();
     await fireEvent.press(screen.getByRole('checkbox', { name: 'Toddlers' }));
@@ -91,10 +100,11 @@ describe('New post', () => {
     expect(screen.getByLabelText('Nearby only')).toBeDisabled();
   });
 
-  it('can be kept nearby only', async () => {
+  it('local mode: can be kept nearby only', async () => {
+    mockLocal = true;
     mutateAsync.mockResolvedValue('post-id');
     await render(<NewPost />);
-    await fireEvent.press(screen.getByRole('button', { name: '+ Add photos' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Post' })).toBeEnabled());
     await fireEvent(screen.getByLabelText('Nearby only'), 'valueChange', true);
     await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
@@ -104,7 +114,7 @@ describe('New post', () => {
   it('keeps the draft and explains when publishing fails', async () => {
     mutateAsync.mockRejectedValue(new Error('post_rate_limited'));
     await render(<NewPost />);
-    await fireEvent.press(screen.getByRole('button', { name: '+ Add photos' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Post' })).toBeEnabled());
     await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
     expect(await screen.findByText(/today's posting limit/)).toBeTruthy();

@@ -1,6 +1,8 @@
 # Locale
 
-A local community app: meet people nearby who share your interests, and shop the things you see in their photos. iOS and Android from one Expo codebase, backed by Supabase. ("Locale" is a placeholder name.)
+A fashion and design social app: post outfits and rooms, tag every piece, and let people shop what they see. iOS and Android from one Expo codebase, backed by Supabase. ("Locale" is a placeholder name.)
+
+The app started as a local community app. The local features (areas, the Nearby feed, groups) are still in the code and the database, switched off with `LOCAL_FEATURES` in `src/lib/features.ts`.
 
 ## Status
 
@@ -19,7 +21,15 @@ Built so far:
 
 7. **Push notifications:** new messages, message requests, group join requests (to moderators) and approvals. Notifications never contain message text. Settings has an on/off switch per category, and tapping a notification opens the conversation or group.
 
-The six core-loop steps and push notifications are done. Before a public launch, work through the list at the bottom of this file.
+8. **Global fashion mode and redesign:** no area step at sign-up; fashion and design interests (the local and kids ones are retired, not deleted); bottom tabs (Home, Explore, New post, Messages, Profile). Home has **For you** and **Following**. Explore is a two-column photo grid with item search. Profiles are three-column grids, and a single post has its own page. Under each post, a **Shop the look** strip shows its tagged items as hang tags. The look: black and white with one ultramarine accent for anything shoppable, Bodoni Moda for names and headings, Instrument Sans for everything else.
+
+Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 8
+
+1. `git pull` and `npm install` (new packages: fonts, icons, haptics).
+2. `npx supabase db push --remote` applies `20261105100000_global_mode.sql`.
+3. Make a new development build (`npx eas-cli@latest build --profile development --platform android`), because the new packages include native code. Install it over the old app.
 
 ## Stack
 
@@ -28,6 +38,7 @@ Expo SDK 58 (Expo Router, TypeScript strict) · TanStack Query · Supabase (Post
 ```
 src/app/              routes (Expo Router): (auth), (onboarding), (app)
 src/components/       shared UI
+src/theme.ts          design tokens (colours, fonts, type scale, spacing)
 src/features/<name>/  feature modules: api, hooks, helpers
 src/lib/              supabase client, generated DB types, errors
 supabase/migrations/  SQL migrations (RLS + policies live with their tables)

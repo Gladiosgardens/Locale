@@ -146,6 +146,11 @@ export async function fetchAuthorPage(authorId: string, cursor: FeedCursor): Pro
   );
 }
 
+export async function fetchPost(postId: string): Promise<FeedPost | null> {
+  const [post] = await toFeedPosts(unwrap(await supabase.rpc('discover_posts', { p_post_id: postId, p_limit: 1 })));
+  return post ?? null;
+}
+
 export const MIN_QUERY_LENGTH = 2;
 
 export async function searchPosts(query: string, cursor: FeedCursor): Promise<FeedPost[]> {

@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { Button, Chip, colors, ErrorText, Screen } from '@/components/ui';
 import { useInterests, useMyProfile, useSetInterests } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 const MIN_INTERESTS = 3;
 const MAX_INTERESTS = 15;
@@ -39,9 +40,9 @@ export default function InterestsStep() {
   const remaining = Math.max(0, MIN_INTERESTS - selected.size);
 
   return (
-    <Screen title="What are you into?" subtitle="Pick at least 3. We use these to suggest groups near you.">
+    <Screen title="What’s your style?" subtitle="Pick at least 3. We use these to shape your feed.">
       {interests.isPending ? (
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colors.ink} />
       ) : interests.isError ? (
         <>
           <ErrorText>Couldn’t load interests.</ErrorText>
@@ -70,5 +71,5 @@ export default function InterestsStep() {
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingBottom: 12 },
   footer: { gap: 10, paddingBottom: 12 },
-  muted: { color: colors.muted, fontSize: 15 },
+  muted: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
 });

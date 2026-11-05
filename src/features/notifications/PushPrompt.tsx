@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { Button, colors } from '@/components/ui';
 import { enablePush, getPermission, type EnableResult } from './push';
+import { fonts } from '@/theme';
 
 const RESULT_MESSAGE: Record<Exclude<EnableResult, 'enabled'>, string> = {
   denied: 'Notifications are off for Locale. You can turn them on in your phone’s Settings.',
@@ -48,6 +49,6 @@ export function PushPrompt() {
 
 const styles = StyleSheet.create({
   card: { margin: 16, padding: 14, borderRadius: 14, backgroundColor: colors.chip, gap: 8 },
-  title: { fontSize: 16, fontWeight: '600', color: colors.text },
-  body: { fontSize: 14, color: colors.muted, lineHeight: 20 },
+  title: { fontFamily: fonts.semibold, fontSize: 16, color: colors.text },
+  body: { fontFamily: fonts.body, fontSize: 14, color: colors.muted, lineHeight: 20 },
 });

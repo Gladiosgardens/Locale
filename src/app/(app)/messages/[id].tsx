@@ -19,6 +19,7 @@ import { useBlockUser } from '@/features/safety/hooks';
 import { ReportSheet, type ReportSubject } from '@/features/safety/ReportSheet';
 import { friendlyError } from '@/lib/errors';
 import { timeAgo } from '@/lib/time';
+import { fonts } from '@/theme';
 
 function Bubble({ m, mine, onLongPress }: { m: Message; mine: boolean; onLongPress: () => void }) {
   return (
@@ -198,26 +199,26 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   headerText: { flex: 1 },
-  title: { fontSize: 17, fontWeight: '600', color: colors.text },
-  link: { color: colors.muted, fontSize: 15 },
-  danger: { color: colors.danger, fontSize: 14 },
-  muted: { color: colors.muted, fontSize: 13 },
+  title: { fontFamily: fonts.semibold, fontSize: 17, color: colors.text },
+  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
+  danger: { color: colors.danger, fontFamily: fonts.body, fontSize: 14  },
+  muted: { color: colors.muted, fontFamily: fonts.body, fontSize: 13  },
   banner: { margin: 12, padding: 12, borderRadius: 12, backgroundColor: '#FFF4E5', gap: 10 },
-  bannerText: { color: '#7A4B00', fontSize: 14, lineHeight: 20 },
+  bannerText: { color: '#7A4B00', fontFamily: fonts.body, fontSize: 14, lineHeight: 20 },
   bannerActions: { flexDirection: 'row', gap: 10 },
-  reportLink: { color: '#7A4B00', fontSize: 13, textDecorationLine: 'underline' },
+  reportLink: { color: '#7A4B00', fontFamily: fonts.body, fontSize: 13, textDecorationLine: 'underline' },
   list: { padding: 12, gap: 6 },
   bubble: { maxWidth: '80%', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, gap: 4 },
   mine: { alignSelf: 'flex-end', backgroundColor: colors.accent },
   theirs: { alignSelf: 'flex-start', backgroundColor: '#FFFFFF', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  body: { fontSize: 16, color: colors.text, lineHeight: 21 },
+  body: { fontFamily: fonts.body, fontSize: 16, color: colors.text, lineHeight: 21 },
   mineText: { color: colors.accentText },
-  time: { fontSize: 11, color: colors.muted, alignSelf: 'flex-end' },
+  time: { fontFamily: fonts.body, fontSize: 11, color: colors.muted, alignSelf: 'flex-end' },
   mineTime: { color: 'rgba(255,255,255,0.75)' },
-  removed: { fontSize: 14, fontStyle: 'italic', color: colors.muted },
+  removed: { fontFamily: fonts.body, fontSize: 14, fontStyle: 'italic', color: colors.muted },
   shared: { gap: 4, backgroundColor: colors.chip, borderRadius: 10, padding: 6 },
   sharedImage: { width: 200, height: 200, borderRadius: 8 },
-  sharedMeta: { fontSize: 12, color: colors.muted },
-  sharedCaption: { fontSize: 13, color: colors.text },
-  waiting: { padding: 16, textAlign: 'center', fontSize: 14, color: colors.muted, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  sharedMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
+  sharedCaption: { fontFamily: fonts.body, fontSize: 13, color: colors.text },
+  waiting: { padding: 16, textAlign: 'center', fontFamily: fonts.body, fontSize: 14, color: colors.muted, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
 });

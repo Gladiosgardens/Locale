@@ -5,6 +5,7 @@ import { Button, colors, ErrorText, Field, Screen } from '@/components/ui';
 import { useAreaSearch, useChooseArea, useMyProfile, useSetAreaFromCell } from '@/features/onboarding/hooks';
 import { LocationDeniedError, locateArea } from '@/features/onboarding/locateArea';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 export default function AreaStep() {
   const profile = useMyProfile();
@@ -98,8 +99,8 @@ export default function AreaStep() {
 }
 
 const styles = StyleSheet.create({
-  current: { fontSize: 18, color: colors.text },
-  empty: { color: colors.muted, fontSize: 15, lineHeight: 21 },
+  current: { fontFamily: fonts.body, fontSize: 18, color: colors.text },
+  empty: { color: colors.muted, fontFamily: fonts.body, fontSize: 15, lineHeight: 21 },
   row: { paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  rowText: { fontSize: 16, color: colors.text },
+  rowText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
 });

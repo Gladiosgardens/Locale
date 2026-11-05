@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/AuthProvider';
 import * as api from './api';
 
@@ -52,6 +52,15 @@ export function useSearch(query: string) {
     initialPageParam: null as api.FeedCursor,
     getNextPageParam: nextCursor,
     enabled: q.length >= api.MIN_QUERY_LENGTH,
+    staleTime: STALE_MS,
+  });
+}
+
+export function usePost(postId: string | undefined) {
+  return useQuery({
+    queryKey: ['feed', 'post', postId],
+    queryFn: () => api.fetchPost(postId!),
+    enabled: !!postId,
     staleTime: STALE_MS,
   });
 }

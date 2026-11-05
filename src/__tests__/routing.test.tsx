@@ -43,13 +43,13 @@ const routes = {
   index: function Start() {
     const { signedIn, onboarded } = useAppState();
     if (!signedIn) return <Redirect href="/sign-in" />;
-    if (!onboarded) return <Redirect href="/area" />;
+    if (!onboarded) return <Redirect href="/interests" />;
     return <Redirect href="/home" />;
   },
   '(auth)/_layout': Group,
   '(auth)/sign-in': () => <Text>SIGN_IN</Text>,
   '(onboarding)/_layout': Group,
-  '(onboarding)/area': () => <Text>AREA</Text>,
+  '(onboarding)/interests': () => <Text>INTERESTS</Text>,
   '(app)/_layout': Group,
   '(app)/home': () => <Text>FEED</Text>,
 };
@@ -65,7 +65,7 @@ it('signed out at launch: shows sign-in, not "unmatched route"', async () => {
 it('signed in but not onboarded at launch: shows onboarding', async () => {
   store.set({ signedIn: true });
   await renderRouter(routes, { initialUrl: '/' });
-  expect(await screen.findByText('AREA')).toBeTruthy();
+  expect(await screen.findByText('INTERESTS')).toBeTruthy();
 });
 
 it('onboarded at launch: shows the feed', async () => {
@@ -78,7 +78,7 @@ it('signing in, then finishing onboarding, moves you along', async () => {
   await renderRouter(routes, { initialUrl: '/' });
   expect(await screen.findByText('SIGN_IN')).toBeTruthy();
   await act(async () => store.set({ signedIn: true }));
-  expect(await screen.findByText('AREA')).toBeTruthy();
+  expect(await screen.findByText('INTERESTS')).toBeTruthy();
   await act(async () => store.set({ onboarded: true }));
   expect(await screen.findByText('FEED')).toBeTruthy();
   expect(screen.queryByTestId('expo-router-unmatched')).toBeNull();

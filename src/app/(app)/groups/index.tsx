@@ -6,6 +6,7 @@ import { Button, Chip, colors } from '@/components/ui';
 import { GroupCard } from '@/features/groups/GroupCard';
 import { useGroups } from '@/features/groups/hooks';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
+import { fonts } from '@/theme';
 
 export default function Groups() {
   const profile = useMyProfile();
@@ -73,15 +74,15 @@ export default function Groups() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingTop: 8 },
-  title: { flex: 1, fontSize: 24, fontWeight: '700', color: colors.text },
-  link: { color: colors.muted, fontSize: 15 },
+  title: { flex: 1, fontFamily: fonts.bold, fontSize: 24, color: colors.text },
+  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
   create: { backgroundColor: colors.accent, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8 },
-  createText: { color: colors.accentText, fontWeight: '600', fontSize: 14 },
-  subtitle: { fontSize: 14, color: colors.muted, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 },
+  createText: { color: colors.accentText, fontFamily: fonts.semibold, fontSize: 14  },
+  subtitle: { fontFamily: fonts.body, fontSize: 14, color: colors.muted, paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 },
   filterBar: { flexGrow: 0 },
   filters: { gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
   list: { gap: 10, paddingHorizontal: 16, paddingBottom: 32 },
   loading: { marginVertical: 24 },
   empty: { paddingVertical: 24, gap: 16 },
-  emptyText: { fontSize: 16, color: colors.muted, lineHeight: 22 },
+  emptyText: { fontFamily: fonts.body, fontSize: 16, color: colors.muted, lineHeight: 22 },
 });

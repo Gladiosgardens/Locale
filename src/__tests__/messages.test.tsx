@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 import Chat from '@/app/(app)/messages/[id]';
-import Inbox from '@/app/(app)/messages/index';
+import Inbox from '@/app/(app)/(tabs)/messages';
 import NewMessage from '@/app/(app)/messages/new';
 import SharePost from '@/app/(app)/messages/share';
 import type { ConversationSummary, Message } from '@/features/messages/api';

@@ -3,6 +3,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(52);
 
+-- These tests cover the local features, which use interests retired in global mode.
+update public.interests set active = true;
+
 -- Fixtures. Owner O, member M, requester R, outsider N (all near Downtown 9q9k5),
 -- far user F (Los Angeles), and a not-yet-onboarded user U nearby.
 insert into auth.users (id, email) values

@@ -5,6 +5,7 @@ import { colors } from '@/components/ui';
 import { Composer } from '@/features/messages/Composer';
 import { useMessageStatus, useSendMessage } from '@/features/messages/hooks';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 export default function NewMessage() {
   const { to, name } = useLocalSearchParams<{ to: string; name?: string }>();
@@ -60,8 +61,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, paddingVertical: 10 },
-  title: { flex: 1, fontSize: 18, fontWeight: '600', color: colors.text },
-  link: { color: colors.muted, fontSize: 15 },
+  title: { flex: 1, fontFamily: fonts.semibold, fontSize: 18, color: colors.text },
+  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
   loading: { marginTop: 24 },
-  notice: { margin: 16, padding: 12, borderRadius: 12, backgroundColor: colors.chip, fontSize: 14, color: colors.text, lineHeight: 20 },
+  notice: { margin: 16, padding: 12, borderRadius: 12, backgroundColor: colors.chip, fontFamily: fonts.body, fontSize: 14, color: colors.text, lineHeight: 20 },
 });

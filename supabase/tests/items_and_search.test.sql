@@ -3,6 +3,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(44);
 
+-- These tests cover the local features, which use interests retired in global mode.
+update public.interests set active = true;
+
 ------------------------------------------------------------------------------
 -- Link rules
 ------------------------------------------------------------------------------

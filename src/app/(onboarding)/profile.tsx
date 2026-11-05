@@ -3,6 +3,7 @@ import { StyleSheet, Switch, Text, View } from 'react-native';
 import { Button, colors, ErrorText, Field, Screen } from '@/components/ui';
 import { useCompleteOnboarding } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 const HANDLE = /^[a-z0-9_]{3,20}$/;
 
@@ -27,7 +28,7 @@ export default function ProfileStep() {
   }
 
   return (
-    <Screen title="Set up your profile" subtitle="This is how neighbors will see you.">
+    <Screen title="Set up your profile" subtitle="This is how people will see you on Locale.">
       <Field
         label="Handle"
         value={handle}
@@ -51,7 +52,7 @@ export default function ProfileStep() {
 }
 
 const styles = StyleSheet.create({
-  hint: { color: colors.muted, fontSize: 13, marginTop: -8 },
+  hint: { color: colors.muted, fontFamily: fonts.body, fontSize: 13, marginTop: -8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  rowText: { fontSize: 16, color: colors.text },
+  rowText: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
 });

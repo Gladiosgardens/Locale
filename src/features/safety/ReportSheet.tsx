@@ -4,6 +4,7 @@ import { Button, colors, ErrorText, Field } from '@/components/ui';
 import { friendlyError } from '@/lib/errors';
 import { REPORT_REASONS, type ReportReason, type ReportTarget } from './api';
 import { useReport } from './hooks';
+import { fonts } from '@/theme';
 
 export type ReportSubject = { type: ReportTarget; id: string; label: string };
 
@@ -79,10 +80,10 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
   sheet: { maxHeight: '85%', backgroundColor: colors.bg, borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 20, paddingBottom: 36, gap: 12 },
   content: { gap: 10 },
-  title: { fontSize: 20, fontWeight: '700', color: colors.text },
-  body: { fontSize: 15, color: colors.muted, lineHeight: 21 },
+  title: { fontFamily: fonts.bold, fontSize: 20, color: colors.text },
+  body: { fontFamily: fonts.body, fontSize: 15, color: colors.muted, lineHeight: 21 },
   option: { padding: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: '#FFFFFF' },
   optionSelected: { borderColor: colors.accent, borderWidth: 2 },
-  optionText: { fontSize: 15, color: colors.text },
-  hint: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  optionText: { fontFamily: fonts.body, fontSize: 15, color: colors.text },
+  hint: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, marginTop: 2 },
 });

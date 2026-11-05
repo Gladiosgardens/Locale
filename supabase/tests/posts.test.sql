@@ -3,6 +3,9 @@ begin;
 create extension if not exists pgtap with schema extensions;
 select plan(35);
 
+-- These tests cover the local features, which use interests retired in global mode.
+update public.interests set active = true;
+
 -- Fixtures (as postgres). Cells: A 9q9k5; B 9q9k7 (north neighbour);
 -- C 9q9kj (two cells east: just outside); D 9q5ct (Los Angeles); E not onboarded.
 insert into auth.users (id, email) values

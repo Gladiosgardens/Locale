@@ -9,6 +9,7 @@ import { useMyProfile } from '@/features/onboarding/hooks';
 import { useBlocked, useUnblockUser } from '@/features/safety/hooks';
 import { usePrivateSettings } from '@/features/settings/hooks';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 export default function Settings() {
   const { session } = useAuth();
@@ -139,14 +140,14 @@ export default function Settings() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, paddingVertical: 10 },
-  title: { fontSize: 22, fontWeight: '700', color: colors.text },
-  link: { color: colors.muted, fontSize: 15 },
+  title: { fontFamily: fonts.bold, fontSize: 22, color: colors.text },
+  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
   body: { padding: 16, gap: 24 },
   section: { gap: 8 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  text: { fontSize: 16, color: colors.text },
-  muted: { fontSize: 14, color: colors.muted },
+  sectionTitle: { fontFamily: fonts.bold, fontSize: 13, color: colors.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
+  text: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
+  muted: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
   chips: { flexDirection: 'row', gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
-  action: { color: colors.accent, fontSize: 15, fontWeight: '600' },
+  action: { color: colors.accent, fontFamily: fonts.semibold, fontSize: 15, },
 });

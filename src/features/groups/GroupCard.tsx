@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/components/ui';
 import type { Group } from './api';
+import { fonts } from '@/theme';
 
 export function membershipLabel(g: Group): string | null {
   if (g.myStatus === 'pending') return 'Requested';
@@ -35,9 +36,9 @@ export function GroupCard({ group, interestLabel, onPress }: { group: Group; int
 const styles = StyleSheet.create({
   card: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 14, gap: 4, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  name: { flex: 1, fontSize: 16, fontWeight: '600', color: colors.text },
-  badge: { fontSize: 12, color: colors.accent, backgroundColor: colors.chip, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
-  meta: { fontSize: 13, color: colors.muted },
-  pending: { fontSize: 13, color: '#7A4B00' },
-  description: { fontSize: 14, color: colors.text, lineHeight: 20, marginTop: 2 },
+  name: { flex: 1, fontFamily: fonts.semibold, fontSize: 16, color: colors.text },
+  badge: { fontFamily: fonts.body, fontSize: 12, color: colors.accent, backgroundColor: colors.chip, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
+  meta: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
+  pending: { fontFamily: fonts.body, fontSize: 13, color: '#7A4B00' },
+  description: { fontFamily: fonts.body, fontSize: 14, color: colors.text, lineHeight: 20, marginTop: 2 },
 });

@@ -7,6 +7,7 @@ import type { GroupPrivacy } from '@/features/groups/api';
 import { useCreateGroup } from '@/features/groups/hooks';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 export default function NewGroup() {
   const profile = useMyProfile();
@@ -83,11 +84,11 @@ export default function NewGroup() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  link: { color: colors.muted, fontSize: 16, width: 60 },
-  title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '600', color: colors.text },
+  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 16, width: 60 },
+  title: { flex: 1, textAlign: 'center', fontFamily: fonts.semibold, fontSize: 17, color: colors.text },
   spacer: { width: 60 },
   body: { padding: 16, gap: 14 },
-  label: { fontSize: 14, fontWeight: '600', color: colors.text },
+  label: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  notice: { fontSize: 13, color: colors.muted, lineHeight: 18 },
+  notice: { fontFamily: fonts.body, fontSize: 13, color: colors.muted, lineHeight: 18 },
 });

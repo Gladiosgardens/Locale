@@ -1,4 +1,17 @@
+import {
+  BodoniModa_500Medium_Italic,
+  BodoniModa_600SemiBold,
+  BodoniModa_700Bold,
+} from '@expo-google-fonts/bodoni-moda';
+import {
+  InstrumentSans_400Regular,
+  InstrumentSans_500Medium,
+  InstrumentSans_600SemiBold,
+  InstrumentSans_700Bold,
+} from '@expo-google-fonts/instrument-sans';
+import Feather from '@expo/vector-icons/Feather';
 import { QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Text } from 'react-native';
@@ -8,8 +21,22 @@ import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { signOut } from '@/features/auth/api';
 import { useMyProfile } from '@/features/onboarding/hooks';
 import { queryClient } from '@/lib/queryClient';
+import { type } from '@/theme';
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    BodoniModa_500Medium_Italic,
+    BodoniModa_600SemiBold,
+    BodoniModa_700Bold,
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+    InstrumentSans_700Bold,
+    ...Feather.font,
+  });
+  // Fonts are bundled, so this is a few frames. If they fail, carry on with system fonts.
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
@@ -30,7 +57,7 @@ function RootNavigator() {
   if (loading || (signedIn && profile.isPending)) {
     return (
       <Centered>
-        <ActivityIndicator color={colors.accent} />
+        <ActivityIndicator color={colors.ink} />
       </Centered>
     );
   }
@@ -38,7 +65,7 @@ function RootNavigator() {
   if (signedIn && profile.isError) {
     return (
       <Centered>
-        <Text>We couldn’t load your profile.</Text>
+        <Text style={type.body}>We couldn’t load your profile.</Text>
         <Button label="Try again" onPress={() => profile.refetch()} />
         <Button label="Sign out" variant="secondary" onPress={signOut} />
       </Centered>

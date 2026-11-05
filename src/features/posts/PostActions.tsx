@@ -1,6 +1,7 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/components/ui';
 import type { FeedPost } from './api';
+import { fonts } from '@/theme';
 
 export type PostAction = 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
 
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)' },
   sheet: { backgroundColor: colors.bg, borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingBottom: 32, paddingTop: 8 },
   row: { paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  text: { fontSize: 16, color: colors.text, textAlign: 'center' },
+  text: { fontFamily: fonts.body, fontSize: 16, color: colors.text, textAlign: 'center' },
   danger: { color: colors.danger },
   cancel: { color: colors.muted },
 });

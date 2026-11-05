@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/components/ui';
 import { useConversations, useSendMessage } from '@/features/messages/hooks';
 import { friendlyError } from '@/lib/errors';
+import { fonts } from '@/theme';
 
 export default function SharePost() {
   const { postId } = useLocalSearchParams<{ postId: string }>();
@@ -62,12 +63,12 @@ export default function SharePost() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, paddingVertical: 10 },
-  title: { fontSize: 18, fontWeight: '600', color: colors.text },
-  link: { color: colors.muted, fontSize: 15 },
-  note: { fontSize: 13, color: colors.muted, paddingHorizontal: 16, paddingBottom: 8 },
+  title: { fontFamily: fonts.semibold, fontSize: 18, color: colors.text },
+  link: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
+  note: { fontFamily: fonts.body, fontSize: 13, color: colors.muted, paddingHorizontal: 16, paddingBottom: 8 },
   row: { paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  name: { fontSize: 16, color: colors.text },
-  handle: { fontSize: 13, color: colors.muted },
+  name: { fontFamily: fonts.body, fontSize: 16, color: colors.text },
+  handle: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
   loading: { marginVertical: 24 },
-  empty: { padding: 24, fontSize: 15, color: colors.muted, lineHeight: 21 },
+  empty: { padding: 24, fontFamily: fonts.body, fontSize: 15, color: colors.muted, lineHeight: 21 },
 });
