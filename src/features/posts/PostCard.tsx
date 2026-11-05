@@ -1,3 +1,4 @@
+import Feather from '@expo/vector-icons/Feather';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { memo, useMemo, useState } from 'react';
@@ -14,6 +15,7 @@ type Props = {
   interests: Map<number, Interest>;
   onMenu: (post: FeedPost) => void;
   onOpenItem: (item: Item) => void;
+  onShare?: (post: FeedPost) => void;
 };
 
 const DOT = 22;
@@ -83,7 +85,7 @@ function TaggedPhoto({
   );
 }
 
-export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpenItem }: Props) {
+export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpenItem, onShare }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth, MAX_WIDTH);
   const [page, setPage] = useState(0);
@@ -122,6 +124,17 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
             </Text>
           </View>
         </Pressable>
+        {onShare ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Share to Instagram Stories"
+            onPress={() => onShare(post)}
+            hitSlop={10}
+            style={styles.shareButton}
+          >
+            <Feather name="share" size={20} color={colors.ink} />
+          </Pressable>
+        ) : null}
         <Pressable accessibilityRole="button" accessibilityLabel="Post options" onPress={() => onMenu(post)} hitSlop={12}>
           <View style={styles.more}>
             <View style={styles.moreDot} />
@@ -198,6 +211,7 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.display, fontSize: 17, color: colors.ink },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
   more: { flexDirection: 'row', gap: 3, padding: 4 },
+  shareButton: { marginRight: space.lg },
   moreDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink },
   pager: {
     position: 'absolute',

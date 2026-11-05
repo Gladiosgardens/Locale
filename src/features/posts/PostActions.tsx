@@ -3,7 +3,7 @@ import { colors } from '@/components/ui';
 import type { FeedPost } from './api';
 import { fonts } from '@/theme';
 
-export type PostAction = 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
+export type PostAction = 'story' | 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
 
 export function PostActions({
   post,
@@ -20,10 +20,12 @@ export function PostActions({
     ? []
     : isMine
       ? [
+          { action: 'story', label: 'Share to Instagram Stories' },
           { action: 'share', label: 'Send in a message' },
           { action: 'delete', label: 'Delete post', danger: true },
         ]
       : [
+          { action: 'story', label: 'Share to Instagram Stories' },
           { action: 'share', label: 'Send in a message' },
           { action: 'report-post', label: 'Report post' },
           { action: 'report-user', label: `Report @${post.author.handle}` },

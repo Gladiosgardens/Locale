@@ -5,6 +5,7 @@ import { colors } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { ItemSheet } from '@/features/items/ItemSheet';
 import { ReportSheet, type ReportSubject } from '@/features/safety/ReportSheet';
+import { StoryShareSheet } from '@/features/share/StoryShareSheet';
 import { useBlockUser } from '@/features/safety/hooks';
 import { useInterests } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
@@ -31,6 +32,7 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   const [openItem, setOpenItem] = useState<Item | null>(null);
   const [menuPost, setMenuPost] = useState<FeedPost | null>(null);
   const [reporting, setReporting] = useState<ReportSubject | null>(null);
+  const [storyPost, setStoryPost] = useState<FeedPost | null>(null);
 
   const interestMap = useMemo(() => new Map((interests.data ?? []).map((i) => [i.id, i])), [interests.data]);
   const posts = useMemo(() => query.data?.pages.flat() ?? [], [query.data]);
@@ -38,6 +40,8 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   function onPick(action: PostAction, post: FeedPost) {
     const fail = (e: unknown) => Alert.alert(friendlyError(e));
     switch (action) {
+      case 'story':
+        return setStoryPost(post);
       case 'share':
         return router.push({ pathname: '/messages/share', params: { postId: post.id } });
       case 'delete':
@@ -63,7 +67,13 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
 
   const renderItem = useCallback(
     ({ item }: { item: FeedPost }) => (
-      <PostCard post={item} interests={interestMap} onMenu={setMenuPost} onOpenItem={setOpenItem} />
+      <PostCard
+        post={item}
+        interests={interestMap}
+        onMenu={setMenuPost}
+        onOpenItem={setOpenItem}
+        onShare={setStoryPost}
+      />
     ),
     [interestMap],
   );
@@ -99,6 +109,7 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
         onClose={() => setMenuPost(null)}
       />
       <ReportSheet subject={reporting} onClose={() => setReporting(null)} />
+      <StoryShareSheet post={storyPost} interests={interestMap} onClose={() => setStoryPost(null)} />
     </>
   );
 }

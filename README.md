@@ -33,7 +33,13 @@ Built so far:
 
 10. **Topics for everyone and a personal For you feed:** new topics where people shop from photos (Tech & gadgets, Phones, Audio, Desk & gaming setups, Gaming, Smart home, Motorcycles, Watches, Grooming, Fragrance, Outdoor & camping gear, Grilling & BBQ, DIY & tools), grouped into sections (Style, Home, Tech & cars, Food & drink, Active & outdoors, Everyday) at sign-up and in the composer. Nobody is asked their gender. **For you** ranks posts in your topics (+36 hours) and from people you follow (+24 hours) above other recent posts; with no topics or follows it is newest first. The strip under a post says "Shop the look" for style posts and "Shop this" for everything else.
 
+11. **Share to Instagram Stories:** a share icon on every post (and an item in its menu) makes a 1080x1920 story image (the photo with numbered dots, up to three tagged pieces with prices, the Locale wordmark and the poster's @handle, kept clear of Instagram's reply bar) and opens the phone's share sheet, where Instagram → Story is one tap. Opening Stories directly, skipping the share sheet, needs a Meta app ID; link stickers need the public web pages (next step).
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 11
+
+`git pull`, `npm install`, then a new development build (image capture and sharing are native code). No database changes.
 
 ### Updating an existing install to step 10
 
