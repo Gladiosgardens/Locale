@@ -20,6 +20,7 @@ const post = (over: Partial<FeedPost> = {}): FeedPost => ({
   id: 'p1',
   caption: 'Living room',
   publishedAt: new Date().toISOString(),
+  rankAt: new Date().toISOString(),
   author: { id: 'u1', handle: 'amy', displayName: 'Amy' },
   areaName: null,
   interestIds: [],
@@ -52,7 +53,8 @@ describe('tags on a post', () => {
   it('numbers the items in a Shop the look strip', async () => {
     const onOpenItem = jest.fn();
     await render(<PostCard post={post()} interests={new Map()} onMenu={jest.fn()} onOpenItem={onOpenItem} />);
-    expect(screen.getByText('Shop the look')).toBeTruthy();
+    // A living-room post isn't an outfit, so the strip is "Shop this".
+    expect(screen.getByText('Shop this')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Brass lamp, Flea market' }));
     expect(onOpenItem).toHaveBeenCalledWith(lamp);
   });

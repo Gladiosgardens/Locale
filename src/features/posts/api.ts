@@ -37,10 +37,12 @@ export type FeedPost = {
   media: FeedMedia[];
   interestIds: number[];
   matchedItemIds: string[];
+  /** Where the post sits in its feed; the paging cursor. Equals publishedAt except in For you. */
+  rankAt: string;
 };
 
 export type FeedCursor = { publishedAt: string; id: string } | null;
-export type FeedScope = 'nearby' | 'following' | 'everywhere';
+export type FeedScope = 'for-you' | 'nearby' | 'following' | 'everywhere';
 
 type RawItem = {
   id: string; title: string; brand: string | null; store_name: string | null; url: string | null;
@@ -54,6 +56,7 @@ type RawPost = {
   id: string; caption: string | null; published_at: string; author_id: string; author_handle: string;
   author_display_name: string; area_name: string | null; media: unknown; interest_ids: number[];
   matched_item_ids?: string[];
+  rank_at?: string;
 };
 
 const cursorArgs = (cursor: FeedCursor) =>
@@ -78,6 +81,7 @@ async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
     areaName: r.area_name,
     interestIds: r.interest_ids,
     matchedItemIds: r.matched_item_ids ?? [],
+    rankAt: r.rank_at ?? r.published_at,
     media: (r.media as RawMedia[]).map((m) => ({
       path: m.path,
       width: m.width,
@@ -108,12 +112,13 @@ export async function fetchFeedPage(
   cursor: FeedCursor,
   interestId: number | null,
 ): Promise<FeedPost[]> {
-  if (scope === 'everywhere' || scope === 'following') {
+  if (scope !== 'nearby') {
     return toFeedPosts(
       unwrap(
         await supabase.rpc('discover_posts', {
           p_limit: FEED_PAGE_SIZE,
           ...(scope === 'following' ? { p_following: true } : {}),
+          ...(scope === 'for-you' ? { p_for_you: true } : {}),
           ...cursorArgs(cursor),
         }),
       ),

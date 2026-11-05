@@ -14,7 +14,7 @@ import { LOCAL_FEATURES } from '@/lib/features';
 import { colors, fonts, radius, space, type } from '@/theme';
 
 const SCOPES: { scope: FeedScope; label: string }[] = [
-  { scope: 'everywhere', label: 'For you' },
+  { scope: 'for-you', label: 'For you' },
   { scope: 'following', label: 'Following' },
   ...(LOCAL_FEATURES ? [{ scope: 'nearby' as const, label: 'Nearby' }] : []),
 ];
@@ -22,7 +22,7 @@ const SCOPES: { scope: FeedScope; label: string }[] = [
 export default function Home() {
   const profile = useMyProfile();
   const interests = useInterests();
-  const [scope, setScope] = useState<FeedScope>('everywhere');
+  const [scope, setScope] = useState<FeedScope>('for-you');
   const [interestId, setInterestId] = useState<number | null>(null);
   const feed = useFeed(scope, interestId);
   const { session } = useAuth();

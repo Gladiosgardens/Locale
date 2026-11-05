@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Chip, colors, ErrorText } from '@/components/ui';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { TagEditor } from '@/features/items/TagEditor';
+import { groupBySection } from '@/features/onboarding/sections';
 import { MAX_PHOTOS, MAX_POST_INTERESTS, type DraftTag, type PickedPhoto } from '@/features/posts/api';
 import { usePublishPost, type PublishStage } from '@/features/posts/hooks';
 import { friendlyError } from '@/lib/errors';
@@ -156,11 +157,16 @@ export default function NewPost() {
         />
 
         <Text style={styles.label}>Topics, up to {MAX_POST_INTERESTS}</Text>
-        <View style={styles.chips}>
-          {(interests.data ?? []).map((i) => (
-            <Chip key={i.id} label={i.label} selected={tags.includes(i.id)} onPress={() => !busy && toggleTag(i.id)} />
-          ))}
-        </View>
+        {groupBySection(interests.data ?? []).map((g) => (
+          <View key={g.key} style={styles.topicGroup}>
+            <Text style={styles.topicSection}>{g.label}</Text>
+            <View style={styles.chips}>
+              {g.items.map((i) => (
+                <Chip key={i.id} label={i.label} selected={tags.includes(i.id)} onPress={() => !busy && toggleTag(i.id)} />
+              ))}
+            </View>
+          </View>
+        ))}
 
         {familySelected && !groupId && LOCAL_FEATURES ? (
           <View style={styles.warning} accessibilityRole="alert">
@@ -254,6 +260,8 @@ const styles = StyleSheet.create({
   },
   label: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ink },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  topicGroup: { gap: space.sm },
+  topicSection: { fontFamily: fonts.medium, fontSize: 13, color: colors.muted },
   warning: { backgroundColor: colors.wash, borderRadius: radius.tag, padding: space.md, gap: 4 },
   warningTitle: { fontFamily: fonts.semibold, color: colors.ink, fontSize: 15 },
   warningText: { fontFamily: fonts.body, color: colors.graphite, fontSize: 14, lineHeight: 20 },

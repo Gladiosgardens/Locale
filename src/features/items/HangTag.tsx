@@ -47,19 +47,22 @@ export function HangTag({
 }
 
 // Horizontal strip of hang tags under a post. Items are numbered to match the dots on the photo.
+// "Shop the look" for outfits; "Shop this" for gadgets, rooms, food and everything else.
 export function ShopTheLook({
   items,
   highlight = [],
   onOpen,
+  title = 'Shop the look',
 }: {
   items: Item[];
   highlight?: string[];
   onOpen: (item: Item) => void;
+  title?: string;
 }) {
   if (!items.length) return null;
   return (
     <View style={styles.strip}>
-      <Text style={styles.heading}>Shop the look</Text>
+      <Text style={styles.heading}>{title}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {items.map((item, i) => (
           <HangTag

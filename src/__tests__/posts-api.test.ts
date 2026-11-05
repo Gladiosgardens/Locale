@@ -51,6 +51,26 @@ describe('fetchFeedPage', () => {
     expect(page[0].media.map((m) => m.url)).toEqual(['https://s/0', null]);
   });
 
+  it('asks for the personal ranking in For you and pages by rank', async () => {
+    (supabase.rpc as jest.Mock).mockResolvedValue({
+      error: null,
+      data: [
+        {
+          id: 'p1', caption: null, published_at: '2026-11-03T19:00:00Z', rank_at: '2026-11-05T07:00:00Z', author_id: 'u1',
+          author_handle: 'ana', author_display_name: 'Ana', area_name: null, interest_ids: [], media: [],
+        },
+      ],
+    });
+    const page = await fetchFeedPage('for-you', { publishedAt: '2026-11-05T08:00:00Z', id: 'p0' }, null);
+    expect(supabase.rpc).toHaveBeenCalledWith('discover_posts', {
+      p_limit: 20,
+      p_for_you: true,
+      p_before_published_at: '2026-11-05T08:00:00Z',
+      p_before_id: 'p0',
+    });
+    expect(page[0].rankAt).toBe('2026-11-05T07:00:00Z');
+  });
+
   it('skips signing when the page is empty', async () => {
     (supabase.rpc as jest.Mock).mockResolvedValue({ error: null, data: [] });
     await expect(fetchFeedPage('nearby', null, null)).resolves.toEqual([]);

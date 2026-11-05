@@ -32,7 +32,15 @@ export type Database = {
         Relationships: [];
       };
       interests: {
-        Row: { active: boolean; id: number; is_family: boolean; label: string; slug: string; sort_order: number };
+        Row: {
+          active: boolean;
+          id: number;
+          is_family: boolean;
+          label: string;
+          section: string;
+          slug: string;
+          sort_order: number;
+        };
         Insert: never;
         Update: never;
         Relationships: [];
@@ -154,6 +162,7 @@ export type Database = {
           p_before_published_at?: string;
           p_author_id?: string;
           p_following?: boolean;
+          p_for_you?: boolean;
           p_limit?: number;
           p_post_id?: string;
           p_query?: string;
@@ -169,6 +178,7 @@ export type Database = {
           matched_item_ids: string[];
           media: Json;
           published_at: string;
+          rank_at: string;
         }[];
       };
       list_groups: {

@@ -21,7 +21,7 @@ function useDebounced(value: string, ms: number) {
 }
 
 // Quick searches people can tap instead of typing.
-const SUGGESTIONS = ['Sneakers', 'Linen', 'Coffee', 'Lamp', 'Running', 'Vintage', 'Plants', 'Camera'];
+const SUGGESTIONS = ['Sneakers', 'Headphones', 'Linen', 'Watch', 'Keyboard', 'Lamp', 'Grill', 'Vintage'];
 
 export default function Explore() {
   const [text, setText] = useState('');

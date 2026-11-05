@@ -161,7 +161,12 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
         ) : null}
       </View>
 
-      <ShopTheLook items={items} highlight={post.matchedItemIds} onOpen={onOpenItem} />
+      <ShopTheLook
+        items={items}
+        highlight={post.matchedItemIds}
+        onOpen={onOpenItem}
+        title={post.interestIds.some((id) => interests.get(id)?.section === 'style') ? 'Shop the look' : 'Shop this'}
+      />
 
       <View style={styles.footer}>
         {post.caption ? (

@@ -7,7 +7,7 @@ export type PublishStage = 'preparing' | 'uploading' | 'publishing';
 const nextCursor = (last: api.FeedPost[]): api.FeedCursor | undefined =>
   last.length < api.FEED_PAGE_SIZE
     ? undefined
-    : { publishedAt: last[last.length - 1].publishedAt, id: last[last.length - 1].id };
+    : { publishedAt: last[last.length - 1].rankAt, id: last[last.length - 1].id };
 
 // Signed image URLs last an hour; refresh well before that.
 const STALE_MS = 5 * 60_000;

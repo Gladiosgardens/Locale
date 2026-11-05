@@ -11,10 +11,11 @@ jest.mock('@/features/onboarding/hooks', () => ({
 }));
 
 const INTERESTS = [
-  { id: 1, slug: 'dogs', label: 'Dogs', sort_order: 1 },
-  { id: 2, slug: 'running', label: 'Running', sort_order: 2 },
-  { id: 3, slug: 'coffee', label: 'Coffee', sort_order: 3 },
-  { id: 4, slug: 'books', label: 'Books', sort_order: 4 },
+  { id: 1, slug: 'dogs', label: 'Dogs', sort_order: 1, section: 'everyday' },
+  { id: 2, slug: 'running', label: 'Running', sort_order: 2, section: 'active' },
+  { id: 3, slug: 'coffee', label: 'Coffee', sort_order: 3, section: 'food' },
+  { id: 4, slug: 'books', label: 'Books', sort_order: 4, section: 'everyday' },
+  { id: 5, slug: 'tech', label: 'Tech & gadgets', sort_order: 5, section: 'tech' },
 ];
 
 const mutateAsync = jest.fn();
@@ -27,6 +28,14 @@ function setup(data = INTERESTS) {
 
 describe('Interests step', () => {
   beforeEach(() => jest.clearAllMocks());
+
+  it('groups topics into sections, in a fixed order, and never asks for gender', async () => {
+    setup();
+    await render(<InterestsStep />);
+    const headers = screen.getAllByRole('header').map((h) => h.props.children);
+    expect(headers).toEqual(['What are you into?', 'Tech & cars', 'Food & drink', 'Active & outdoors', 'Everyday']);
+    expect(screen.queryByText(/gender|male|female/i)).toBeNull();
+  });
 
   it('requires 3 picks before continuing, then saves them', async () => {
     setup();

@@ -49,8 +49,9 @@ beforeEach(() => {
   mockFollowing = 4;
   (useInterests as jest.Mock).mockReturnValue({
     data: [
-      { id: 1, slug: 'dogs', label: 'Dogs', sort_order: 1, is_family: false },
-      { id: 2, slug: 'coffee', label: 'Coffee', sort_order: 2, is_family: false },
+      { id: 1, slug: 'dogs', label: 'Dogs', sort_order: 1, is_family: false, section: 'everyday' },
+      { id: 3, slug: 'menswear', label: 'Menswear', sort_order: 3, is_family: false, section: 'style' },
+      { id: 2, slug: 'coffee', label: 'Coffee', sort_order: 2, is_family: false, section: 'food' },
     ],
   });
   (useMyProfile as jest.Mock).mockReturnValue({ data: { area: { id: 'a', name: 'Downtown' }, interestIds: [1, 2] } });
@@ -64,6 +65,7 @@ const tagged = () => {
     priceCents: 6900, currency: 'USD', isAffiliate: false,
   };
   p.media[0].tags = [{ id: 't1', x: 0.5, y: 0.5, item }];
+  p.interestIds = [3];
   return p;
 };
 
@@ -71,7 +73,7 @@ describe('Feed', () => {
   it('opens on For you, with posts, authors and tags; delete for mine, report/block for others', async () => {
     (useFeed as jest.Mock).mockReturnValue(feedResult());
     await render(<Feed />);
-    expect(useFeed).toHaveBeenLastCalledWith('everywhere', null);
+    expect(useFeed).toHaveBeenLastCalledWith('for-you', null);
     expect(screen.getByRole('tab', { name: 'For you', selected: true })).toBeTruthy();
     expect(screen.queryByRole('tab', { name: 'Nearby' })).toBeNull();
     expect(screen.getByText(/Caption p1/)).toBeTruthy();
@@ -96,6 +98,7 @@ describe('Feed', () => {
     (useFeed as jest.Mock).mockReturnValue(feedResult({ data: { pages: [[tagged()]] } }));
     await render(<Feed />);
     expect(screen.getByText('Shop the look')).toBeTruthy();
+    expect(screen.queryByText('Shop this')).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Linen shirt, Arket, $69.00' }));
     expect(screen.getByRole('button', { name: 'Shop on arket.com' })).toBeTruthy();
   });

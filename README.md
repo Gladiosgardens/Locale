@@ -31,7 +31,13 @@ Built so far:
    - **Contacts**: the phone hashes its contacts' email addresses (SHA-256) and sends only the hashes, which are matched against accounts and not stored. Limited to 5 checks a day, and anyone can opt out in Settings → Finding you.
    New followers get a push notification (with its own switch in Settings).
 
+10. **Topics for everyone and a personal For you feed:** new topics where people shop from photos (Tech & gadgets, Phones, Audio, Desk & gaming setups, Gaming, Smart home, Motorcycles, Watches, Grooming, Fragrance, Outdoor & camping gear, Grilling & BBQ, DIY & tools), grouped into sections (Style, Home, Tech & cars, Food & drink, Active & outdoors, Everyday) at sign-up and in the composer. Nobody is asked their gender. **For you** ranks posts in your topics (+36 hours) and from people you follow (+24 hours) above other recent posts; with no topics or follows it is newest first. The strip under a post says "Shop the look" for style posts and "Shop this" for everything else.
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 10
+
+`git pull`, then `npx supabase db push --remote`. No new build is needed if you already made the step 9 build.
 
 ### Updating an existing install to step 9
 

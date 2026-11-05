@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Chip, colors, ErrorText, Screen } from '@/components/ui';
 import { useInterests, useMyProfile, useSetInterests } from '@/features/onboarding/hooks';
+import { groupBySection } from '@/features/onboarding/sections';
 import { friendlyError } from '@/lib/errors';
 import { fonts } from '@/theme';
 
@@ -51,9 +52,18 @@ export default function InterestsStep() {
       ) : interests.data.length === 0 ? (
         <Text style={styles.muted}>No interests are available right now. Please try again later.</Text>
       ) : (
-        <ScrollView contentContainerStyle={styles.chips}>
-          {interests.data.map((i) => (
-            <Chip key={i.id} label={i.label} selected={selected.has(i.id)} onPress={() => toggle(i.id)} />
+        <ScrollView contentContainerStyle={styles.sections}>
+          {groupBySection(interests.data).map((g) => (
+            <View key={g.key} style={styles.section}>
+              <Text style={styles.sectionTitle} accessibilityRole="header">
+                {g.label}
+              </Text>
+              <View style={styles.chips}>
+                {g.items.map((i) => (
+                  <Chip key={i.id} label={i.label} selected={selected.has(i.id)} onPress={() => toggle(i.id)} />
+                ))}
+              </View>
+            </View>
           ))}
         </ScrollView>
       )}
@@ -69,7 +79,10 @@ export default function InterestsStep() {
 }
 
 const styles = StyleSheet.create({
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingBottom: 12 },
+  sections: { gap: 20, paddingBottom: 12 },
+  section: { gap: 10 },
+  sectionTitle: { fontFamily: fonts.displayItalic, fontSize: 19, color: colors.ink },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   footer: { gap: 10, paddingBottom: 12 },
   muted: { color: colors.muted, fontFamily: fonts.body, fontSize: 15  },
 });
