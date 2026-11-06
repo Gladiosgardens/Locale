@@ -6,6 +6,7 @@ import { memo, useMemo, useState } from 'react';
 import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Avatar } from '@/components/ui';
 import { ShopTheLook } from '@/features/items/HangTag';
+import { VideoMedia } from '@/features/video/VideoMedia';
 import type { Interest } from '@/features/onboarding/api';
 import { timeAgo } from '@/lib/time';
 import { colors, fonts, space } from '@/theme';
@@ -18,6 +19,8 @@ type Props = {
   onMenu: (post: FeedPost) => void;
   onOpenItem: (item: Item, postId: string) => void;
   onShare?: (post: FeedPost) => void;
+  /** True while this post is the one on screen; videos play only then. */
+  active?: boolean;
 };
 
 const DOT = 22;
@@ -87,7 +90,7 @@ function TaggedPhoto({
   );
 }
 
-export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpenItem, onShare }: Props) {
+export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpenItem, onShare, active = false }: Props) {
   const { width: windowWidth } = useWindowDimensions();
   const width = Math.min(windowWidth, MAX_WIDTH);
   const [page, setPage] = useState(0);
@@ -172,7 +175,18 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
           pagingEnabled
           showsHorizontalScrollIndicator={false}
           onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width))}
-          renderItem={({ item }) => (
+          renderItem={({ item }) =>
+            item.kind === 'video' ? (
+              <View>
+                <VideoMedia media={item} width={width} height={height} active={active} />
+                {item.tags.length ? (
+                  <View style={styles.badge} pointerEvents="none">
+                    <View style={styles.badgeDot} />
+                    <Text style={styles.badgeText}>{item.tags.length === 1 ? '1 item' : `${item.tags.length} items`}</Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : (
             <TaggedPhoto
               media={item}
               width={width}
@@ -183,7 +197,8 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
               onToggle={() => setShowTags((v) => !v)}
               onOpenItem={openItem}
             />
-          )}
+            )
+          }
         />
         {post.media.length > 1 ? (
           <View style={styles.pager} pointerEvents="none" accessibilityLabel={`Photo ${page + 1} of ${post.media.length}`}>

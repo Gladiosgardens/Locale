@@ -1,15 +1,20 @@
 // publish-post: turns the caller's held uploads into a published post.
 //
-// POST { uploads: ["<uid>/<uuid>.jpg", ...], caption?: string, interestIds?: number[],
-//        tags?: [{ media, x, y, item: {...} }], searchable?: boolean, groupId?: string }
+// POST { uploads: ["<uid>/<uuid>.jpg", ...] | video: { uploadId }, caption?: string,
+//        interestIds?: number[], tags?: [{ media, x, y, item: {...} }], searchable?: boolean,
+//        groupId?: string }
 //   -> 200 { id } | 4xx/5xx { error: "<code>" }
 //
 // Steps: verify the caller, re-sanitise every image (strip EXIF/GPS/XMP/IPTC,
 // drop appended data), copy to the private post-media bucket under the new
 // post id, create the post rows in one transaction, delete the originals.
+// For a video: check with Mux that it belongs to the caller, is ready and is at
+// most 60 seconds, then attach it.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { JpegError, sanitizeJpeg } from '../_shared/jpeg.ts';
+import { videoState } from '../_shared/mux.ts';
+import { muxCredentials } from '../_shared/server.ts';
 
 const MAX_IMAGES = 10;
 const MAX_CAPTION = 2200;
@@ -47,6 +52,7 @@ const RPC_ERRORS: Record<string, number> = {
   invalid_url: 400,
   shortened_url: 400,
   not_a_member: 403,
+  invalid_video: 400,
 };
 
 const json = (status: number, body: unknown) =>
@@ -54,6 +60,7 @@ const json = (status: number, body: unknown) =>
 
 type Body = {
   uploads?: unknown;
+  video?: unknown;
   caption?: unknown;
   interestIds?: unknown;
   tags?: unknown;
@@ -62,8 +69,15 @@ type Body = {
 };
 
 function parseBody(body: Body, uid: string) {
+  const video = body.video as { uploadId?: unknown } | undefined;
+  const videoUploadId = video ? video.uploadId : null;
+  if (videoUploadId !== null && (typeof videoUploadId !== 'string' || !/^[A-Za-z0-9]{8,80}$/.test(videoUploadId))) {
+    throw new PublishError(400, 'invalid_video');
+  }
   const uploads = Array.isArray(body.uploads) ? body.uploads : [];
-  if (uploads.length < 1 || uploads.length > MAX_IMAGES) throw new PublishError(400, 'media_count');
+  if (videoUploadId ? uploads.length !== 0 : uploads.length < 1 || uploads.length > MAX_IMAGES) {
+    throw new PublishError(400, 'media_count');
+  }
   const pathPattern = new RegExp(`^${uid}/[0-9a-f-]{36}\\.jpg$`);
   if (!uploads.every((p) => typeof p === 'string' && pathPattern.test(p)) || new Set(uploads).size !== uploads.length) {
     throw new PublishError(400, 'bad_upload_path');
@@ -94,6 +108,7 @@ function parseBody(body: Body, uid: string) {
   }
 
   return {
+    videoUploadId: videoUploadId as string | null,
     uploads: uploads as string[],
     caption: caption as string | null,
     interestIds: interestIds as number[],
@@ -123,7 +138,31 @@ Deno.serve(async (req) => {
   const written: string[] = [];
 
   try {
-    const media: { path: string; width: number; height: number }[] = [];
+    const media: Record<string, unknown>[] = [];
+
+    if (input.videoUploadId) {
+      const creds = muxCredentials();
+      if (!creds) throw new PublishError(503, 'video_not_configured');
+      const state = await videoState(creds, input.videoUploadId, uid);
+      if (state.status === 'processing') throw new PublishError(409, 'video_processing');
+      if (state.status === 'failed') {
+        throw new PublishError(400, state.reason === 'too_long' ? 'video_too_long' : 'invalid_video');
+      }
+      // Record the asset so create_post_record can check this caller owns it.
+      await admin
+        .from('video_uploads')
+        .update({ asset_id: state.assetId })
+        .eq('upload_id', input.videoUploadId)
+        .eq('profile_id', uid);
+      media.push({
+        kind: 'video',
+        asset_id: state.assetId,
+        playback_id: state.playbackId,
+        duration: state.duration,
+        width: state.width,
+        height: state.height,
+      });
+    }
 
     for (const [i, source] of input.uploads.entries()) {
       const { data: file, error } = await admin.storage.from('post-uploads').download(source);
@@ -173,6 +212,6 @@ Deno.serve(async (req) => {
     return json(500, { error: 'publish_failed' });
   } finally {
     // Originals are never needed again; the app re-uploads on retry.
-    await admin.storage.from('post-uploads').remove(input.uploads);
+    if (input.uploads.length) await admin.storage.from('post-uploads').remove(input.uploads);
   }
 });

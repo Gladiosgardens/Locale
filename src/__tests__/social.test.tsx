@@ -19,7 +19,7 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 const post = (over: Partial<FeedPost> = {}): FeedPost => ({
   id: 'p1', caption: 'New desk', publishedAt: new Date().toISOString(), rankAt: new Date().toISOString(),
   author: { id: 'u1', handle: 'sami', displayName: 'Sami' }, areaName: null, interestIds: [], matchedItemIds: [],
-  media: [{ path: 'p1/0.jpg', width: 100, height: 100, url: 'https://s/0', tags: [] }],
+  media: [{ kind: 'image', videoUrl: null, duration: null, path: 'p1/0.jpg', width: 100, height: 100, url: 'https://s/0', tags: [] }],
   likeCount: 2, commentCount: 3, iLiked: false, iSaved: false, ...over,
 });
 

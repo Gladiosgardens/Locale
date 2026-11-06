@@ -8,7 +8,9 @@ import { Button, Chip, colors, ErrorText } from '@/components/ui';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { TagEditor } from '@/features/items/TagEditor';
 import { groupBySection } from '@/features/onboarding/sections';
-import { MAX_PHOTOS, MAX_POST_INTERESTS, type DraftTag, type PickedPhoto } from '@/features/posts/api';
+import { MAX_PHOTOS, MAX_POST_INTERESTS, type DraftTag, type PickedPhoto, type PickedVideo } from '@/features/posts/api';
+import { MAX_VIDEO_MS } from '@/features/video/mux';
+import { createVideoPlayer } from 'expo-video';
 import { usePublishPost, type PublishStage } from '@/features/posts/hooks';
 import { friendlyError } from '@/lib/errors';
 import { LOCAL_FEATURES } from '@/lib/features';
@@ -19,6 +21,7 @@ const MAX_POST_TAGS = 20;
 
 function stageText(stage: PublishStage, done: number, total: number) {
   if (stage === 'publishing') return 'Publishing…';
+  if (stage === 'processing') return 'Getting your video ready…';
   const n = Math.min(done + 1, total);
   return stage === 'preparing' ? `Preparing photo ${n} of ${total}…` : `Uploading photo ${n} of ${total}…`;
 }
@@ -28,6 +31,8 @@ export default function NewPost() {
   const profile = useMyProfile();
   const interests = useInterests();
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
+  // A post is photos or one video. The video's poster frame stands in as photo 0 for tagging.
+  const [video, setVideo] = useState<PickedVideo | null>(null);
   const [caption, setCaption] = useState('');
   const [tags, setTags] = useState<number[]>([]);
   const [itemTags, setItemTags] = useState<DraftTag[]>([]);
@@ -57,6 +62,33 @@ export default function NewPost() {
     setPhotos((prev) => [...prev, ...picked].slice(0, MAX_PHOTOS));
   }
 
+  async function pickVideo() {
+    setError(null);
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['videos'],
+      allowsEditing: true, // iOS shows a trimmer
+      videoMaxDuration: 60,
+      quality: 1,
+    });
+    if (result.canceled) return;
+    const a = result.assets[0];
+    if ((a.duration ?? 0) > MAX_VIDEO_MS) {
+      setError('Videos can be up to 60 seconds. Trim it in your Photos app, then try again.');
+      return;
+    }
+    let thumbnail: PickedPhoto['thumbnail'];
+    try {
+      const player = createVideoPlayer(a.uri);
+      [thumbnail] = await player.generateThumbnailsAsync(0.5);
+      player.release();
+    } catch {
+      thumbnail = undefined; // tagging still works without a preview frame
+    }
+    setVideo({ uri: a.uri, width: a.width, height: a.height, durationMs: a.duration ?? 0 });
+    setPhotos([{ uri: a.uri, width: a.width, height: a.height, thumbnail }]);
+    setItemTags([]);
+  }
+
   function toggleTag(id: number) {
     setTags((prev) =>
       prev.includes(id) ? prev.filter((t) => t !== id) : prev.length < MAX_POST_INTERESTS ? [...prev, id] : prev,
@@ -64,6 +96,7 @@ export default function NewPost() {
   }
 
   function removePhoto(index: number) {
+    if (video) setVideo(null);
     setPhotos((prev) => prev.filter((_, j) => j !== index));
     // Drop that photo's tags and shift later photos' tags down by one.
     setItemTags((prev) =>
@@ -75,7 +108,8 @@ export default function NewPost() {
     setError(null);
     try {
       await publish.mutateAsync({
-        photos,
+        photos: video ? [] : photos,
+        video,
         caption,
         interestIds: tags,
         tags: itemTags,
@@ -109,11 +143,16 @@ export default function NewPost() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
           {photos.map((p, i) => (
             <View key={`${p.uri}-${i}`}>
-              <Image source={{ uri: p.uri }} style={styles.thumb} contentFit="cover" />
+              <Image source={p.thumbnail ?? (video ? undefined : { uri: p.uri })} style={styles.thumb} contentFit="cover" />
+              {video ? (
+                <View style={styles.videoBadge} pointerEvents="none">
+                  <Text style={styles.videoBadgeText}>{`Video, ${Math.round(video.durationMs / 1000)}s`}</Text>
+                </View>
+              ) : null}
               {!busy ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Remove photo ${i + 1}`}
+                  accessibilityLabel={video ? 'Remove video' : `Remove photo ${i + 1}`}
                   style={styles.remove}
                   onPress={() => removePhoto(i)}
                 >
@@ -123,7 +162,7 @@ export default function NewPost() {
               {!busy ? (
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel={`Tag items in photo ${i + 1}`}
+                  accessibilityLabel={video ? 'Tag items in the video' : `Tag items in photo ${i + 1}`}
                   style={styles.tagButton}
                   onPress={() => setTagging(i)}
                 >
@@ -137,7 +176,13 @@ export default function NewPost() {
               ) : null}
             </View>
           ))}
-          {photos.length < MAX_PHOTOS && !busy ? (
+          {photos.length === 0 && !busy ? (
+            <Pressable accessibilityRole="button" style={[styles.thumb, styles.add]} onPress={pickVideo}>
+              <Text style={styles.addText}>Add a video</Text>
+              <Text style={styles.addHint}>Up to 60s</Text>
+            </Pressable>
+          ) : null}
+          {!video && photos.length < MAX_PHOTOS && !busy ? (
             <Pressable accessibilityRole="button" style={[styles.thumb, styles.add]} onPress={pickPhotos}>
               <Text style={styles.addText}>{photos.length ? 'Add more' : 'Add photos'}</Text>
             </Pressable>
@@ -236,6 +281,17 @@ const styles = StyleSheet.create({
   thumb: { width: 112, height: 140, borderRadius: radius.tag, backgroundColor: colors.wash },
   add: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ink, borderStyle: 'dashed' },
   addText: { fontFamily: fonts.semibold, color: colors.ink, fontSize: 14 },
+  addHint: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, marginTop: 2 },
+  videoBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: colors.ink,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  videoBadgeText: { fontFamily: fonts.semibold, color: colors.onInk, fontSize: 11 },
   remove: {
     position: 'absolute',
     top: 6,

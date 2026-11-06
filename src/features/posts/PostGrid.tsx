@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useMemo, useState, type ReactElement } from 'react';
@@ -33,7 +34,7 @@ function Tile({ post, width, height }: { post: FeedPost; width: number; height: 
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`Post by ${post.author.displayName}${items ? `, ${items} shoppable items` : ''}`}
+      accessibilityLabel={`${first?.kind === 'video' ? 'Video' : 'Post'} by ${post.author.displayName}${items ? `, ${items} shoppable items` : ''}`}
       onPress={() => router.push(`/post/${post.id}`)}
       style={({ pressed }) => [{ width, height }, pressed && styles.pressed]}
     >
@@ -44,6 +45,11 @@ function Tile({ post, width, height }: { post: FeedPost; width: number; height: 
         transition={200}
         accessibilityIgnoresInvertColors
       />
+      {first?.kind === 'video' ? (
+        <View style={styles.play} pointerEvents="none">
+          <Ionicons name="play" size={14} color={colors.paper} />
+        </View>
+      ) : null}
       {items ? (
         <View style={styles.badge} pointerEvents="none">
           <View style={styles.badgeDot} />
@@ -138,6 +144,17 @@ const styles = StyleSheet.create({
   squareGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP },
   image: { backgroundColor: colors.wash },
   pressed: { opacity: 0.85 },
+  play: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badge: {
     position: 'absolute',
     right: 8,

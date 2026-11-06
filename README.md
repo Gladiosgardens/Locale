@@ -37,7 +37,22 @@ Built so far:
 
 12. **Likes, comments and saves:** a heart, comment, share and bookmark row under every post, with like counts and "View all N comments". Comments are flat, up to 1,000 characters; the commenter or the post's author can delete one, and others can report it (one child-safety report or three reporters hide it pending review). The bookmark saves a post; **Save to wishlist** in an item's sheet saves that item. Both appear in **Saved** (bookmark icon on your profile). The post's author gets a push for new comments (switch in Settings). Who liked a post is not listed, only the count.
 
+13. **Short videos (Mux):** a post can be one video of up to 60 seconds instead of photos. The phone uploads straight to Mux with a one-time URL from `create-video-upload` (20 a day per person); the app polls `video-status` until Mux has processed it, then `publish-post` re-checks it with Mux (uploaded by this person, ready, at most 60 s) before `create_post_record` attaches it. Items are tagged on the video's poster frame and listed in the "Shop this" strip (no dots on moving video). In feeds, the video on screen plays muted on a loop; tap for sound. Grids show a play icon. Mux credentials are Supabase secrets: `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`.
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 13
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy create-video-upload
+npx supabase functions deploy video-status
+npx supabase functions deploy publish-post
+npx eas-cli@27.4.1 build --profile development --platform android
+```
+
+A new build is needed: video playback is native code.
 
 ### Updating an existing install to step 12
 
@@ -210,6 +225,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - CAPTCHA on sign-in (Supabase Auth supports hCaptcha/Turnstile) and a custom SMTP provider with sensible rate limits.
 - The 18+ gate is self-attested; get the age-rating questionnaire and COPPA position reviewed.
 - Moderation for area and display names.
+- **Video privacy and moderation.** Switch Mux playback to signed URLs (tokens issued only for posts the viewer may see), delete the Mux asset when a post is deleted or removed, and scan videos for illegal content (the same requirement as photos) before they go public.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

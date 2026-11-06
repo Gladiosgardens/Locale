@@ -2,7 +2,27 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { useAuth } from '@/features/auth/AuthProvider';
 import * as api from './api';
 
-export type PublishStage = 'preparing' | 'uploading' | 'publishing';
+export type PublishStage = 'preparing' | 'uploading' | 'processing' | 'publishing';
+
+const VIDEO_POLL_MS = 2000;
+const VIDEO_WAIT_MS = 3 * 60_000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Upload a video to Mux and wait until it's ready to play. Returns the upload id.
+async function uploadVideo(video: api.PickedVideo, onStage?: (stage: PublishStage, done: number, total: number) => void) {
+  onStage?.('uploading', 0, 1);
+  const { uploadId, url } = await api.createVideoUpload();
+  await api.uploadVideoFile(url, video.uri);
+  onStage?.('processing', 1, 1);
+  const deadline = Date.now() + VIDEO_WAIT_MS;
+  for (;;) {
+    const status = await api.videoStatus(uploadId);
+    if (status.status === 'ready') return uploadId;
+    if (status.status === 'failed') throw new Error(status.reason === 'too_long' ? 'video_too_long' : 'invalid_video');
+    if (Date.now() > deadline) throw new Error('video_processing');
+    await sleep(VIDEO_POLL_MS);
+  }
+}
 
 const nextCursor = (last: api.FeedPost[]): api.FeedCursor | undefined =>
   last.length < api.FEED_PAGE_SIZE
@@ -95,6 +115,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
   return useMutation({
     mutationFn: async (input: {
       photos: api.PickedPhoto[];
+      video?: api.PickedVideo | null;
       caption: string;
       interestIds: number[];
       tags?: api.DraftTag[];
@@ -103,6 +124,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
     }) => {
       const userId = session?.user.id;
       if (!userId) throw new Error('not_authenticated');
+      const videoUploadId = input.video ? await uploadVideo(input.video, onStage) : null;
       const total = input.photos.length;
       const uploads: string[] = [];
       for (const [i, photo] of input.photos.entries()) {
@@ -119,6 +141,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
         tags: input.tags,
         searchable: input.searchable,
         groupId: input.groupId,
+        videoUploadId,
       });
     },
     onSuccess: () => {

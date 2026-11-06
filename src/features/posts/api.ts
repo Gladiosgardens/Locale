@@ -1,9 +1,15 @@
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { randomUUID } from 'expo-crypto';
+import type { VideoThumbnail } from 'expo-video';
 import { File } from 'expo-file-system';
+import { FileSystemUploadType, uploadAsync } from 'expo-file-system/legacy';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { check, unwrap } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
+import { playbackUrl, thumbnailUrl } from '@/features/video/mux';
+
+/** A decoded image the app already holds: a video's poster frame. */
+export type ImageRef = VideoThumbnail;
 
 export const FEED_PAGE_SIZE = 20;
 export const MAX_PHOTOS = 10;
@@ -25,7 +31,19 @@ export type Item = {
 
 export type ItemTag = { id: string; x: number; y: number; item: Item };
 
-export type FeedMedia = { path: string; width: number; height: number; url: string | null; tags: ItemTag[] };
+export type FeedMedia = {
+  kind: 'image' | 'video';
+  /** Storage path for photos; a stable key (the playback id) for videos. */
+  path: string;
+  width: number;
+  height: number;
+  /** A photo, or a video's poster frame. */
+  url: string | null;
+  /** HLS stream for videos. */
+  videoUrl: string | null;
+  duration: number | null;
+  tags: ItemTag[];
+};
 
 export type FeedPost = {
   id: string;
@@ -53,7 +71,8 @@ type RawItem = {
   url_host: string | null; price_cents: number | null; currency: string | null; is_affiliate: boolean;
 };
 type RawMedia = {
-  path: string; width: number; height: number;
+  kind?: 'image' | 'video'; path: string | null; playback_id?: string | null; duration?: number | null;
+  width: number; height: number;
   tags?: { id: string; x: number; y: number; item: RawItem }[];
 };
 type RawPost = {
@@ -71,13 +90,11 @@ const cursorArgs = (cursor: FeedCursor) =>
   cursor ? { p_before_published_at: cursor.publishedAt, p_before_id: cursor.id } : {};
 
 async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
-  const media = rows.flatMap((r) => r.media as RawMedia[]);
+  const paths = rows.flatMap((r) => (r.media as RawMedia[]).map((m) => m.path).filter((p): p is string => !!p));
   const urls = new Map<string, string>();
-  if (media.length) {
+  if (paths.length) {
     // One request for the whole page. Storage RLS re-checks visibility.
-    const signed = unwrap(
-      await supabase.storage.from('post-media').createSignedUrls(media.map((m) => m.path), SIGNED_URL_SECONDS),
-    );
+    const signed = unwrap(await supabase.storage.from('post-media').createSignedUrls(paths, SIGNED_URL_SECONDS));
     for (const s of signed) if (s.path && s.signedUrl) urls.set(s.path, s.signedUrl);
   }
 
@@ -95,10 +112,13 @@ async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
     iLiked: r.i_liked ?? false,
     iSaved: r.i_saved ?? false,
     media: (r.media as RawMedia[]).map((m) => ({
-      path: m.path,
+      kind: m.kind === 'video' ? ('video' as const) : ('image' as const),
+      path: m.path ?? m.playback_id ?? '',
       width: m.width,
       height: m.height,
-      url: urls.get(m.path) ?? null,
+      url: m.kind === 'video' && m.playback_id ? thumbnailUrl(m.playback_id) : m.path ? (urls.get(m.path) ?? null) : null,
+      videoUrl: m.kind === 'video' && m.playback_id ? playbackUrl(m.playback_id) : null,
+      duration: m.duration ?? null,
       tags: (m.tags ?? []).map((t) => ({
         id: t.id,
         x: t.x,
@@ -195,7 +215,7 @@ export async function deletePost(postId: string): Promise<void> {
   check(await supabase.rpc('delete_my_post', { p_post_id: postId }));
 }
 
-export type PickedPhoto = { uri: string; width: number; height: number };
+export type PickedPhoto = { uri: string; width: number; height: number; thumbnail?: ImageRef };
 
 // Re-encode as JPEG, at most 2048 px on the long edge. Re-rendering applies
 // the orientation and drops EXIF (incl. GPS) on the device; the server strips
@@ -239,6 +259,44 @@ export type DraftTag = {
   };
 };
 
+async function invokeFn<T>(name: string, body: Record<string, unknown>, fallback: string): Promise<T> {
+  const { data, error } = await supabase.functions.invoke<T>(name, { body });
+  if (error) {
+    let code = fallback;
+    if (error instanceof FunctionsHttpError) {
+      try {
+        code = (await error.context.json()).error ?? code;
+      } catch {
+        // keep the generic code
+      }
+    }
+    throw new Error(code);
+  }
+  return data!;
+}
+
+export type PickedVideo = { uri: string; width: number; height: number; durationMs: number };
+
+export function createVideoUpload(): Promise<{ uploadId: string; url: string }> {
+  return invokeFn('create-video-upload', {}, 'upload_failed');
+}
+
+/** Streams the file from disk to Mux's one-time upload URL. */
+export async function uploadVideoFile(url: string, uri: string): Promise<void> {
+  const result = await uploadAsync(url, uri, {
+    httpMethod: 'PUT',
+    uploadType: FileSystemUploadType.BINARY_CONTENT,
+    headers: { 'Content-Type': 'application/octet-stream' },
+  });
+  if (result.status < 200 || result.status >= 300) throw new Error('upload_failed');
+}
+
+export type VideoStatus = { status: 'processing' | 'ready' | 'failed'; reason?: string };
+
+export function videoStatus(uploadId: string): Promise<VideoStatus> {
+  return invokeFn('video-status', { uploadId }, 'status_failed');
+}
+
 export async function publishPost(input: {
   uploads: string[];
   caption: string;
@@ -246,10 +304,12 @@ export async function publishPost(input: {
   tags?: DraftTag[];
   searchable?: boolean;
   groupId?: string | null;
+  videoUploadId?: string | null;
 }): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ id: string }>('publish-post', {
     body: {
       uploads: input.uploads,
+      ...(input.videoUploadId ? { video: { uploadId: input.videoUploadId } } : {}),
       caption: input.caption.trim() || null,
       interestIds: input.interestIds,
       tags: input.tags ?? [],

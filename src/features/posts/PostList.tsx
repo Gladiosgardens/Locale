@@ -14,6 +14,8 @@ import { useDeletePost } from './hooks';
 import { PostActions, type PostAction } from './PostActions';
 import { PostCard } from './PostCard';
 
+const VIEWABILITY = { itemVisiblePercentThreshold: 60 };
+
 type PagedQuery = {
   data?: { pages: FeedPost[][] };
   isRefetching: boolean;
@@ -33,6 +35,12 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   const [menuPost, setMenuPost] = useState<FeedPost | null>(null);
   const [reporting, setReporting] = useState<ReportSubject | null>(null);
   const [storyPost, setStoryPost] = useState<FeedPost | null>(null);
+  // The post most on screen; its video (if any) plays.
+  const [activeId, setActiveId] = useState<string | null>(null);
+  // FlatList needs this callback to stay the same for the list's lifetime.
+  const onViewable = useCallback(({ viewableItems }: { viewableItems: { item: FeedPost; isViewable: boolean }[] }) => {
+    setActiveId(viewableItems.find((v) => v.isViewable)?.item.id ?? null);
+  }, []);
 
   const interestMap = useMemo(() => new Map((interests.data ?? []).map((i) => [i.id, i])), [interests.data]);
   const posts = useMemo(() => query.data?.pages.flat() ?? [], [query.data]);
@@ -75,9 +83,10 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
         onMenu={setMenuPost}
         onOpenItem={openItemSheet}
         onShare={setStoryPost}
+        active={item.id === activeId}
       />
     ),
-    [interestMap, openItemSheet],
+    [interestMap, openItemSheet, activeId],
   );
 
   return (
@@ -87,6 +96,8 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
         keyExtractor={(p) => p.id}
         renderItem={renderItem}
         keyboardShouldPersistTaps="handled"
+        onViewableItemsChanged={onViewable}
+        viewabilityConfig={VIEWABILITY}
         onEndReached={() => {
           if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
         }}

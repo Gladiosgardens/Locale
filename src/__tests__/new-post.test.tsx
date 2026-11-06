@@ -8,6 +8,9 @@ const mockBack = jest.fn();
 let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({ router: { back: () => mockBack() }, useLocalSearchParams: () => mockParams }));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
+jest.mock('expo-video', () => ({
+  createVideoPlayer: () => ({ generateThumbnailsAsync: async () => [{}], release: jest.fn() }),
+}));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
 jest.mock('@/features/posts/hooks', () => ({ usePublishPost: jest.fn() }));
 let mockLocal = false;
@@ -62,7 +65,41 @@ describe('New post', () => {
       tags: [],
       searchable: true,
       groupId: null,
+      video: null,
     });
+  });
+
+  it('posts a single video, tagged from its poster frame', async () => {
+    mutateAsync.mockResolvedValue('post-id');
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///clip.mov', width: 1080, height: 1920, duration: 14_200 }],
+    });
+    await render(<NewPost />);
+    await fireEvent.press(screen.getByRole('button', { name: /Add a video/ }));
+    await waitFor(() => expect(screen.getByText('Video, 14s')).toBeTruthy());
+    expect(screen.queryByRole('button', { name: /Add photos|Add more/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Tag items in the video' })).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          photos: [],
+          video: { uri: 'file:///clip.mov', width: 1080, height: 1920, durationMs: 14_200 },
+        }),
+      ),
+    );
+  });
+
+  it('refuses videos over 60 seconds', async () => {
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///long.mov', width: 1080, height: 1920, duration: 95_000 }],
+    });
+    await render(<NewPost />);
+    await fireEvent.press(screen.getByRole('button', { name: /Add a video/ }));
+    expect(await screen.findByText(/Videos can be up to 60 seconds/)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Post' })).toBeDisabled();
   });
 
   it('posts into a group without the public options', async () => {

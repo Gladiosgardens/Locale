@@ -16,7 +16,7 @@ const item = (id: string, title: string, brand: string | null, cents: number | n
 const post = (tags: { x: number; y: number; item: Item }[], over: Partial<FeedPost> = {}): FeedPost => ({
   id: 'p1', caption: 'Weekend setup', publishedAt: '2026-11-05T10:00:00Z', rankAt: '2026-11-05T10:00:00Z', likeCount: 0, commentCount: 0, iLiked: false, iSaved: false,
   author: { id: 'u1', handle: 'sami', displayName: 'Sami' }, areaName: null, interestIds: [2], matchedItemIds: [],
-  media: [{ path: 'p1/0.jpg', width: 1000, height: 1000, url: 'https://s/0', tags: tags.map((t, i) => ({ id: `t${i}`, ...t })) }],
+  media: [{ kind: 'image', videoUrl: null, duration: null, path: 'p1/0.jpg', width: 1000, height: 1000, url: 'https://s/0', tags: tags.map((t, i) => ({ id: `t${i}`, ...t })) }],
   ...over,
 });
 

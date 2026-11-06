@@ -92,7 +92,7 @@ export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange,
                 accessibilityLabel="Tap the photo where the item is"
                 onPress={(e) => startAt(e.nativeEvent.locationX, e.nativeEvent.locationY)}
               >
-                <Image source={{ uri: photo.uri }} style={{ width, height }} contentFit="cover" />
+                <Image source={photo.thumbnail ?? { uri: photo.uri }} style={{ width, height }} contentFit="cover" />
                 {[...tags.map((t) => ({ x: t.x, y: t.y, key: `${t.x}-${t.y}`, pending: false })),
                   ...(pending ? [{ ...pending, key: 'pending', pending: true }] : [])].map((d, i) => (
                   <View

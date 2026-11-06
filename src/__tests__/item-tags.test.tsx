@@ -37,7 +37,7 @@ const post = (over: Partial<FeedPost> = {}): FeedPost => ({
   interestIds: [],
   matchedItemIds: [],
   media: [{
-    path: 'p1/0.jpg', width: 1000, height: 800, url: 'https://s/0',
+    kind: 'image', videoUrl: null, duration: null, path: 'p1/0.jpg', width: 1000, height: 800, url: 'https://s/0',
     tags: [{ id: 't1', x: 0.3, y: 0.6, item: sofa }, { id: 't2', x: 0.8, y: 0.2, item: lamp }],
   }],
   ...over,
