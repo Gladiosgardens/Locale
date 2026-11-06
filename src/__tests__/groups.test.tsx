@@ -23,7 +23,13 @@ jest.mock('@/features/onboarding/hooks', () => ({
   }),
 }));
 jest.mock('@/features/groups/hooks');
+jest.mock('@/features/social/hooks', () => ({
+  useItemSaved: () => ({ data: false }),
+  useSaveItem: () => ({ mutate: jest.fn() }),
+}));
 jest.mock('@/features/posts/hooks', () => ({
+  useLikePost: () => ({ mutate: jest.fn() }),
+  useSavePost: () => ({ mutate: jest.fn() }),
   useGroupFeed: jest.fn(),
   useDeletePost: () => ({ mutate: jest.fn() }),
 }));

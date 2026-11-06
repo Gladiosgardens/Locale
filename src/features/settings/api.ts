@@ -7,13 +7,14 @@ export type PrivateSettings = {
   notifyMessages: boolean;
   notifyGroups: boolean;
   notifyFollows: boolean;
+  notifyComments: boolean;
   findableByEmail: boolean;
 };
 
 export async function getPrivateSettings(userId: string): Promise<PrivateSettings> {
   const result = await supabase
     .from('profile_private')
-    .select('dm_policy, notify_messages, notify_groups, notify_follows, findable_by_email')
+    .select('dm_policy, notify_messages, notify_groups, notify_follows, notify_comments, findable_by_email')
     .eq('profile_id', userId)
     .maybeSingle();
   const row = unwrap(result) as {
@@ -21,6 +22,7 @@ export async function getPrivateSettings(userId: string): Promise<PrivateSetting
     notify_messages: boolean;
     notify_groups: boolean;
     notify_follows: boolean;
+    notify_comments: boolean;
     findable_by_email: boolean;
   } | null;
   return {
@@ -28,6 +30,7 @@ export async function getPrivateSettings(userId: string): Promise<PrivateSetting
     notifyMessages: row?.notify_messages ?? true,
     notifyGroups: row?.notify_groups ?? true,
     notifyFollows: row?.notify_follows ?? true,
+    notifyComments: row?.notify_comments ?? true,
     findableByEmail: row?.findable_by_email ?? true,
   };
 }
@@ -44,12 +47,14 @@ export async function setNotificationPreferences(prefs: {
   messages?: boolean;
   groups?: boolean;
   follows?: boolean;
+  comments?: boolean;
 }): Promise<void> {
   check(
     await supabase.rpc('set_notification_preferences', {
       ...(prefs.messages != null ? { p_messages: prefs.messages } : {}),
       ...(prefs.groups != null ? { p_groups: prefs.groups } : {}),
       ...(prefs.follows != null ? { p_follows: prefs.follows } : {}),
+      ...(prefs.comments != null ? { p_comments: prefs.comments } : {}),
     }),
   );
 }

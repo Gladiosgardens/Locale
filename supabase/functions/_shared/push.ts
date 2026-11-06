@@ -3,12 +3,13 @@
 
 export type NotificationRow = {
   id: number;
-  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower';
+  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment';
   actor_id?: string | null;
   actor_name: string | null;
   group_name: string | null;
   conversation_id: string | null;
   group_id: string | null;
+  post_id?: string | null;
   tokens: string[];
 };
 
@@ -45,6 +46,8 @@ export function describe(row: NotificationRow): { title: string; body: string; u
       return row.group_id ? { title: group, body: `${actor} asked to join`, url: `/groups/${row.group_id}` } : null;
     case 'group_join_approved':
       return row.group_id ? { title: group, body: 'Your request to join was approved', url: `/groups/${row.group_id}` } : null;
+    case 'comment':
+      return row.post_id ? { title: actor, body: 'Commented on your post', url: `/post/${row.post_id}` } : null;
     case 'new_follower':
       return row.actor_id ? { title: actor, body: 'Started following you', url: `/profile/${row.actor_id}` } : null;
     default:

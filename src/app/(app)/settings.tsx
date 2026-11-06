@@ -106,6 +106,14 @@ export default function Settings() {
             />
           </View>
           <View style={styles.row}>
+            <Text style={styles.text}>Comments on my posts</Text>
+            <Switch
+              accessibilityLabel="Notify me about comments on my posts"
+              value={prefs?.notifyComments ?? true}
+              onValueChange={(comments) => settings.setNotifications.mutate({ comments }, { onError: fail })}
+            />
+          </View>
+          <View style={styles.row}>
             <Text style={styles.text}>New followers</Text>
             <Switch
               accessibilityLabel="Notify me about new followers"

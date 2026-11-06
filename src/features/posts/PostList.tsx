@@ -29,7 +29,7 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   const interests = useInterests();
   const remove = useDeletePost();
   const block = useBlockUser();
-  const [openItem, setOpenItem] = useState<Item | null>(null);
+  const [openItem, setOpenItem] = useState<{ item: Item; postId: string } | null>(null);
   const [menuPost, setMenuPost] = useState<FeedPost | null>(null);
   const [reporting, setReporting] = useState<ReportSubject | null>(null);
   const [storyPost, setStoryPost] = useState<FeedPost | null>(null);
@@ -65,17 +65,19 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
     }
   }
 
+  const openItemSheet = useCallback((item: Item, postId: string) => setOpenItem({ item, postId }), []);
+
   const renderItem = useCallback(
     ({ item }: { item: FeedPost }) => (
       <PostCard
         post={item}
         interests={interestMap}
         onMenu={setMenuPost}
-        onOpenItem={setOpenItem}
+        onOpenItem={openItemSheet}
         onShare={setStoryPost}
       />
     ),
-    [interestMap],
+    [interestMap, openItemSheet],
   );
 
   return (
@@ -101,7 +103,7 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
         ListHeaderComponent={header}
         ListEmptyComponent={empty}
       />
-      <ItemSheet item={openItem} onClose={() => setOpenItem(null)} />
+      <ItemSheet item={openItem?.item ?? null} postId={openItem?.postId} onClose={() => setOpenItem(null)} />
       <PostActions
         post={menuPost}
         isMine={menuPost?.author.id === session?.user.id}

@@ -1,11 +1,15 @@
 import * as WebBrowser from 'expo-web-browser';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui';
 import type { Item } from '@/features/posts/api';
+import { useItemSaved, useSaveItem } from '@/features/social/hooks';
+import { friendlyError } from '@/lib/errors';
 import { colors, fonts, radius, space, type } from '@/theme';
 import { formatPrice } from './link';
 
-export function ItemSheet({ item, onClose }: { item: Item | null; onClose: () => void }) {
+export function ItemSheet({ item, postId, onClose }: { item: Item | null; postId?: string; onClose: () => void }) {
+  const saved = useItemSaved(postId ? item?.id : undefined);
+  const save = useSaveItem();
   const byline = item ? [...new Set([item.brand, item.storeName].filter(Boolean))].join(', ') : '';
 
   return (
@@ -45,6 +49,18 @@ export function ItemSheet({ item, onClose }: { item: Item | null; onClose: () =>
             ) : (
               <Text style={styles.note}>The poster didn’t say where it’s from.</Text>
             )}
+            {postId ? (
+              <Button
+                label={saved.data ? 'Saved to your wishlist' : 'Save to wishlist'}
+                variant="secondary"
+                onPress={() =>
+                  save.mutate(
+                    { itemId: item.id, postId, saved: !saved.data },
+                    { onError: (e) => Alert.alert(friendlyError(e)) },
+                  )
+                }
+              />
+            ) : null}
             <Button label="Close" variant="quiet" onPress={onClose} />
           </View>
         </View>

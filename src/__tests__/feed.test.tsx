@@ -8,7 +8,19 @@ jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }));
 jest.mock('@/features/auth/api', () => ({ signOut: jest.fn() }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
-jest.mock('@/features/posts/hooks', () => ({ useFeed: jest.fn(), useDeletePost: jest.fn() }));
+const mockLike = jest.fn();
+const mockSave = jest.fn();
+jest.mock('@/features/posts/hooks', () => ({
+  useFeed: jest.fn(),
+  useDeletePost: jest.fn(),
+  useLikePost: () => ({ mutate: mockLike }),
+  useSavePost: () => ({ mutate: mockSave }),
+}));
+jest.mock('@/features/social/hooks', () => ({
+  useItemSaved: () => ({ data: false }),
+  useSaveItem: () => ({ mutate: jest.fn() }),
+}));
+
 let mockFollowing = 4;
 jest.mock('@/features/profiles/hooks', () => ({ useProfile: () => ({ data: { followingCount: mockFollowing } }) }));
 jest.mock('@/features/messages/hooks', () => ({

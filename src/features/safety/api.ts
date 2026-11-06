@@ -1,7 +1,7 @@
 import { check, unwrap } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 
-export type ReportTarget = 'post' | 'profile' | 'group' | 'message';
+export type ReportTarget = 'post' | 'profile' | 'group' | 'message' | 'comment';
 export type ReportReason =
   | 'spam' | 'harassment' | 'nudity' | 'child_safety' | 'violence' | 'hate' | 'scam' | 'other';
 

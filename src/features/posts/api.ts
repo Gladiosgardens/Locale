@@ -39,10 +39,14 @@ export type FeedPost = {
   matchedItemIds: string[];
   /** Where the post sits in its feed; the paging cursor. Equals publishedAt except in For you. */
   rankAt: string;
+  likeCount: number;
+  commentCount: number;
+  iLiked: boolean;
+  iSaved: boolean;
 };
 
 export type FeedCursor = { publishedAt: string; id: string } | null;
-export type FeedScope = 'for-you' | 'nearby' | 'following' | 'everywhere';
+export type FeedScope = 'for-you' | 'nearby' | 'following' | 'everywhere' | 'saved';
 
 type RawItem = {
   id: string; title: string; brand: string | null; store_name: string | null; url: string | null;
@@ -57,6 +61,10 @@ type RawPost = {
   author_display_name: string; area_name: string | null; media: unknown; interest_ids: number[];
   matched_item_ids?: string[];
   rank_at?: string;
+  like_count?: number;
+  comment_count?: number;
+  i_liked?: boolean;
+  i_saved?: boolean;
 };
 
 const cursorArgs = (cursor: FeedCursor) =>
@@ -82,6 +90,10 @@ async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
     interestIds: r.interest_ids,
     matchedItemIds: r.matched_item_ids ?? [],
     rankAt: r.rank_at ?? r.published_at,
+    likeCount: r.like_count ?? 0,
+    commentCount: r.comment_count ?? 0,
+    iLiked: r.i_liked ?? false,
+    iSaved: r.i_saved ?? false,
     media: (r.media as RawMedia[]).map((m) => ({
       path: m.path,
       width: m.width,
@@ -119,6 +131,7 @@ export async function fetchFeedPage(
           p_limit: FEED_PAGE_SIZE,
           ...(scope === 'following' ? { p_following: true } : {}),
           ...(scope === 'for-you' ? { p_for_you: true } : {}),
+          ...(scope === 'saved' ? { p_saved: true } : {}),
           ...cursorArgs(cursor),
         }),
       ),
@@ -168,6 +181,14 @@ export async function searchPosts(query: string, cursor: FeedCursor): Promise<Fe
       }),
     ),
   );
+}
+
+export async function setLike(postId: string, like: boolean): Promise<void> {
+  check(await supabase.rpc('set_post_like', { p_post_id: postId, p_like: like }));
+}
+
+export async function setPostSaved(postId: string, saved: boolean): Promise<void> {
+  check(await supabase.rpc('set_post_saved', { p_post_id: postId, p_saved: saved }));
 }
 
 export async function deletePost(postId: string): Promise<void> {

@@ -6,6 +6,16 @@ import { PostCard } from '@/features/posts/PostCard';
 
 jest.mock('expo-web-browser', () => ({ openBrowserAsync: jest.fn() }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('@/features/posts/hooks', () => ({
+  useLikePost: () => ({ mutate: jest.fn() }),
+  useSavePost: () => ({ mutate: jest.fn() }),
+}));
+const mockSaveItem = jest.fn();
+let mockSaved = false;
+jest.mock('@/features/social/hooks', () => ({
+  useItemSaved: (id?: string) => ({ data: id ? mockSaved : undefined }),
+  useSaveItem: () => ({ mutate: mockSaveItem }),
+}));
 
 const sofa: Item = {
   id: 'i1', title: 'Linen sofa', brand: 'IKEA', storeName: 'IKEA', url: 'https://www.ikea.com/sofa',
@@ -21,6 +31,7 @@ const post = (over: Partial<FeedPost> = {}): FeedPost => ({
   caption: 'Living room',
   publishedAt: new Date().toISOString(),
   rankAt: new Date().toISOString(),
+  likeCount: 0, commentCount: 0, iLiked: false, iSaved: false,
   author: { id: 'u1', handle: 'amy', displayName: 'Amy' },
   areaName: null,
   interestIds: [],
@@ -41,7 +52,7 @@ describe('tags on a post', () => {
 
     await fireEvent.press(screen.getByRole('button', { name: 'Show 2 tagged items' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Item: Linen sofa' }));
-    expect(onOpenItem).toHaveBeenCalledWith(sofa);
+    expect(onOpenItem).toHaveBeenCalledWith(sofa, 'p1');
   });
 
   it('omits the area for far-away posts', async () => {
@@ -56,7 +67,7 @@ describe('tags on a post', () => {
     // A living-room post isn't an outfit, so the strip is "Shop this".
     expect(screen.getByText('Shop this')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Brass lamp, Flea market' }));
-    expect(onOpenItem).toHaveBeenCalledWith(lamp);
+    expect(onOpenItem).toHaveBeenCalledWith(lamp, 'p1');
   });
 
   it('opens search results with their tags already showing', async () => {
@@ -81,5 +92,26 @@ describe('item sheet', () => {
     await render(<ItemSheet item={lamp} onClose={jest.fn()} />);
     expect(screen.getByText('Available at Flea market. No link was added.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Shop on/ })).toBeNull();
+  });
+});
+
+describe('saving items', () => {
+  it('offers Save to wishlist when the post is known, and saves it', async () => {
+    mockSaved = false;
+    await render(<ItemSheet item={sofa} postId="p1" onClose={jest.fn()} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Save to wishlist' }));
+    expect(mockSaveItem).toHaveBeenCalledWith({ itemId: 'i1', postId: 'p1', saved: true }, expect.anything());
+  });
+
+  it('shows when an item is already saved, and can remove it', async () => {
+    mockSaved = true;
+    await render(<ItemSheet item={sofa} postId="p1" onClose={jest.fn()} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Saved to your wishlist' }));
+    expect(mockSaveItem).toHaveBeenLastCalledWith({ itemId: 'i1', postId: 'p1', saved: false }, expect.anything());
+  });
+
+  it('has no Save button without a post to save from', async () => {
+    await render(<ItemSheet item={sofa} onClose={jest.fn()} />);
+    expect(screen.queryByRole('button', { name: /wishlist/ })).toBeNull();
   });
 });

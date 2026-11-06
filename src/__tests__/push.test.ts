@@ -17,6 +17,14 @@ describe('push messages', () => {
       .toEqual({ title: 'Runners', body: 'Your request to join was approved', url: '/groups/g2' });
   });
 
+  it('opens the post for a new comment, without the comment text', () => {
+    expect(describeRow(row({ kind: 'comment', actor_name: 'Ana', post_id: 'p9', conversation_id: null }))).toEqual({
+      title: 'Ana',
+      body: 'Commented on your post',
+      url: '/post/p9',
+    });
+  });
+
   it('links a new follower to their profile', () => {
     expect(describeRow(row({ kind: 'new_follower', actor_id: 'u9', actor_name: 'Ana', conversation_id: null }))).toEqual({
       title: 'Ana',

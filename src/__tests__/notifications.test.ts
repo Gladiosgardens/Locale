@@ -36,6 +36,7 @@ describe('routeFromNotification', () => {
     expect(routeFromNotification({ url: `/messages/${id}` })).toBe(`/messages/${id}`);
     expect(routeFromNotification({ url: `/groups/${id}` })).toBe(`/groups/${id}`);
     expect(routeFromNotification({ url: `/profile/${id}` })).toBe(`/profile/${id}`);
+    expect(routeFromNotification({ url: `/post/${id}` })).toBe(`/post/${id}`);
     expect(routeFromNotification({ url: 'https://evil.example' })).toBeNull();
     expect(routeFromNotification({ url: '/settings' })).toBeNull();
     expect(routeFromNotification(null)).toBeNull();

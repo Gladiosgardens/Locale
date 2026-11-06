@@ -35,7 +35,13 @@ Built so far:
 
 11. **Share to Stories (Instagram, Snapchat, TikTok, Facebook):** a share icon on every post (and an item in its menu) makes a 1080x1920 story image (the photo with numbered dots, up to three tagged pieces with prices, the Locale wordmark and the poster's @handle, kept clear of Instagram's reply bar) and opens the phone's share sheet, which lists Instagram, Snapchat, TikTok, Facebook and any other app that takes photos. Opening one app directly, skipping the share sheet, needs that company's developer kit and app ID (Meta, Snap Creative Kit, TikTok Share Kit); link stickers need the public web pages (next step).
 
+12. **Likes, comments and saves:** a heart, comment, share and bookmark row under every post, with like counts and "View all N comments". Comments are flat, up to 1,000 characters; the commenter or the post's author can delete one, and others can report it (one child-safety report or three reporters hide it pending review). The bookmark saves a post; **Save to wishlist** in an item's sheet saves that item. Both appear in **Saved** (bookmark icon on your profile). The post's author gets a push for new comments (switch in Settings). Who liked a post is not listed, only the count.
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 12
+
+`git pull`, `npx supabase db push --remote`, then `npx supabase functions deploy deliver-notifications` (comment notifications). No new build needed beyond step 11's.
 
 ### Updating an existing install to step 11
 

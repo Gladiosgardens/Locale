@@ -99,6 +99,11 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
           {p.handle}
         </Text>
         {isTab ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Saved" onPress={() => router.push('/saved')} hitSlop={10}>
+            <Feather name="bookmark" size={22} color={colors.ink} />
+          </Pressable>
+        ) : null}
+        {isTab ? (
           <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} hitSlop={10}>
             <Feather name="settings" size={22} color={colors.ink} />
           </Pressable>

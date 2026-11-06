@@ -1,20 +1,22 @@
-import Feather from '@expo/vector-icons/Feather';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { memo, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Avatar } from '@/components/ui';
 import { ShopTheLook } from '@/features/items/HangTag';
 import type { Interest } from '@/features/onboarding/api';
 import { timeAgo } from '@/lib/time';
 import { colors, fonts, space } from '@/theme';
 import type { FeedMedia, FeedPost, Item } from './api';
+import { useLikePost, useSavePost } from './hooks';
 
 type Props = {
   post: FeedPost;
   interests: Map<number, Interest>;
   onMenu: (post: FeedPost) => void;
-  onOpenItem: (item: Item) => void;
+  onOpenItem: (item: Item, postId: string) => void;
   onShare?: (post: FeedPost) => void;
 };
 
@@ -105,6 +107,35 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
   const numbers = useMemo(() => new Map(items.map((it, i) => [it.id, i + 1])), [items]);
   const meta = [post.areaName, timeAgo(post.publishedAt)].filter(Boolean).join(', ');
 
+  const openItem = (item: Item) => onOpenItem(item, post.id);
+
+  // Likes and saves flip at once; the server call follows and is undone if it fails.
+  const likeMut = useLikePost();
+  const saveMut = useSavePost();
+  const [liked, setLiked] = useState(post.iLiked);
+  const [likes, setLikes] = useState(post.likeCount);
+  const [saved, setSaved] = useState(post.iSaved);
+  function toggleLike() {
+    const next = !liked;
+    setLiked(next);
+    setLikes((n) => n + (next ? 1 : -1));
+    if (next && Platform.OS !== 'web') void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    likeMut.mutate(
+      { id: post.id, like: next },
+      {
+        onError: () => {
+          setLiked(!next);
+          setLikes((n) => n + (next ? -1 : 1));
+        },
+      },
+    );
+  }
+  function toggleSave() {
+    const next = !saved;
+    setSaved(next);
+    saveMut.mutate({ id: post.id, saved: next }, { onError: () => setSaved(!next) });
+  }
+
   return (
     <View style={[styles.card, { width }]} accessibilityLabel={`Post by ${post.author.displayName}`}>
       <View style={styles.header}>
@@ -124,17 +155,6 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
             </Text>
           </View>
         </Pressable>
-        {onShare ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Share to Stories"
-            onPress={() => onShare(post)}
-            hitSlop={10}
-            style={styles.shareButton}
-          >
-            <Feather name="share" size={20} color={colors.ink} />
-          </Pressable>
-        ) : null}
         <Pressable accessibilityRole="button" accessibilityLabel="Post options" onPress={() => onMenu(post)} hitSlop={12}>
           <View style={styles.more}>
             <View style={styles.moreDot} />
@@ -161,7 +181,7 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
               numbers={numbers}
               highlight={post.matchedItemIds}
               onToggle={() => setShowTags((v) => !v)}
-              onOpenItem={onOpenItem}
+              onOpenItem={openItem}
             />
           )}
         />
@@ -174,10 +194,46 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
         ) : null}
       </View>
 
+      <View style={styles.actions}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={liked ? 'Unlike' : 'Like'}
+          accessibilityState={{ selected: liked }}
+          onPress={toggleLike}
+          hitSlop={8}
+        >
+          <Ionicons name={liked ? 'heart' : 'heart-outline'} size={26} color={colors.ink} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Comments"
+          onPress={() => router.push(`/comments/${post.id}`)}
+          hitSlop={8}
+        >
+          <Ionicons name="chatbubble-outline" size={24} color={colors.ink} />
+        </Pressable>
+        {onShare ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Share to Stories" onPress={() => onShare(post)} hitSlop={8}>
+            <Ionicons name="share-outline" size={25} color={colors.ink} />
+          </Pressable>
+        ) : null}
+        <View style={styles.flex} />
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={saved ? 'Remove from Saved' : 'Save'}
+          accessibilityState={{ selected: saved }}
+          onPress={toggleSave}
+          hitSlop={8}
+        >
+          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={24} color={colors.ink} />
+        </Pressable>
+      </View>
+      {likes > 0 ? <Text style={styles.likes}>{likes === 1 ? '1 like' : `${likes.toLocaleString()} likes`}</Text> : null}
+
       <ShopTheLook
         items={items}
         highlight={post.matchedItemIds}
-        onOpen={onOpenItem}
+        onOpen={openItem}
         title={post.interestIds.some((id) => interests.get(id)?.section === 'style') ? 'Shop the look' : 'Shop this'}
       />
 
@@ -197,6 +253,13 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
             ))}
           </View>
         ) : null}
+        {post.commentCount > 0 ? (
+          <Pressable accessibilityRole="link" onPress={() => router.push(`/comments/${post.id}`)} hitSlop={4}>
+            <Text style={styles.viewComments}>
+              {post.commentCount === 1 ? 'View 1 comment' : `View all ${post.commentCount.toLocaleString()} comments`}
+            </Text>
+          </Pressable>
+        ) : null}
         <Text style={styles.time}>{meta}</Text>
       </View>
     </View>
@@ -211,7 +274,10 @@ const styles = StyleSheet.create({
   name: { fontFamily: fonts.display, fontSize: 17, color: colors.ink },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
   more: { flexDirection: 'row', gap: 3, padding: 4 },
-  shareButton: { marginRight: space.lg },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 18, paddingHorizontal: space.lg, paddingTop: space.md },
+  flex: { flex: 1 },
+  likes: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink, paddingHorizontal: space.lg, paddingTop: 6 },
+  viewComments: { fontFamily: fonts.body, fontSize: 14, color: colors.muted },
   moreDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink },
   pager: {
     position: 'absolute',

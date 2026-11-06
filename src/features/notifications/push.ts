@@ -12,7 +12,7 @@ const TOKEN_KEY = 'locale.pushToken';
 export type EnableResult = 'enabled' | 'denied' | 'unsupported' | 'not_configured';
 
 // Only routes the app actually has, so a malformed payload can't send people anywhere odd.
-const ALLOWED_ROUTE = /^\/(messages|groups|profile)\/[0-9a-f-]{36}$/;
+const ALLOWED_ROUTE = /^\/(messages|groups|profile|post)\/[0-9a-f-]{36}$/;
 
 export function routeFromNotification(data: unknown): string | null {
   const url = (data as { url?: unknown } | null)?.url;

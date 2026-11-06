@@ -57,6 +57,7 @@ export type Database = {
           area_id: string | null;
           dm_policy: string;
           findable_by_email: boolean;
+          notify_comments: boolean;
           notify_follows: boolean;
           notify_groups: boolean;
           notify_messages: boolean;
@@ -81,6 +82,12 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      saved_items: {
+        Row: { created_at: string; item_id: string; post_id: string; profile_id: string };
+        Insert: never;
+        Update: never;
+        Relationships: [];
       };
       profile_interests: {
         Row: { created_at: string; interest_id: number; profile_id: string };
@@ -166,6 +173,7 @@ export type Database = {
           p_limit?: number;
           p_post_id?: string;
           p_query?: string;
+          p_saved?: boolean;
         };
         Returns: {
           area_name: string | null;
@@ -179,6 +187,44 @@ export type Database = {
           media: Json;
           published_at: string;
           rank_at: string;
+          like_count: number;
+          comment_count: number;
+          i_liked: boolean;
+          i_saved: boolean;
+        }[];
+      };
+      set_post_like: { Args: { p_like: boolean; p_post_id: string }; Returns: undefined };
+      set_post_saved: { Args: { p_post_id: string; p_saved: boolean }; Returns: undefined };
+      set_item_saved: { Args: { p_item_id: string; p_post_id: string; p_saved: boolean }; Returns: undefined };
+      add_comment: { Args: { p_body: string; p_post_id: string }; Returns: string };
+      delete_comment: { Args: { p_comment_id: string }; Returns: undefined };
+      list_comments: {
+        Args: { p_after_created_at?: string; p_after_id?: string; p_limit?: number; p_post_id: string };
+        Returns: {
+          author_display_name: string;
+          author_handle: string;
+          author_id: string;
+          body: string;
+          can_delete: boolean;
+          created_at: string;
+          id: string;
+        }[];
+      };
+      my_saved_items: {
+        Args: { p_before_created_at?: string; p_limit?: number };
+        Returns: {
+          brand: string | null;
+          currency: string | null;
+          is_affiliate: boolean;
+          item_id: string;
+          photo_path: string | null;
+          post_id: string;
+          price_cents: number | null;
+          saved_at: string;
+          store_name: string | null;
+          title: string;
+          url: string | null;
+          url_host: string | null;
         }[];
       };
       list_groups: {
@@ -276,7 +322,7 @@ export type Database = {
         }[];
       };
       set_notification_preferences: {
-        Args: { p_follows?: boolean; p_groups?: boolean; p_messages?: boolean };
+        Args: { p_comments?: boolean; p_follows?: boolean; p_groups?: boolean; p_messages?: boolean };
         Returns: undefined;
       };
       set_findable_by_email: { Args: { p_findable: boolean }; Returns: undefined };

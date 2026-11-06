@@ -65,6 +65,18 @@ export function usePost(postId: string | undefined) {
   });
 }
 
+export function useLikePost() {
+  return useMutation({ mutationFn: ({ id, like }: { id: string; like: boolean }) => api.setLike(id, like) });
+}
+
+export function useSavePost() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, saved }: { id: string; saved: boolean }) => api.setPostSaved(id, saved),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['feed', 'saved'] }),
+  });
+}
+
 export function useDeletePost() {
   const qc = useQueryClient();
   return useMutation({
