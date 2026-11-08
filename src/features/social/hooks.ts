@@ -80,3 +80,51 @@ export function useSaveItem() {
     onSettled: () => qc.invalidateQueries({ queryKey: ['saved-items'] }),
   });
 }
+
+export const MAX_COLLECTION_NAME = 40;
+
+export function useCollections(enabled = true) {
+  return useQuery({ queryKey: ['collections'], queryFn: api.listCollections, enabled, staleTime: 5 * 60_000 });
+}
+
+export function usePostCollections(postId: string | undefined) {
+  return useQuery({
+    queryKey: ['post-collections', postId],
+    queryFn: () => api.postCollectionIds(postId!),
+    enabled: !!postId,
+  });
+}
+
+function useRefreshCollections() {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: ['collections'] });
+    qc.invalidateQueries({ queryKey: ['post-collections'] });
+    // Adding to a collection saves the post; collection feeds live under ['feed'].
+    qc.invalidateQueries({ queryKey: ['feed'] });
+  };
+}
+
+export function useSetInCollection() {
+  const refresh = useRefreshCollections();
+  return useMutation({
+    mutationFn: (v: { collectionId: string; postId: string; inIt: boolean }) =>
+      api.setInCollection(v.collectionId, v.postId, v.inIt),
+    onSettled: refresh,
+  });
+}
+
+export function useCreateCollection() {
+  const refresh = useRefreshCollections();
+  return useMutation({ mutationFn: api.createCollection, onSuccess: refresh });
+}
+
+export function useRenameCollection() {
+  const refresh = useRefreshCollections();
+  return useMutation({ mutationFn: (v: { id: string; name: string }) => api.renameCollection(v.id, v.name), onSuccess: refresh });
+}
+
+export function useDeleteCollection() {
+  const refresh = useRefreshCollections();
+  return useMutation({ mutationFn: api.deleteCollection, onSuccess: refresh });
+}

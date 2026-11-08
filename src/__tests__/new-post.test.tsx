@@ -13,6 +13,17 @@ jest.mock('expo-video', () => ({
 }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
 const mockDetect = jest.fn();
+const mockSetPeople = jest.fn();
+jest.mock('@/features/posts/api', () => ({
+  ...jest.requireActual('@/features/posts/api'),
+  setPeopleTags: (...a: unknown[]) => mockSetPeople(...a),
+}));
+jest.mock('@/features/people/hooks', () => ({
+  usePeopleSearch: (q: string) => ({
+    data: q.length >= 2 ? [{ id: 'u-ben', handle: 'ben', displayName: 'Ben', iFollow: false, note: null }] : undefined,
+    isFetching: false,
+  }),
+}));
 jest.mock('@/features/posts/hooks', () => ({ usePublishPost: jest.fn(), useDetectItems: () => ({ mutateAsync: mockDetect }) }));
 let mockShoppingDefault = true;
 jest.mock('@/features/settings/hooks', () => ({
@@ -74,6 +85,25 @@ describe('New post', () => {
       video: null,
       shopping: true,
     });
+  });
+
+  it('tags people on a photo and saves the tags after publishing', async () => {
+    mutateAsync.mockResolvedValue('post-id');
+    mockSetPeople.mockResolvedValue(undefined);
+    await render(<NewPost />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Tag people in photo 1' }));
+    await fireEvent.press(screen.getByLabelText('Photo. Tap where a person is to tag them.'), {
+      nativeEvent: { locationX: 0, locationY: 0 },
+    });
+    await fireEvent.changeText(screen.getByLabelText('Search for a person'), 'be');
+    await fireEvent.press(screen.getByRole('button', { name: 'Tag @ben' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.getByRole('button', { name: 'Tag people in photo 1' })).toHaveTextContent('1 person');
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Dogs' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() => expect(mockBack).toHaveBeenCalled());
+    expect(mockSetPeople).toHaveBeenCalledWith('post-id', [{ position: 0, profileId: 'u-ben', handle: 'ben', x: 0, y: 0 }]);
   });
 
   it('posts a single video, tagged from its poster frame', async () => {

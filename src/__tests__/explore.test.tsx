@@ -4,7 +4,7 @@ import { useFeed, useSearch } from '@/features/posts/hooks';
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ router: { push: (...a: unknown[]) => mockPush(...a), back: jest.fn() } }));
-jest.mock('@/features/posts/hooks', () => ({ useSearch: jest.fn(), useFeed: jest.fn() }));
+jest.mock('@/features/posts/hooks', () => ({ useSearch: jest.fn(), useFeed: jest.fn(), useRemoveMyTag: () => ({ mutate: jest.fn() }) }));
 let mockPeople: unknown[] = [];
 jest.mock('@/features/people/hooks', () => ({
   usePeopleSearch: (q: string) => ({ data: q ? mockPeople : undefined }),
@@ -42,7 +42,7 @@ it('shows public posts as a grid before searching', async () => {
 
 it('debounces the query and shows an empty result', async () => {
   await render(<Explore />);
-  await fireEvent.changeText(screen.getByLabelText('Search people, items, brands and stores'), 'linen');
+  await fireEvent.changeText(screen.getByLabelText('Search people, items, brands, stores and hashtags'), 'linen');
   expect(useSearch).toHaveBeenLastCalledWith('');
   await act(async () => {
     jest.advanceTimersByTime(400);
@@ -63,7 +63,7 @@ it('searches a suggestion when tapped', async () => {
 it('shows matching people above posts, with a link to all of them', async () => {
   mockPeople = ['a', 'b', 'c', 'd'].map((x) => ({ id: x, handle: `ana_${x}`, displayName: `Ana ${x}`, iFollow: false, note: null }));
   await render(<Explore />);
-  await fireEvent.changeText(screen.getByLabelText('Search people, items, brands and stores'), 'ana');
+  await fireEvent.changeText(screen.getByLabelText('Search people, items, brands, stores and hashtags'), 'ana');
   await act(async () => {
     jest.advanceTimersByTime(400);
   });

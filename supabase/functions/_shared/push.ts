@@ -3,7 +3,7 @@
 
 export type NotificationRow = {
   id: number;
-  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply';
+  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply' | 'mention' | 'comment_mention' | 'tag';
   actor_id?: string | null;
   actor_name: string | null;
   group_name: string | null;
@@ -50,6 +50,12 @@ export function describe(row: NotificationRow): { title: string; body: string; u
       return row.post_id ? { title: actor, body: 'Commented on your post', url: `/post/${row.post_id}` } : null;
     case 'reply':
       return row.post_id ? { title: actor, body: 'Replied to your comment', url: `/post/${row.post_id}` } : null;
+    case 'mention':
+      return row.post_id ? { title: actor, body: 'Mentioned you in a post', url: `/post/${row.post_id}` } : null;
+    case 'comment_mention':
+      return row.post_id ? { title: actor, body: 'Mentioned you in a comment', url: `/comments/${row.post_id}` } : null;
+    case 'tag':
+      return row.post_id ? { title: actor, body: 'Tagged you in a post', url: `/post/${row.post_id}` } : null;
     case 'new_follower':
       return row.actor_id ? { title: actor, body: 'Started following you', url: `/profile/${row.actor_id}` } : null;
     default:

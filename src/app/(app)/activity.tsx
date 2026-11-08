@@ -17,6 +17,9 @@ const VERB: Record<Activity['kind'], string> = {
   comment: 'commented:',
   reply: 'replied to your comment:',
   follow: 'started following you.',
+  mention: 'mentioned you in a post:',
+  comment_mention: 'mentioned you in a comment:',
+  tag: 'tagged you in a post.',
 };
 
 function Row({ a }: { a: Activity }) {
@@ -31,7 +34,11 @@ function Row({ a }: { a: Activity }) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`${a.actor.displayName} ${VERB[a.kind]} ${a.body ?? ''}`}
-      onPress={() => (a.postId ? router.push(a.kind === 'like' ? `/post/${a.postId}` : `/comments/${a.postId}`) : undefined)}
+      onPress={() => (a.postId ? router.push(
+                  a.kind === 'comment' || a.kind === 'reply' || a.kind === 'comment_mention'
+                    ? `/comments/${a.postId}`
+                    : `/post/${a.postId}`,
+                ) : undefined)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
       <Pressable onPress={() => router.push(`/profile/${a.actor.id}`)} accessibilityRole="link" hitSlop={4}>

@@ -64,6 +64,22 @@ export function useAuthorFeed(authorId: string | undefined) {
   });
 }
 
+export function useFilteredFeed(filter: api.PostFilter | null) {
+  return useInfiniteQuery({
+    queryKey: ['feed', 'filter', filter],
+    queryFn: ({ pageParam }) => api.fetchFilteredPage(filter!, pageParam),
+    initialPageParam: null as api.FeedCursor,
+    getNextPageParam: nextCursor,
+    enabled: !!filter,
+    staleTime: STALE_MS,
+  });
+}
+
+export function useRemoveMyTag() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: api.removeMyPeopleTag, onSuccess: () => qc.invalidateQueries({ queryKey: ['feed'] }) });
+}
+
 export function useSearch(query: string) {
   const q = query.trim();
   return useInfiniteQuery({

@@ -12,7 +12,12 @@ jest.mock('expo-router', () => ({
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: () => ({ session: { user: { id: 'me' } } }) }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: () => ({ data: [] }) }));
 jest.mock('@/features/profiles/hooks', () => ({ useProfile: jest.fn(), useFollow: jest.fn() }));
-jest.mock('@/features/posts/hooks', () => ({ useAuthorFeed: jest.fn(), useDeletePost: () => ({ mutate: jest.fn() }) }));
+jest.mock('@/features/posts/hooks', () => ({
+  useAuthorFeed: jest.fn(),
+  useDeletePost: () => ({ mutate: jest.fn() }),
+  useFilteredFeed: () => ({ data: { pages: [[]] }, isPending: false, isError: false, isRefetching: false, isFetchingNextPage: false, hasNextPage: false, refetch: jest.fn(), fetchNextPage: jest.fn() }),
+  useRemoveMyTag: () => ({ mutate: jest.fn() }),
+}));
 jest.mock('@/features/safety/hooks', () => ({
   useBlockUser: () => ({ mutate: jest.fn() }),
   useReport: () => ({ mutateAsync: jest.fn(), isPending: false }),
@@ -62,6 +67,14 @@ it('hides follow and message on your own profile', async () => {
   await fireEvent.press(screen.getByRole('button', { name: 'Edit profile' }));
   expect(mockPush).toHaveBeenCalledWith('/edit-profile');
   expect(screen.getByRole('button', { name: 'Share profile' })).toBeTruthy();
+});
+
+it('has a Tagged tab with posts the person is tagged in', async () => {
+  (useProfile as jest.Mock).mockReturnValue({ isPending: false, data: profile() });
+  (useAuthorFeed as jest.Mock).mockReturnValue({ data: { pages: [[]] }, isPending: false });
+  await render(<ProfileScreen />);
+  await fireEvent.press(screen.getByRole('tab', { name: 'Tagged' }));
+  expect(screen.getByText('No posts with @bex tagged yet.')).toBeTruthy();
 });
 
 it('shows posts as a grid that opens each post', async () => {

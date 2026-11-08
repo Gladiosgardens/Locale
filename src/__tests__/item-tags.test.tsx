@@ -16,6 +16,8 @@ jest.mock('@/features/posts/hooks', () => ({
     mockSimilarCalls.push(a);
     return mockSimilar;
   },
+  useFilteredFeed: () => ({ data: { pages: [[]] }, isPending: false, isError: false, isRefetching: false, isFetchingNextPage: false, hasNextPage: false, refetch: jest.fn(), fetchNextPage: jest.fn() }),
+  useRemoveMyTag: () => ({ mutate: jest.fn() }),
 }));
 const mockSaveItem = jest.fn();
 let mockSaved = false;
@@ -43,7 +45,7 @@ const post = (over: Partial<FeedPost> = {}): FeedPost => ({
   areaName: null,
   interestIds: [],
   matchedItemIds: [],
-  media: [{
+  media: [{ people: [],
     kind: 'image', videoUrl: null, duration: null, path: 'p1/0.jpg', width: 1000, height: 800, url: 'https://s/0',
     tags: [{ id: 't1', x: 0.3, y: 0.6, item: sofa }, { id: 't2', x: 0.8, y: 0.2, item: lamp }],
   }],

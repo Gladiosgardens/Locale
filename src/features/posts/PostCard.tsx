@@ -8,6 +8,7 @@ import { ShopTheLook } from '@/features/items/HangTag';
 import { VideoMedia } from '@/features/video/VideoMedia';
 import type { Interest } from '@/features/onboarding/api';
 import { timeAgo } from '@/lib/time';
+import { RichText } from '@/components/RichText';
 import { colors, fonts, space } from '@/theme';
 import type { FeedMedia, FeedPost, Item } from './api';
 import { useLikePost, useSavePost } from './hooks';
@@ -47,11 +48,18 @@ function TaggedPhoto({
   onOpenItem: (item: Item) => void;
 }) {
   const count = media.tags.length;
+  const people = media.people.length;
+  const what = [
+    count ? (count === 1 ? '1 tagged item' : `${count} tagged items`) : null,
+    people ? (people === 1 ? '1 tagged person' : `${people} tagged people`) : null,
+  ]
+    .filter(Boolean)
+    .join(' and ');
   return (
     <Pressable
-      onPress={count ? onToggle : undefined}
-      accessibilityRole={count ? 'button' : undefined}
-      accessibilityLabel={count ? (showTags ? 'Hide tagged items' : `Show ${count} tagged items`) : undefined}
+      onPress={count || people ? onToggle : undefined}
+      accessibilityRole={count || people ? 'button' : undefined}
+      accessibilityLabel={what ? (showTags ? 'Hide tags' : `Show ${what}`) : undefined}
     >
       <Image
         source={media.url ? { uri: media.url, cacheKey: media.path } : undefined}
@@ -80,6 +88,27 @@ function TaggedPhoto({
             </Pressable>
           ))
         : null}
+      {showTags
+        ? media.people.map((p) => (
+            <Pressable
+              key={p.profileId}
+              accessibilityRole="link"
+              accessibilityLabel={`Tagged: @${p.handle}`}
+              onPress={() => router.push(`/profile/${p.profileId}`)}
+              hitSlop={6}
+              style={[styles.person, { left: Math.min(p.x * width, width - 130), top: p.y * height }]}
+            >
+              <Text style={styles.personText} numberOfLines={1}>
+                {p.handle}
+              </Text>
+            </Pressable>
+          ))
+        : null}
+      {people && !showTags ? (
+        <View style={styles.peopleBadge} pointerEvents="none">
+          <Ionicons name="person" size={12} color={colors.onInk} />
+        </View>
+      ) : null}
       {count && !showTags ? (
         <View style={styles.badge} pointerEvents="none">
           <View style={styles.badgeDot} />
@@ -109,6 +138,12 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
   }, [post.media]);
   const numbers = useMemo(() => new Map(items.map((it, i) => [it.id, i + 1])), [items]);
   const meta = [post.areaName, timeAgo(post.publishedAt)].filter(Boolean).join(', ');
+  // Everyone tagged across the post (also covers videos, which don't show labels).
+  const withPeople = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const m of post.media) for (const p of m.people) seen.set(p.profileId, p.handle);
+    return [...seen.entries()];
+  }, [post.media]);
 
   const openItem = (item: Item) => onOpenItem(item, post.id);
 
@@ -256,7 +291,25 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
         {post.caption ? (
           <Text style={styles.caption}>
             <Text style={styles.captionName}>{post.author.handle} </Text>
-            {post.caption}
+            <RichText text={post.caption} />
+          </Text>
+        ) : null}
+        {withPeople.length ? (
+          <Text style={styles.with}>
+            With{' '}
+            {withPeople.map(([id, handle], i) => (
+              <Text key={id}>
+                {i ? ', ' : ''}
+                <Text
+                  style={styles.captionName}
+                  accessibilityRole="link"
+                  onPress={() => router.push(`/profile/${id}`)}
+                  suppressHighlighting
+                >
+                  @{handle}
+                </Text>
+              </Text>
+            ))}
           </Text>
         ) : null}
         {post.interestIds.length ? (
@@ -340,4 +393,25 @@ const styles = StyleSheet.create({
   },
   badgeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.ultramarine },
   badgeText: { fontFamily: fonts.semibold, color: colors.ink, fontSize: 12 },
+  peopleBadge: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  person: {
+    position: 'absolute',
+    maxWidth: 130,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+  },
+  personText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.onInk },
+  with: { fontFamily: fonts.body, fontSize: 14, lineHeight: 20, color: colors.muted },
 });

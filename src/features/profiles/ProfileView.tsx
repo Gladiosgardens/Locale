@@ -1,10 +1,11 @@
 import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Centered } from '@/components/ui';
 import { shareInvite } from '@/features/people/invite';
-import { useAuthorFeed } from '@/features/posts/hooks';
+import { useAuthorFeed, useFilteredFeed } from '@/features/posts/hooks';
 import { PostGrid } from '@/features/posts/PostGrid';
 import { friendlyError } from '@/lib/errors';
 import { colors, fonts, space, type } from '@/theme';
@@ -17,6 +18,9 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
   const profile = useProfile(id);
   const posts = useAuthorFeed(id);
   const follow = useFollow(id);
+  const [tab, setTab] = useState<'posts' | 'tagged'>('posts');
+  const taggedFilter = useMemo(() => (id && tab === 'tagged' ? { taggedId: id } : null), [id, tab]);
+  const tagged = useFilteredFeed(taggedFilter);
   const p = profile.data;
 
   if (profile.isPending) {
@@ -85,6 +89,20 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
           />
         </View>
       )}
+      <View style={styles.tabs} accessibilityRole="tablist">
+        {(['posts', 'tagged'] as const).map((t) => (
+          <Pressable
+            key={t}
+            accessibilityRole="tab"
+            accessibilityLabel={t === 'posts' ? 'Posts' : 'Tagged'}
+            accessibilityState={{ selected: tab === t }}
+            onPress={() => setTab(t)}
+            style={[styles.tab, tab === t && styles.tabActive]}
+          >
+            <Feather name={t === 'posts' ? 'grid' : 'user-check'} size={20} color={tab === t ? colors.ink : colors.muted} />
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 
@@ -118,11 +136,21 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
         )}
       </View>
       <PostGrid
-        query={posts}
+        query={tab === 'posts' ? posts : tagged}
         layout="square"
         header={header}
         empty={
-          posts.isPending ? (
+          tab === 'tagged' ? (
+            tagged.isPending ? (
+              <ActivityIndicator style={styles.loading} color={colors.ink} />
+            ) : (
+              <View style={styles.empty}>
+                <Text style={type.bodyMuted}>
+                  {p.isMe ? 'Posts you’re tagged in will appear here.' : `No posts with @${p.handle} tagged yet.`}
+                </Text>
+              </View>
+            )
+          ) : posts.isPending ? (
             <ActivityIndicator style={styles.loading} color={colors.ink} />
           ) : (
             <View style={styles.empty}>
@@ -156,7 +184,16 @@ const styles = StyleSheet.create({
   },
   topHandle: { flex: 1, fontFamily: fonts.semibold, fontSize: 16, color: colors.ink },
   spacer: { width: 24 },
-  info: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.xl, gap: space.md },
+  info: { paddingHorizontal: space.lg, paddingTop: space.sm, gap: space.md },
+  tabs: {
+    flexDirection: 'row',
+    marginHorizontal: -space.lg,
+    marginTop: space.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.hairline,
+  },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: 'transparent', marginTop: -1 },
+  tabActive: { borderTopColor: colors.ink },
   identity: { flexDirection: 'row', alignItems: 'center', gap: space.xl },
   counts: { flex: 1, flexDirection: 'row', justifyContent: 'space-around' },
   stat: { alignItems: 'center' },

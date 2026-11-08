@@ -33,6 +33,8 @@ jest.mock('@/features/posts/hooks', () => ({
   useSimilarItems: () => ({ data: undefined, isPending: false }),
   useGroupFeed: jest.fn(),
   useDeletePost: () => ({ mutate: jest.fn() }),
+  useFilteredFeed: () => ({ data: { pages: [[]] }, isPending: false, isError: false, isRefetching: false, isFetchingNextPage: false, hasNextPage: false, refetch: jest.fn(), fetchNextPage: jest.fn() }),
+  useRemoveMyTag: () => ({ mutate: jest.fn() }),
 }));
 jest.mock('@/features/safety/hooks', () => ({
   useBlockUser: () => ({ mutate: jest.fn() }),

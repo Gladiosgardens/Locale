@@ -14,7 +14,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { RichText } from '@/components/RichText';
 import { Button } from '@/components/ui';
+import { MentionSuggestions } from '@/features/people/MentionSuggestions';
 import { ReportSheet, type ReportSubject } from '@/features/safety/ReportSheet';
 import { MAX_COMMENT, threadComments, type Comment } from '@/features/social/api';
 import { useAddComment, useComments, useDeleteComment, useLikeComment } from '@/features/social/hooks';
@@ -56,7 +58,7 @@ function CommentRow({
       <View style={styles.rowText}>
         <Text style={styles.body}>
           <Text style={styles.handle}>{c.author.handle} </Text>
-          {c.body}
+          <RichText text={c.body} />
         </Text>
         <View style={styles.meta}>
           <Text style={styles.time}>{timeAgo(c.createdAt)}</Text>
@@ -91,6 +93,7 @@ export default function Comments() {
   const like = useLikeComment(postId);
   const [text, setText] = useState('');
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
+  const [cursor, setCursor] = useState(0);
   const input = useRef<ComponentRef<typeof TextInput>>(null);
   const [reporting, setReporting] = useState<ReportSubject | null>(null);
   const list = useMemo(() => threadComments(comments.data?.pages.flat() ?? []), [comments.data]);
@@ -175,6 +178,7 @@ export default function Comments() {
             )
           }
         />
+        <MentionSuggestions text={text} cursor={cursor} onChange={setText} />
         {replyTo ? (
           <View style={styles.replying}>
             <Text style={styles.time}>Replying to @{replyTo.author.handle}</Text>
@@ -198,6 +202,7 @@ export default function Comments() {
             style={styles.input}
             value={text}
             onChangeText={setText}
+            onSelectionChange={(e) => setCursor(e.nativeEvent.selection.end)}
             placeholder="Add a comment"
             placeholderTextColor={colors.muted}
             multiline

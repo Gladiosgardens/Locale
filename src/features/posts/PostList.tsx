@@ -6,12 +6,13 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { ItemSheet } from '@/features/items/ItemSheet';
 import { ReportSheet, type ReportSubject } from '@/features/safety/ReportSheet';
 import { StoryShareSheet } from '@/features/share/StoryShareSheet';
+import { CollectionSheet } from '@/features/social/CollectionSheet';
 import { useBlockUser } from '@/features/safety/hooks';
 import { useInterests } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
 import type { FeedPost, Item } from './api';
 import { EditCaptionSheet } from './EditCaptionSheet';
-import { useDeletePost } from './hooks';
+import { useDeletePost, useRemoveMyTag } from './hooks';
 import { PostActions, type PostAction } from './PostActions';
 import { PostCard } from './PostCard';
 
@@ -37,6 +38,8 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   const [reporting, setReporting] = useState<ReportSubject | null>(null);
   const [storyPost, setStoryPost] = useState<FeedPost | null>(null);
   const [editing, setEditing] = useState<FeedPost | null>(null);
+  const [collecting, setCollecting] = useState<string | null>(null);
+  const untag = useRemoveMyTag();
   // The post most on screen; its video (if any) plays.
   const [activeId, setActiveId] = useState<string | null>(null);
   // FlatList needs this callback to stay the same for the list's lifetime.
@@ -52,6 +55,13 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
     switch (action) {
       case 'edit':
         return setEditing(post);
+      case 'collection':
+        return setCollecting(post.id);
+      case 'untag':
+        return Alert.alert('Remove yourself from this post?', 'Your tag comes off. The post stays up.', [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Remove', style: 'destructive', onPress: () => untag.mutate(post.id, { onError: fail }) },
+        ]);
       case 'story':
         return setStoryPost(post);
       case 'share':
@@ -122,11 +132,13 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
       <PostActions
         post={menuPost}
         isMine={menuPost?.author.id === session?.user.id}
+        isTagged={!!menuPost?.media.some((m) => m.people.some((p) => p.profileId === session?.user.id))}
         onPick={onPick}
         onClose={() => setMenuPost(null)}
       />
       <ReportSheet subject={reporting} onClose={() => setReporting(null)} />
       <EditCaptionSheet post={editing} onClose={() => setEditing(null)} />
+      <CollectionSheet postId={collecting} onClose={() => setCollecting(null)} />
       <StoryShareSheet post={storyPost} interests={interestMap} onClose={() => setStoryPost(null)} />
     </>
   );

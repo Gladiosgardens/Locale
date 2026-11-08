@@ -2,17 +2,21 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Chip, colors, ErrorText } from '@/components/ui';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { TagEditor } from '@/features/items/TagEditor';
+import { MentionSuggestions } from '@/features/people/MentionSuggestions';
+import { MAX_PEOPLE_TAGS, PeopleTagEditor } from '@/features/people/PeopleTagEditor';
 import { groupBySection } from '@/features/onboarding/sections';
 import {
   MAX_CAPTION,
   MAX_PHOTOS,
   MAX_POST_INTERESTS,
+  setPeopleTags,
   type DraftTag,
+  type PeopleTagDraft,
   type PickedPhoto,
   type PickedVideo,
 } from '@/features/posts/api';
@@ -46,6 +50,9 @@ export default function NewPost() {
   const shopping = shoppingChoice ?? settings.query.data?.shoppingDefault ?? true;
   const detectMut = useDetectItems();
   const [caption, setCaption] = useState('');
+  const [captionCursor, setCaptionCursor] = useState(0);
+  const [people, setPeople] = useState<PeopleTagDraft[]>([]);
+  const [taggingPeople, setTaggingPeople] = useState<number | null>(null);
   const [tags, setTags] = useState<number[]>([]);
   const [itemTags, setItemTags] = useState<DraftTag[]>([]);
   const [tagging, setTagging] = useState<number | null>(null);
@@ -99,6 +106,7 @@ export default function NewPost() {
     setVideo({ uri: a.uri, width: a.width, height: a.height, durationMs: a.duration ?? 0 });
     setPhotos([{ uri: a.uri, width: a.width, height: a.height, thumbnail }]);
     setItemTags([]);
+    setPeople([]);
   }
 
   function toggleTag(id: number) {
@@ -114,12 +122,17 @@ export default function NewPost() {
     setItemTags((prev) =>
       prev.filter((t) => t.media !== index).map((t) => (t.media > index ? { ...t, media: t.media - 1 } : t)),
     );
+    setPeople((prev) =>
+      prev
+        .filter((t) => t.position !== index)
+        .map((t) => (t.position > index ? { ...t, position: t.position - 1 } : t)),
+    );
   }
 
   async function submit() {
     setError(null);
     try {
-      await publish.mutateAsync({
+      const postId = await publish.mutateAsync({
         photos: video ? [] : photos,
         video,
         caption,
@@ -130,6 +143,13 @@ export default function NewPost() {
         searchable: !(nearbyOnly || familySelected),
         groupId: groupId ?? null,
       });
+      if (people.length) {
+        try {
+          await setPeopleTags(postId, people);
+        } catch (e) {
+          Alert.alert('Posted, but the people tags didn’t save', friendlyError(e));
+        }
+      }
       router.back();
     } catch (e) {
       setError(friendlyError(e));
@@ -191,6 +211,21 @@ export default function NewPost() {
                   </Text>
                 </Pressable>
               ) : null}
+              {!busy ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={video ? 'Tag people in the video' : `Tag people in photo ${i + 1}`}
+                  style={[styles.tagButton, styles.peopleButton]}
+                  onPress={() => setTaggingPeople(i)}
+                >
+                  <Text style={[styles.tagButtonText, styles.peopleButtonText]}>
+                    {(() => {
+                      const n = people.filter((t) => t.position === i).length;
+                      return n ? `${n} ${n === 1 ? 'person' : 'people'}` : 'Tag people';
+                    })()}
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
           ))}
           {photos.length === 0 && !busy ? (
@@ -211,12 +246,14 @@ export default function NewPost() {
           style={styles.caption}
           value={caption}
           onChangeText={setCaption}
-          placeholder="Write a caption"
+          onSelectionChange={(e) => setCaptionCursor(e.nativeEvent.selection.end)}
+          placeholder="Write a caption, @mention people, add #hashtags"
           placeholderTextColor={colors.muted}
           multiline
           maxLength={MAX_CAPTION}
           editable={!busy}
         />
+        <MentionSuggestions text={caption} cursor={captionCursor} onChange={setCaption} />
 
         <Text style={styles.label}>Topics, up to {MAX_POST_INTERESTS}</Text>
         {groupBySection(interests.data ?? []).map((g) => (
@@ -295,6 +332,14 @@ export default function NewPost() {
         {progress ? <Text style={styles.progress}>{progress}</Text> : null}
         <Button label="Post" onPress={submit} disabled={photos.length === 0} loading={busy} />
       </ScrollView>
+      <PeopleTagEditor
+        photo={taggingPeople != null ? (photos[taggingPeople] ?? null) : null}
+        position={taggingPeople ?? 0}
+        tags={people.filter((t) => t.position === taggingPeople)}
+        remaining={MAX_PEOPLE_TAGS - people.length}
+        onChange={(next) => setPeople((prev) => [...prev.filter((t) => t.position !== taggingPeople), ...next])}
+        onClose={() => setTaggingPeople(null)}
+      />
       <TagEditor
         photo={tagging != null ? (photos[tagging] ?? null) : null}
         mediaIndex={tagging ?? 0}
@@ -386,6 +431,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tagButtonText: { fontFamily: fonts.semibold, color: colors.ultramarine, fontSize: 12 },
+  // Sits above "Tag items"; people tags aren't shopping, so they stay black.
+  peopleButton: { bottom: 34 },
+  peopleButtonText: { color: colors.ink },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   switchText: { fontFamily: fonts.medium, fontSize: 15, color: colors.ink },
   notice: { fontFamily: fonts.body, color: colors.muted, fontSize: 13, lineHeight: 18 },

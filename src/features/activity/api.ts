@@ -2,7 +2,7 @@ import { check, unwrap } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { thumbnailUrl } from '@/features/video/mux';
 
-export type ActivityKind = 'like' | 'comment' | 'reply' | 'follow';
+export type ActivityKind = 'like' | 'comment' | 'reply' | 'follow' | 'mention' | 'comment_mention' | 'tag';
 
 export type Activity = {
   kind: ActivityKind;

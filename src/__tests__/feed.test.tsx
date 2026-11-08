@@ -17,6 +17,8 @@ jest.mock('@/features/posts/hooks', () => ({
   useSavePost: () => ({ mutate: mockSave }),
   useSimilarItems: () => ({ data: undefined, isPending: false }),
   useUpdateCaption: () => ({ mutate: mockUpdateCaption, isPending: false }),
+  useFilteredFeed: () => ({ data: { pages: [[]] }, isPending: false, isError: false, isRefetching: false, isFetchingNextPage: false, hasNextPage: false, refetch: jest.fn(), fetchNextPage: jest.fn() }),
+  useRemoveMyTag: () => ({ mutate: jest.fn() }),
 }));
 const mockUpdateCaption = jest.fn();
 let mockUnread = 0;
@@ -42,7 +44,7 @@ const post = (id: string, authorId: string, name: string) => ({
   publishedAt: new Date().toISOString(),
   author: { id: authorId, handle: name.toLowerCase(), displayName: name },
   areaName: 'Downtown',
-  media: [{ path: `${id}/0.jpg`, width: 100, height: 100, url: 'https://s/x', tags: [] as unknown[] }],
+  media: [{ path: `${id}/0.jpg`, width: 100, height: 100, url: 'https://s/x', tags: [] as unknown[], people: [] }],
   interestIds: [1],
   matchedItemIds: [] as string[],
 });

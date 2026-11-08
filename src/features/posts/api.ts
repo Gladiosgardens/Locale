@@ -31,6 +31,9 @@ export type Item = {
 
 export type ItemTag = { id: string; x: number; y: number; item: Item };
 
+/** A person tagged on a photo. */
+export type PersonTag = { profileId: string; handle: string; x: number; y: number };
+
 export type FeedMedia = {
   kind: 'image' | 'video';
   /** Storage path for photos; a stable key (the playback id) for videos. */
@@ -43,6 +46,7 @@ export type FeedMedia = {
   videoUrl: string | null;
   duration: number | null;
   tags: ItemTag[];
+  people: PersonTag[];
 };
 
 export type FeedPost = {
@@ -74,6 +78,7 @@ type RawMedia = {
   kind?: 'image' | 'video'; path: string | null; playback_id?: string | null; duration?: number | null;
   width: number; height: number;
   tags?: { id: string; x: number; y: number; item: RawItem }[];
+  people?: { profile_id: string; handle: string; x: number; y: number }[];
 };
 type RawPost = {
   id: string; caption: string | null; published_at: string; author_id: string; author_handle: string;
@@ -135,6 +140,7 @@ async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
           isAffiliate: t.item.is_affiliate,
         },
       })),
+      people: (m.people ?? []).map((p) => ({ profileId: p.profile_id, handle: p.handle, x: p.x, y: p.y })),
     })),
   }));
 }
@@ -187,6 +193,38 @@ export async function fetchAuthorPage(authorId: string, cursor: FeedCursor): Pro
 export async function fetchPost(postId: string): Promise<FeedPost | null> {
   const [post] = await toFeedPosts(unwrap(await supabase.rpc('discover_posts', { p_post_id: postId, p_limit: 1 })));
   return post ?? null;
+}
+
+/** Posts with a hashtag, posts a person is tagged in, or one of my collections. */
+export type PostFilter = { hashtag: string } | { taggedId: string } | { collectionId: string };
+
+export async function fetchFilteredPage(filter: PostFilter, cursor: FeedCursor): Promise<FeedPost[]> {
+  return toFeedPosts(
+    unwrap(
+      await supabase.rpc('discover_posts', {
+        p_limit: FEED_PAGE_SIZE,
+        ...('hashtag' in filter ? { p_hashtag: filter.hashtag } : {}),
+        ...('taggedId' in filter ? { p_tagged_id: filter.taggedId } : {}),
+        ...('collectionId' in filter ? { p_collection_id: filter.collectionId } : {}),
+        ...cursorArgs(cursor),
+      }),
+    ),
+  );
+}
+
+export type PeopleTagDraft = { position: number; profileId: string; handle: string; x: number; y: number };
+
+export async function setPeopleTags(postId: string, tags: PeopleTagDraft[]): Promise<void> {
+  check(
+    await supabase.rpc('set_people_tags', {
+      p_post_id: postId,
+      p_tags: tags.map((t) => ({ position: t.position, profile_id: t.profileId, x: t.x, y: t.y })),
+    }),
+  );
+}
+
+export async function removeMyPeopleTag(postId: string): Promise<void> {
+  check(await supabase.rpc('remove_my_people_tag', { p_post_id: postId }));
 }
 
 export const MIN_QUERY_LENGTH = 2;

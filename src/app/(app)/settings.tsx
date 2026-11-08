@@ -127,6 +127,14 @@ export default function Settings() {
             />
           </View>
           <View style={styles.row}>
+            <Text style={styles.text}>Mentions and photo tags</Text>
+            <Switch
+              accessibilityLabel="Notify me when someone mentions or tags me"
+              value={prefs?.notifyMentions ?? true}
+              onValueChange={(mentions) => settings.setNotifications.mutate({ mentions }, { onError: fail })}
+            />
+          </View>
+          <View style={styles.row}>
             <Text style={styles.text}>New followers</Text>
             <Switch
               accessibilityLabel="Notify me about new followers"

@@ -60,6 +60,7 @@ export type Database = {
           findable_by_email: boolean;
           shopping_default: boolean;
           notify_comments: boolean;
+          notify_mentions: boolean;
           notify_follows: boolean;
           notify_groups: boolean;
           notify_messages: boolean;
@@ -176,6 +177,9 @@ export type Database = {
           p_post_id?: string;
           p_query?: string;
           p_saved?: boolean;
+          p_hashtag?: string;
+          p_tagged_id?: string;
+          p_collection_id?: string;
         };
         Returns: {
           area_name: string | null;
@@ -201,6 +205,24 @@ export type Database = {
       add_comment: { Args: { p_body: string; p_parent_id?: string; p_post_id: string }; Returns: string };
       set_comment_like: { Args: { p_comment_id: string; p_like: boolean }; Returns: undefined };
       update_post_caption: { Args: { p_caption: string; p_post_id: string }; Returns: undefined };
+      set_people_tags: { Args: { p_post_id: string; p_tags: Json }; Returns: undefined };
+      remove_my_people_tag: { Args: { p_post_id: string }; Returns: undefined };
+      my_collections: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          name: string;
+          post_count: number;
+          cover_path: string | null;
+          cover_playback_id: string | null;
+          created_at: string;
+        }[];
+      };
+      create_collection: { Args: { p_name: string }; Returns: string };
+      rename_collection: { Args: { p_collection_id: string; p_name: string }; Returns: undefined };
+      delete_collection: { Args: { p_collection_id: string }; Returns: undefined };
+      set_in_collection: { Args: { p_collection_id: string; p_in: boolean; p_post_id: string }; Returns: undefined };
+      post_collection_ids: { Args: { p_post_id: string }; Returns: string[] };
       my_activity: {
         Args: { p_before?: string; p_limit?: number };
         Returns: {
@@ -347,7 +369,7 @@ export type Database = {
         }[];
       };
       set_notification_preferences: {
-        Args: { p_comments?: boolean; p_follows?: boolean; p_groups?: boolean; p_messages?: boolean };
+        Args: { p_comments?: boolean; p_follows?: boolean; p_groups?: boolean; p_mentions?: boolean; p_messages?: boolean };
         Returns: undefined;
       };
       set_findable_by_email: { Args: { p_findable: boolean }; Returns: undefined };

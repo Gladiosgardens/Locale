@@ -3,16 +3,19 @@ import { colors } from '@/components/ui';
 import type { FeedPost } from './api';
 import { fonts } from '@/theme';
 
-export type PostAction = 'edit' | 'story' | 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
+export type PostAction = 'edit' | 'collection' | 'untag' | 'story' | 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
 
 export function PostActions({
   post,
   isMine,
+  isTagged = false,
   onPick,
   onClose,
 }: {
   post: FeedPost | null;
   isMine: boolean;
+  /** The viewer is tagged in this post. */
+  isTagged?: boolean;
   onPick: (action: PostAction, post: FeedPost) => void;
   onClose: () => void;
 }) {
@@ -21,11 +24,14 @@ export function PostActions({
     : isMine
       ? [
           { action: 'edit', label: 'Edit caption' },
+          { action: 'collection', label: 'Save to collection' },
           { action: 'story', label: 'Share to Stories' },
           { action: 'share', label: 'Send in a message' },
           { action: 'delete', label: 'Delete post', danger: true },
         ]
       : [
+          { action: 'collection', label: 'Save to collection' },
+          ...(isTagged ? [{ action: 'untag' as const, label: 'Remove me from this post' }] : []),
           { action: 'story', label: 'Share to Stories' },
           { action: 'share', label: 'Send in a message' },
           { action: 'report-post', label: 'Report post' },

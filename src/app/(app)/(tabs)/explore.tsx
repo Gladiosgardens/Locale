@@ -32,6 +32,8 @@ export default function Explore() {
   const peopleFound = searching ? (people.data ?? []) : [];
   const discover = useFeed('everywhere', null);
   const active = searching ? results : discover;
+  // A one-word search can also be a hashtag.
+  const hashtag = searching && /^#?[^\s#@]+$/.test(query.trim()) ? query.trim().replace(/^#/, '').toLowerCase() : null;
 
   const empty = active.isPending ? (
     <ActivityIndicator style={styles.loading} color={colors.ink} />
@@ -53,6 +55,17 @@ export default function Explore() {
       <Text style={type.title} accessibilityRole="header">
         {searching ? `“${query.trim()}”` : 'Explore'}
       </Text>
+      {hashtag && !/^[0-9_]+$/.test(hashtag) ? (
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => router.push(`/tag/${encodeURIComponent(hashtag)}`)}
+          style={styles.hashtag}
+          hitSlop={4}
+        >
+          <Feather name="hash" size={18} color={colors.ink} />
+          <Text style={styles.hashtagText}>See posts tagged #{hashtag}</Text>
+        </Pressable>
+      ) : null}
       {peopleFound.length ? (
         <View style={styles.people}>
           <Text style={styles.peopleTitle}>People</Text>
@@ -89,11 +102,11 @@ export default function Explore() {
         <View style={styles.search}>
           <Feather name="search" size={18} color={colors.muted} />
           <TextInput
-            accessibilityLabel="Search people, items, brands and stores"
+            accessibilityLabel="Search people, items, brands, stores and hashtags"
             style={styles.input}
             value={text}
             onChangeText={setText}
-            placeholder="Search people, items, brands"
+            placeholder="Search people, items, #hashtags"
             placeholderTextColor={colors.muted}
             autoCorrect={false}
             returnKeyType="search"
@@ -111,6 +124,8 @@ export default function Explore() {
 }
 
 const styles = StyleSheet.create({
+  hashtag: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
+  hashtagText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   screen: { flex: 1, backgroundColor: colors.paper },
   searchRow: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.sm },
   search: {

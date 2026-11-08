@@ -19,7 +19,7 @@ jest.mock('@/lib/supabase', () => ({ supabase: {} }));
 const post = (over: Partial<FeedPost> = {}): FeedPost => ({
   id: 'p1', caption: 'New desk', publishedAt: new Date().toISOString(), rankAt: new Date().toISOString(),
   author: { id: 'u1', handle: 'sami', displayName: 'Sami' }, areaName: null, interestIds: [], matchedItemIds: [],
-  media: [{ kind: 'image', videoUrl: null, duration: null, path: 'p1/0.jpg', width: 100, height: 100, url: 'https://s/0', tags: [] }],
+  media: [{ kind: 'image', videoUrl: null, duration: null, path: 'p1/0.jpg', width: 100, height: 100, url: 'https://s/0', tags: [], people: [] }],
   likeCount: 2, commentCount: 3, iLiked: false, iSaved: false, ...over,
 });
 
@@ -90,7 +90,7 @@ describe('Comments', () => {
 
   it('threads replies under their comment and replies to the thread', async () => {
     await render(<Comments />);
-    const bodies = screen.getAllByText(/Body (c1|c2|r1)/).map((t) => t.props.children[1]);
+    const bodies = screen.getAllByText(/^Body (c1|c2|r1)$/).map((t) => [t.props.children].flat().join(''));
     expect(bodies).toEqual(['Body c1', 'Body r1', 'Body c2']);
     expect(screen.getByText('2 likes')).toBeTruthy();
     // Replying to a reply answers the top comment's thread.
@@ -126,6 +126,15 @@ describe('Comments', () => {
   });
 });
 
+const filtered = { data: { pages: [[]] }, isPending: false } as never;
+function mockCollectionHooks(collections: unknown[] = []) {
+  jest.spyOn(socialHooks, 'useCollections').mockReturnValue({ data: collections } as never);
+  jest.spyOn(socialHooks, 'useCreateCollection').mockReturnValue({ mutate: jest.fn(), isPending: false } as never);
+  jest.spyOn(socialHooks, 'useRenameCollection').mockReturnValue({ mutate: jest.fn(), isPending: false } as never);
+  jest.spyOn(socialHooks, 'useDeleteCollection').mockReturnValue({ mutate: jest.fn() } as never);
+  jest.spyOn(postHooks, 'useFilteredFeed').mockReturnValue(filtered);
+}
+
 describe('Saved', () => {
   it('shows the wishlist with prices and can remove an item', async () => {
     const saveItem = { mutate: jest.fn() };
@@ -139,6 +148,7 @@ describe('Saved', () => {
     } as never);
     jest.spyOn(postHooks, 'useFeed').mockReturnValue({ data: { pages: [[]] }, isPending: false } as never);
     jest.spyOn(postHooks, 'useSimilarItems').mockReturnValue({ data: undefined, isPending: false } as never);
+    mockCollectionHooks();
     await render(<Saved />);
     expect(screen.getByText('Desk lamp')).toBeTruthy();
     expect(screen.getByText(/179/)).toBeTruthy();

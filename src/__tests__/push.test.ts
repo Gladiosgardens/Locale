@@ -33,6 +33,14 @@ describe('push messages', () => {
     });
   });
 
+  it('describes mentions and photo tags without any text from the post', () => {
+    const d = (kind: 'mention' | 'comment_mention' | 'tag') =>
+      describeRow(row({ kind, actor_name: 'Ana', post_id: 'p9', conversation_id: null }));
+    expect(d('mention')).toEqual({ title: 'Ana', body: 'Mentioned you in a post', url: '/post/p9' });
+    expect(d('comment_mention')).toEqual({ title: 'Ana', body: 'Mentioned you in a comment', url: '/comments/p9' });
+    expect(d('tag')).toEqual({ title: 'Ana', body: 'Tagged you in a post', url: '/post/p9' });
+  });
+
   it('links a new follower to their profile', () => {
     expect(describeRow(row({ kind: 'new_follower', actor_id: 'u9', actor_name: 'Ana', conversation_id: null }))).toEqual({
       title: 'Ana',
