@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type InfiniteData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
 
 export function useComments(postId: string | undefined) {
@@ -23,7 +23,33 @@ function useRefreshPost(postId: string | undefined) {
 
 export function useAddComment(postId: string | undefined) {
   const refresh = useRefreshPost(postId);
-  return useMutation({ mutationFn: (body: string) => api.addComment(postId!, body), onSuccess: refresh });
+  return useMutation({
+    mutationFn: (v: { body: string; parentId?: string | null }) => api.addComment(postId!, v.body, v.parentId),
+    onSuccess: refresh,
+  });
+}
+
+export function useLikeComment(postId: string | undefined) {
+  const qc = useQueryClient();
+  const key = ['comments', postId];
+  const patch = (id: string, like: boolean) =>
+    qc.setQueryData<InfiniteData<api.Comment[]>>(key, (d) =>
+      d
+        ? {
+            ...d,
+            pages: d.pages.map((page) =>
+              page.map((c) =>
+                c.id === id && c.iLiked !== like ? { ...c, iLiked: like, likeCount: c.likeCount + (like ? 1 : -1) } : c,
+              ),
+            ),
+          }
+        : d,
+    );
+  return useMutation({
+    mutationFn: (v: { id: string; like: boolean }) => api.setCommentLike(v.id, v.like),
+    onMutate: (v) => patch(v.id, v.like),
+    onError: (_e, v) => patch(v.id, !v.like),
+  });
 }
 
 export function useDeleteComment(postId: string | undefined) {

@@ -120,6 +120,15 @@ export function useSavePost() {
   });
 }
 
+export function useUpdateCaption() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, caption }: { id: string; caption: string }) => api.updateCaption(id, caption),
+    // Single-post views are cached under ['feed', 'post', id] too.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['feed'] }),
+  });
+}
+
 export function useDeletePost() {
   const qc = useQueryClient();
   return useMutation({

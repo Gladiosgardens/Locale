@@ -59,8 +59,8 @@ it('hides follow and message on your own profile', async () => {
   await render(<ProfileScreen />);
   expect(screen.queryByRole('button', { name: 'Follow' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Message' })).toBeNull();
-  await fireEvent.press(screen.getByRole('button', { name: 'Find friends' }));
-  expect(mockPush).toHaveBeenCalledWith('/find-friends');
+  await fireEvent.press(screen.getByRole('button', { name: 'Edit profile' }));
+  expect(mockPush).toHaveBeenCalledWith('/edit-profile');
   expect(screen.getByRole('button', { name: 'Share profile' })).toBeTruthy();
 });
 

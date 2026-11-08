@@ -2,12 +2,13 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Avatar, Button } from '@/components/ui';
+import { Button } from '@/components/ui';
 import type { ConversationRow } from '@/features/messages/api';
 import { useConversations } from '@/features/messages/hooks';
 import { PushPrompt } from '@/features/notifications/PushPrompt';
 import { timeAgo } from '@/lib/time';
 import { colors, fonts, space, type } from '@/theme';
+import { UserAvatar } from '@/features/profiles/UserAvatar';
 
 function Row({ c, request }: { c: ConversationRow; request: boolean }) {
   const preview = c.awaitingReply ? 'Request sent' : c.lastMessage ?? '';
@@ -19,7 +20,7 @@ function Row({ c, request }: { c: ConversationRow; request: boolean }) {
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       onPress={() => router.push(`/messages/${c.id}`)}
     >
-      <Avatar name={c.otherName} size={48} />
+      <UserAvatar userId={c.otherId} name={c.otherName} size={48} />
       <View style={styles.rowText}>
         <Text style={[styles.name, unread && styles.unreadName]} numberOfLines={1}>
           {c.otherName}

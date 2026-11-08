@@ -10,6 +10,8 @@ export default function Layout() {
       <Stack.Screen name="post/[id]" />
       <Stack.Screen name="find-friends" />
       <Stack.Screen name="saved" />
+      <Stack.Screen name="activity" />
+      <Stack.Screen name="edit-profile" />
       <Stack.Screen name="comments/[postId]" />
       <Stack.Screen name="qr" options={{ presentation: 'modal' }} />
       <Stack.Screen name="u/[handle]" />

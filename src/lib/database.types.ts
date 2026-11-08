@@ -13,6 +13,7 @@ type AreaRow = {
 };
 
 type ProfileRow = {
+  avatar_path: string | null;
   bio: string | null;
   created_at: string;
   display_name: string | null;
@@ -197,7 +198,27 @@ export type Database = {
       set_post_like: { Args: { p_like: boolean; p_post_id: string }; Returns: undefined };
       set_post_saved: { Args: { p_post_id: string; p_saved: boolean }; Returns: undefined };
       set_item_saved: { Args: { p_item_id: string; p_post_id: string; p_saved: boolean }; Returns: undefined };
-      add_comment: { Args: { p_body: string; p_post_id: string }; Returns: string };
+      add_comment: { Args: { p_body: string; p_parent_id?: string; p_post_id: string }; Returns: string };
+      set_comment_like: { Args: { p_comment_id: string; p_like: boolean }; Returns: undefined };
+      update_post_caption: { Args: { p_caption: string; p_post_id: string }; Returns: undefined };
+      my_activity: {
+        Args: { p_before?: string; p_limit?: number };
+        Returns: {
+          actor_avatar_path: string | null;
+          actor_display_name: string;
+          actor_handle: string;
+          actor_id: string;
+          body: string | null;
+          created_at: string;
+          i_follow_actor: boolean;
+          kind: string;
+          post_id: string | null;
+          post_media_path: string | null;
+          post_playback_id: string | null;
+        }[];
+      };
+      my_activity_unread: { Args: Record<string, never>; Returns: number };
+      mark_activity_seen: { Args: Record<string, never>; Returns: undefined };
       delete_comment: { Args: { p_comment_id: string }; Returns: undefined };
       list_comments: {
         Args: { p_after_created_at?: string; p_after_id?: string; p_limit?: number; p_post_id: string };
@@ -209,6 +230,9 @@ export type Database = {
           can_delete: boolean;
           created_at: string;
           id: string;
+          i_liked: boolean;
+          like_count: number;
+          parent_id: string | null;
         }[];
       };
       my_saved_items: {

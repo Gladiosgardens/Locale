@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Avatar } from '@/components/ui';
 import { friendlyError } from '@/lib/errors';
 import { colors, fonts, radius, space } from '@/theme';
 import type { Person } from './api';
 import { useFollowPerson } from './hooks';
+import { UserAvatar } from '@/features/profiles/UserAvatar';
 
 export function PersonRow({ person }: { person: Person }) {
   const followMut = useFollowPerson();
@@ -34,7 +34,7 @@ export function PersonRow({ person }: { person: Person }) {
         accessibilityLabel={`Open ${person.displayName}’s profile`}
         onPress={() => router.push(`/profile/${person.id}`)}
       >
-        <Avatar name={person.displayName} size={48} />
+        <UserAvatar userId={person.id} name={person.displayName} size={48} />
         <View style={styles.text}>
           <Text style={styles.name} numberOfLines={1}>
             {person.displayName}

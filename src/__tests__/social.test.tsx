@@ -63,14 +63,17 @@ describe('post actions', () => {
 describe('Comments', () => {
   const add = { mutate: jest.fn(), isPending: false };
   const remove = { mutate: jest.fn() };
-  const comment = (id: string, canDelete: boolean) => ({
-    id, body: `Body ${id}`, createdAt: new Date().toISOString(), canDelete,
-    author: { id: `a-${id}`, handle: `h${id}`, displayName: `Name ${id}` },
+  const likeComment = { mutate: jest.fn() };
+  const comment = (id: string, canDelete: boolean, over: object = {}) => ({
+    id, body: `Body ${id}`, createdAt: new Date().toISOString(), canDelete, parentId: null, likeCount: 0, iLiked: false,
+    author: { id: `a-${id}`, handle: `h${id}`, displayName: `Name ${id}` }, ...over,
   });
   beforeEach(() => {
     jest.spyOn(socialHooks, 'useComments').mockReturnValue({
-      data: { pages: [[comment('c1', false), comment('c2', true)]] }, isPending: false, isError: false, hasNextPage: false,
+      data: { pages: [[comment('c1', false), comment('c2', true), comment('r1', false, { parentId: 'c1', likeCount: 2, iLiked: true })]] },
+      isPending: false, isError: false, hasNextPage: false,
     } as never);
+    jest.spyOn(socialHooks, 'useLikeComment').mockReturnValue(likeComment as never);
     jest.spyOn(socialHooks, 'useAddComment').mockReturnValue(add as never);
     jest.spyOn(socialHooks, 'useDeleteComment').mockReturnValue(remove as never);
   });
@@ -82,14 +85,39 @@ describe('Comments', () => {
     expect(postButton).toBeDisabled();
     await fireEvent.changeText(screen.getByLabelText('Add a comment'), 'Where is the lamp from?');
     await fireEvent.press(screen.getByRole('button', { name: 'Post comment' }));
-    expect(add.mutate).toHaveBeenCalledWith('Where is the lamp from?', expect.anything());
+    expect(add.mutate).toHaveBeenCalledWith({ body: 'Where is the lamp from?', parentId: null }, expect.anything());
+  });
+
+  it('threads replies under their comment and replies to the thread', async () => {
+    await render(<Comments />);
+    const bodies = screen.getAllByText(/Body (c1|c2|r1)/).map((t) => t.props.children[1]);
+    expect(bodies).toEqual(['Body c1', 'Body r1', 'Body c2']);
+    expect(screen.getByText('2 likes')).toBeTruthy();
+    // Replying to a reply answers the top comment's thread.
+    await fireEvent.press(screen.getByRole('button', { name: 'Reply to hr1' }));
+    expect(screen.getByText('Replying to @hr1')).toBeTruthy();
+    expect(screen.getByLabelText('Write a reply to hr1').props.value).toBe('@hr1 ');
+    await fireEvent.changeText(screen.getByLabelText('Write a reply to hr1'), '@hr1 thanks!');
+    await fireEvent.press(screen.getByRole('button', { name: 'Post comment' }));
+    expect(add.mutate).toHaveBeenCalledWith({ body: '@hr1 thanks!', parentId: 'c1' }, expect.anything());
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancel reply' }));
+    expect(screen.queryByText(/Replying to/)).toBeNull();
+  });
+
+  it('likes and unlikes comments', async () => {
+    await render(<Comments />);
+    const hearts = screen.getAllByRole('button', { name: /like comment/i });
+    await fireEvent.press(hearts[0]);
+    expect(likeComment.mutate).toHaveBeenCalledWith({ id: 'c1', like: true });
+    await fireEvent.press(screen.getByRole('button', { name: 'Unlike comment' }));
+    expect(likeComment.mutate).toHaveBeenCalledWith({ id: 'r1', like: false });
   });
 
   it('deletes your own comments and reports others', async () => {
     const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     await render(<Comments />);
     const menus = screen.getAllByRole('button', { name: 'Comment options' });
-    await fireEvent.press(menus[1]);
+    await fireEvent.press(menus[2]);
     expect(alert.mock.calls[0][0]).toBe('Delete this comment?');
     (alert.mock.calls[0][2] as { text: string; onPress?: () => void }[]).find((b) => b.text === 'Delete')!.onPress!();
     expect(remove.mutate).toHaveBeenCalledWith('c2', expect.anything());

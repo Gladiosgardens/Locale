@@ -25,6 +25,14 @@ describe('push messages', () => {
     });
   });
 
+  it('opens the post for a reply, without the reply text', () => {
+    expect(describeRow(row({ kind: 'reply', actor_name: 'Ana', post_id: 'p9', conversation_id: null }))).toEqual({
+      title: 'Ana',
+      body: 'Replied to your comment',
+      url: '/post/p9',
+    });
+  });
+
   it('links a new follower to their profile', () => {
     expect(describeRow(row({ kind: 'new_follower', actor_id: 'u9', actor_name: 'Ana', conversation_id: null }))).toEqual({
       title: 'Ana',

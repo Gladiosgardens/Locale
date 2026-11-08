@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { memo, useMemo, useState } from 'react';
 import { FlatList, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { Avatar } from '@/components/ui';
 import { ShopTheLook } from '@/features/items/HangTag';
 import { VideoMedia } from '@/features/video/VideoMedia';
 import type { Interest } from '@/features/onboarding/api';
@@ -12,6 +11,7 @@ import { timeAgo } from '@/lib/time';
 import { colors, fonts, space } from '@/theme';
 import type { FeedMedia, FeedPost, Item } from './api';
 import { useLikePost, useSavePost } from './hooks';
+import { UserAvatar } from '@/features/profiles/UserAvatar';
 
 type Props = {
   post: FeedPost;
@@ -148,7 +148,7 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
           accessibilityLabel={`Open ${post.author.displayName}’s profile`}
           onPress={() => router.push(`/profile/${post.author.id}`)}
         >
-          <Avatar name={post.author.displayName} size={34} />
+          <UserAvatar userId={post.author.id} name={post.author.displayName} size={34} />
           <View style={styles.authorText}>
             <Text style={styles.name} numberOfLines={1}>
               {post.author.displayName}

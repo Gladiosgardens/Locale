@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
@@ -115,7 +116,7 @@ export function Chip({ label, selected, onPress }: { label: string; selected: bo
   );
 }
 
-export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
+export function Avatar({ name, size = 36, uri }: { name: string; size?: number; uri?: string | null }) {
   const initials = name
     .split(/\s+/)
     .filter(Boolean)
@@ -128,7 +129,17 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
-      <Text style={[styles.avatarText, { fontSize: size * 0.4 }]}>{initials || '·'}</Text>
+      {uri ? (
+        <Image
+          source={{ uri }}
+          style={{ width: size, height: size, borderRadius: size / 2 }}
+          contentFit="cover"
+          transition={150}
+          accessibilityIgnoresInvertColors
+        />
+      ) : (
+        <Text style={[styles.avatarText, { fontSize: size * 0.4 }]}>{initials || '·'}</Text>
+      )}
     </View>
   );
 }
@@ -178,7 +189,7 @@ const styles = StyleSheet.create({
   chipSelected: { backgroundColor: colors.ink, borderColor: colors.ink },
   chipText: { color: colors.ink, fontFamily: fonts.medium, fontSize: 14 },
   chipTextSelected: { color: colors.onInk },
-  avatar: { backgroundColor: colors.wash, alignItems: 'center', justifyContent: 'center' },
+  avatar: { backgroundColor: colors.wash, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarText: { fontFamily: fonts.display, color: colors.ink },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.md, backgroundColor: colors.paper, padding: space.xl },
 });

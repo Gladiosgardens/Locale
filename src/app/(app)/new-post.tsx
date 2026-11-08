@@ -8,7 +8,14 @@ import { Button, Chip, colors, ErrorText } from '@/components/ui';
 import { useInterests, useMyProfile } from '@/features/onboarding/hooks';
 import { TagEditor } from '@/features/items/TagEditor';
 import { groupBySection } from '@/features/onboarding/sections';
-import { MAX_PHOTOS, MAX_POST_INTERESTS, type DraftTag, type PickedPhoto, type PickedVideo } from '@/features/posts/api';
+import {
+  MAX_CAPTION,
+  MAX_PHOTOS,
+  MAX_POST_INTERESTS,
+  type DraftTag,
+  type PickedPhoto,
+  type PickedVideo,
+} from '@/features/posts/api';
 import { MAX_VIDEO_MS } from '@/features/video/mux';
 import { createVideoPlayer } from 'expo-video';
 import { useDetectItems, usePublishPost, type PublishStage } from '@/features/posts/hooks';
@@ -17,7 +24,6 @@ import { friendlyError } from '@/lib/errors';
 import { LOCAL_FEATURES } from '@/lib/features';
 import { fonts, radius, space } from '@/theme';
 
-const MAX_CAPTION = 2200;
 const MAX_POST_TAGS = 20;
 
 function stageText(stage: PublishStage, done: number, total: number) {
@@ -150,7 +156,11 @@ export default function NewPost() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
           {photos.map((p, i) => (
             <View key={`${p.uri}-${i}`}>
-              <Image source={p.thumbnail ?? (video ? undefined : { uri: p.uri })} style={styles.thumb} contentFit="cover" />
+              <Image
+                source={p.thumbnail ?? (video ? undefined : { uri: p.uri })}
+                style={styles.thumb}
+                contentFit="cover"
+              />
               {video ? (
                 <View style={styles.videoBadge} pointerEvents="none">
                   <Text style={styles.videoBadgeText}>{`Video, ${Math.round(video.durationMs / 1000)}s`}</Text>
@@ -214,7 +224,12 @@ export default function NewPost() {
             <Text style={styles.topicSection}>{g.label}</Text>
             <View style={styles.chips}>
               {g.items.map((i) => (
-                <Chip key={i.id} label={i.label} selected={tags.includes(i.id)} onPress={() => !busy && toggleTag(i.id)} />
+                <Chip
+                  key={i.id}
+                  label={i.label}
+                  selected={tags.includes(i.id)}
+                  onPress={() => !busy && toggleTag(i.id)}
+                />
               ))}
             </View>
           </View>
@@ -224,8 +239,8 @@ export default function NewPost() {
           <View style={styles.warning} accessibilityRole="alert">
             <Text style={styles.warningTitle}>Please avoid showing children’s faces</Text>
             <Text style={styles.warningText}>
-              This post is public to everyone nearby. Shoot from behind, crop faces out, or share kid photos
-              in a members-only group once groups are available.
+              This post is public to everyone nearby. Shoot from behind, crop faces out, or share kid photos in a
+              members-only group once groups are available.
             </Text>
           </View>
         ) : null}
@@ -281,7 +296,7 @@ export default function NewPost() {
         <Button label="Post" onPress={submit} disabled={photos.length === 0} loading={busy} />
       </ScrollView>
       <TagEditor
-        photo={tagging != null ? photos[tagging] ?? null : null}
+        photo={tagging != null ? (photos[tagging] ?? null) : null}
         mediaIndex={tagging ?? 0}
         tags={itemTags.filter((t) => t.media === tagging)}
         remainingForPost={MAX_POST_TAGS - itemTags.length}
@@ -312,7 +327,13 @@ const styles = StyleSheet.create({
   body: { padding: space.lg, gap: space.lg },
   thumbs: { gap: space.sm },
   thumb: { width: 112, height: 140, borderRadius: radius.tag, backgroundColor: colors.wash },
-  add: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.ink, borderStyle: 'dashed' },
+  add: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.ink,
+    borderStyle: 'dashed',
+  },
   addText: { fontFamily: fonts.semibold, color: colors.ink, fontSize: 14 },
   addHint: { fontFamily: fonts.body, color: colors.muted, fontSize: 12, marginTop: 2 },
   videoBadge: {

@@ -2,13 +2,14 @@ import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Avatar, Button, Centered } from '@/components/ui';
+import { Button, Centered } from '@/components/ui';
 import { shareInvite } from '@/features/people/invite';
 import { useAuthorFeed } from '@/features/posts/hooks';
 import { PostGrid } from '@/features/posts/PostGrid';
 import { friendlyError } from '@/lib/errors';
 import { colors, fonts, space, type } from '@/theme';
 import { useFollow, useProfile } from './hooks';
+import { UserAvatar } from './UserAvatar';
 
 // A profile: masthead name, counts, follow and message, then a grid of posts.
 // Used for other people's profiles and for the Profile tab (where `isTab` hides Back).
@@ -46,7 +47,7 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
   const header = (
     <View style={styles.info}>
       <View style={styles.identity}>
-        <Avatar name={p.displayName} size={76} />
+        <UserAvatar userId={p.id} name={p.displayName} size={76} />
         <View style={styles.counts}>
           <Stat value={morePosts ? `${postCount}+` : String(postCount)} label={postCount === 1 ? 'post' : 'posts'} />
           <Stat value={p.followerCount.toLocaleString()} label={p.followerCount === 1 ? 'follower' : 'followers'} />
@@ -65,7 +66,7 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
       {p.bio ? <Text style={type.body}>{p.bio}</Text> : null}
       {p.isMe ? (
         <View style={styles.actions}>
-          <Button style={styles.flex} label="Find friends" onPress={() => router.push('/find-friends')} />
+          <Button style={styles.flex} label="Edit profile" variant="secondary" onPress={() => router.push('/edit-profile')} />
           <Button style={styles.flex} label="Share profile" variant="quiet" onPress={() => void shareInvite(p.handle)} />
         </View>
       ) : (
@@ -98,6 +99,11 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
         <Text style={styles.topHandle} numberOfLines={1}>
           {p.handle}
         </Text>
+        {isTab ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Find friends" onPress={() => router.push('/find-friends')} hitSlop={10}>
+            <Feather name="user-plus" size={22} color={colors.ink} />
+          </Pressable>
+        ) : null}
         {isTab ? (
           <Pressable accessibilityRole="button" accessibilityLabel="Saved" onPress={() => router.push('/saved')} hitSlop={10}>
             <Feather name="bookmark" size={22} color={colors.ink} />

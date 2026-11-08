@@ -211,6 +211,12 @@ export async function setPostSaved(postId: string, saved: boolean): Promise<void
   check(await supabase.rpc('set_post_saved', { p_post_id: postId, p_saved: saved }));
 }
 
+export const MAX_CAPTION = 2200;
+
+export async function updateCaption(postId: string, caption: string): Promise<void> {
+  check(await supabase.rpc('update_post_caption', { p_post_id: postId, p_caption: caption.trim() }));
+}
+
 export async function deletePost(postId: string): Promise<void> {
   check(await supabase.rpc('delete_my_post', { p_post_id: postId }));
 }

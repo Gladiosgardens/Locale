@@ -16,7 +16,11 @@ jest.mock('@/features/posts/hooks', () => ({
   useLikePost: () => ({ mutate: mockLike }),
   useSavePost: () => ({ mutate: mockSave }),
   useSimilarItems: () => ({ data: undefined, isPending: false }),
+  useUpdateCaption: () => ({ mutate: mockUpdateCaption, isPending: false }),
 }));
+const mockUpdateCaption = jest.fn();
+let mockUnread = 0;
+jest.mock('@/features/activity/hooks', () => ({ useActivityUnread: () => ({ data: mockUnread }) }));
 jest.mock('@/features/social/hooks', () => ({
   useItemSaved: () => ({ data: false }),
   useSaveItem: () => ({ mutate: jest.fn() }),
@@ -60,6 +64,7 @@ function feedResult(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   mockFollowing = 4;
+  mockUnread = 0;
   (useInterests as jest.Mock).mockReturnValue({
     data: [
       { id: 1, slug: 'dogs', label: 'Dogs', sort_order: 1, is_family: false, section: 'everyday' },
@@ -96,6 +101,7 @@ describe('Feed', () => {
     expect(menus).toHaveLength(2);
     await fireEvent.press(menus[0]);
     expect(screen.getByRole('button', { name: 'Delete post' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Edit caption' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Block/ })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
     await fireEvent.press(menus[1]);
@@ -105,6 +111,26 @@ describe('Feed', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
     await fireEvent.press(screen.getByRole('link', { name: 'Open Ben’s profile' }));
     expect(mockPush).toHaveBeenCalledWith('/profile/other');
+  });
+
+  it('edits the caption of your own post', async () => {
+    (useFeed as jest.Mock).mockReturnValue(feedResult());
+    await render(<Feed />);
+    await fireEvent.press(screen.getAllByRole('button', { name: 'Post options' })[0]);
+    await fireEvent.press(screen.getByRole('button', { name: 'Edit caption' }));
+    expect(screen.getByLabelText('Caption').props.value).toBe('Caption p1');
+    await fireEvent.changeText(screen.getByLabelText('Caption'), 'New words');
+    await fireEvent.press(screen.getByRole('button', { name: 'Save caption' }));
+    expect(mockUpdateCaption).toHaveBeenCalledWith({ id: 'p1', caption: 'New words' }, expect.anything());
+  });
+
+  it('shows new activity on the heart and opens it', async () => {
+    (useFeed as jest.Mock).mockReturnValue(feedResult());
+    mockUnread = 12;
+    await render(<Feed />);
+    expect(screen.getByText('9+')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Activity, 12 new' }));
+    expect(mockPush).toHaveBeenCalledWith('/activity');
   });
 
   it('shows tagged items as a Shop the look strip that opens the item', async () => {

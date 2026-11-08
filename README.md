@@ -41,7 +41,20 @@ Built so far:
 
 14. **Automatic item detection:** in the tagging screen, **Find items automatically** sends the photo to `detect-items`, which asks an Anthropic vision model for the shoppable items it sees (never people) and looks each up with Google Lens through SerpApi (photo plus a search phrase). The poster picks a match, tags it by name without a link, or ignores it; nothing is tagged without their choice. A photo uploaded for detection is reused when publishing. Viewers get **Find similar online** in an item's sheet (`similar-items`, cached for a week). Limits: 30 detections and 40 new similar lookups per person per day. **Show shopping on this post** (default in Settings → Shopping) turns off tags, links and detection for a post. Secrets: `ANTHROPIC_API_KEY`, `SERPAPI_KEY`, optional `ANTHROPIC_MODEL` (default `claude-haiku-5-5`).
 
+15. **Profile photos, edit profile, activity, replies:** **Edit profile** (on your profile) changes your photo, name, username and bio. Profile photos go through `set-avatar`, which re-encodes the JPEG (stripping location and other metadata) into a public `avatars` bucket and deletes the previous one; photos show next to names everywhere. The heart on Home opens **Activity**: likes, comments, replies and new followers, with a badge for what's new since you last looked. Comments can be liked and replied to (one level deep; replying to a reply joins that thread), and the comment's author gets a push for replies. Your own posts have **Edit caption** in their ••• menu.
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 15
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy set-avatar
+npx supabase functions deploy deliver-notifications
+```
+
+No new build is needed; restart the dev server with `npx expo start --dev-client --clear`.
 
 ### Updating an existing install to step 14
 
@@ -243,6 +256,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Unused uploads.** Photos uploaded for detection but never posted stay in `post-uploads`; add a daily cleanup of files older than a day.
 - **Automatic results are third-party data.** SerpApi reads Google's results; review its terms and the Legal Shield plan before relying on it at scale, and disclose "found automatically" (the app already labels similar items).
 - **Video privacy and moderation.** Switch Mux playback to signed URLs (tokens issued only for posts the viewer may see), delete the Mux asset when a post is deleted or removed, and scan videos for illegal content (the same requirement as photos) before they go public.
+- **Profile photo moderation.** Profile photos are public (anyone with the link can load them) and not yet scanned; include them in image safety scanning and let people report a profile photo.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

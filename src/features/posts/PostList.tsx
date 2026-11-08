@@ -10,6 +10,7 @@ import { useBlockUser } from '@/features/safety/hooks';
 import { useInterests } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
 import type { FeedPost, Item } from './api';
+import { EditCaptionSheet } from './EditCaptionSheet';
 import { useDeletePost } from './hooks';
 import { PostActions, type PostAction } from './PostActions';
 import { PostCard } from './PostCard';
@@ -35,6 +36,7 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   const [menuPost, setMenuPost] = useState<FeedPost | null>(null);
   const [reporting, setReporting] = useState<ReportSubject | null>(null);
   const [storyPost, setStoryPost] = useState<FeedPost | null>(null);
+  const [editing, setEditing] = useState<FeedPost | null>(null);
   // The post most on screen; its video (if any) plays.
   const [activeId, setActiveId] = useState<string | null>(null);
   // FlatList needs this callback to stay the same for the list's lifetime.
@@ -48,6 +50,8 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   function onPick(action: PostAction, post: FeedPost) {
     const fail = (e: unknown) => Alert.alert(friendlyError(e));
     switch (action) {
+      case 'edit':
+        return setEditing(post);
       case 'story':
         return setStoryPost(post);
       case 'share':
@@ -122,6 +126,7 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
         onClose={() => setMenuPost(null)}
       />
       <ReportSheet subject={reporting} onClose={() => setReporting(null)} />
+      <EditCaptionSheet post={editing} onClose={() => setEditing(null)} />
       <StoryShareSheet post={storyPost} interests={interestMap} onClose={() => setStoryPost(null)} />
     </>
   );
