@@ -14,5 +14,6 @@ export function usePrivateSettings() {
   const setDmPolicy = useMutation({ mutationFn: api.setDmPolicy, onSuccess: refresh });
   const setNotifications = useMutation({ mutationFn: api.setNotificationPreferences, onSuccess: refresh });
   const setFindable = useMutation({ mutationFn: api.setFindableByEmail, onSuccess: refresh });
-  return { query, setDmPolicy, setNotifications, setFindable };
+  const setShoppingDefault = useMutation({ mutationFn: api.setShoppingDefault, onSuccess: refresh });
+  return { query, setDmPolicy, setNotifications, setFindable, setShoppingDefault };
 }

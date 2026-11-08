@@ -46,6 +46,19 @@ export default function Settings() {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Shopping</Text>
+          <View style={styles.row}>
+            <Text style={[styles.text, styles.flex]}>Show shopping on my posts by default</Text>
+            <Switch
+              accessibilityLabel="Show shopping on my posts by default"
+              value={prefs?.shoppingDefault ?? true}
+              onValueChange={(v) => settings.setShoppingDefault.mutate(v, { onError: fail })}
+            />
+          </View>
+          <Text style={styles.muted}>You can still change it for each post. When it’s off, posts have no tags or shop links.</Text>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Finding you</Text>
           <View style={styles.row}>
             <Text style={[styles.text, styles.flex]}>Let people who have my email find me</Text>

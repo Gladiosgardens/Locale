@@ -57,6 +57,7 @@ export type Database = {
           area_id: string | null;
           dm_policy: string;
           findable_by_email: boolean;
+          shopping_default: boolean;
           notify_comments: boolean;
           notify_follows: boolean;
           notify_groups: boolean;
@@ -326,6 +327,7 @@ export type Database = {
         Returns: undefined;
       };
       set_findable_by_email: { Args: { p_findable: boolean }; Returns: undefined };
+      set_shopping_default: { Args: { p_enabled: boolean }; Returns: undefined };
       search_people: {
         Args: { p_limit?: number; p_query: string };
         Returns: {

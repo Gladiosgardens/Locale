@@ -110,6 +110,7 @@ describe('Saved', () => {
       }]] }, isPending: false, isError: false, hasNextPage: false,
     } as never);
     jest.spyOn(postHooks, 'useFeed').mockReturnValue({ data: { pages: [[]] }, isPending: false } as never);
+    jest.spyOn(postHooks, 'useSimilarItems').mockReturnValue({ data: undefined, isPending: false } as never);
     await render(<Saved />);
     expect(screen.getByText('Desk lamp')).toBeTruthy();
     expect(screen.getByText(/179/)).toBeTruthy();

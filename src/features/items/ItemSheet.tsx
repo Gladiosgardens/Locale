@@ -1,7 +1,10 @@
 import * as WebBrowser from 'expo-web-browser';
-import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
+import { useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui';
 import type { Item } from '@/features/posts/api';
+import { useSimilarItems } from '@/features/posts/hooks';
 import { useItemSaved, useSaveItem } from '@/features/social/hooks';
 import { friendlyError } from '@/lib/errors';
 import { colors, fonts, radius, space, type } from '@/theme';
@@ -10,6 +13,8 @@ import { formatPrice } from './link';
 export function ItemSheet({ item, postId, onClose }: { item: Item | null; postId?: string; onClose: () => void }) {
   const saved = useItemSaved(postId ? item?.id : undefined);
   const save = useSaveItem();
+  const [showSimilar, setShowSimilar] = useState(false);
+  const similar = useSimilarItems(item?.id, postId, showSimilar);
   const byline = item ? [...new Set([item.brand, item.storeName].filter(Boolean))].join(', ') : '';
 
   return (
@@ -61,6 +66,42 @@ export function ItemSheet({ item, postId, onClose }: { item: Item | null; postId
                 }
               />
             ) : null}
+            {postId && !showSimilar ? (
+              <Button label="Find similar online" variant="quiet" onPress={() => setShowSimilar(true)} />
+            ) : null}
+            {showSimilar ? (
+              <View style={styles.similar}>
+                <Text style={styles.similarTitle}>Similar items</Text>
+                <Text style={styles.note}>Found automatically. They may not be the exact item.</Text>
+                {similar.isPending ? <ActivityIndicator color={colors.ink} /> : null}
+                {similar.isError ? <Text style={styles.note}>{friendlyError(similar.error)}</Text> : null}
+                {similar.data?.length === 0 ? <Text style={styles.note}>Nothing similar found.</Text> : null}
+                <ScrollView style={styles.similarList}>
+                  {(similar.data ?? []).map((m) => (
+                    <Pressable
+                      key={m.url}
+                      accessibilityRole="link"
+                      accessibilityLabel={[m.title, m.store ?? m.host, m.priceCents != null && m.currency ? formatPrice(m.priceCents, m.currency) : null]
+                        .filter(Boolean)
+                        .join(', ')}
+                      onPress={() => void WebBrowser.openBrowserAsync(m.url, { dismissButtonStyle: 'close' })}
+                      style={({ pressed }) => [styles.match, pressed && styles.pressed]}
+                    >
+                      <Image source={m.thumbnail ? { uri: m.thumbnail } : undefined} style={styles.matchImage} contentFit="cover" />
+                      <View style={styles.matchText}>
+                        <Text style={styles.matchTitle} numberOfLines={2}>
+                          {m.title}
+                        </Text>
+                        <Text style={styles.matchMeta}>{m.store ?? m.host}</Text>
+                        {m.priceCents != null && m.currency ? (
+                          <Text style={styles.matchPrice}>{formatPrice(m.priceCents, m.currency)}</Text>
+                        ) : null}
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
             <Button label="Close" variant="quiet" onPress={onClose} />
           </View>
         </View>
@@ -104,4 +145,14 @@ const styles = StyleSheet.create({
   },
   actions: { gap: space.sm, marginTop: space.sm },
   note: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, textAlign: 'center' },
+  similar: { gap: space.sm },
+  similarTitle: { fontFamily: fonts.displayItalic, fontSize: 19, color: colors.ink },
+  similarList: { maxHeight: 260 },
+  match: { flexDirection: 'row', gap: space.md, alignItems: 'center', paddingVertical: space.sm },
+  pressed: { opacity: 0.7 },
+  matchImage: { width: 52, height: 52, borderRadius: radius.tag, backgroundColor: colors.wash },
+  matchText: { flex: 1, gap: 2 },
+  matchTitle: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ink },
+  matchMeta: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
+  matchPrice: { fontFamily: fonts.semibold, fontSize: 14, color: colors.ultramarine },
 });

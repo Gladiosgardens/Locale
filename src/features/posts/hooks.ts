@@ -85,6 +85,29 @@ export function usePost(postId: string | undefined) {
   });
 }
 
+/** Prepares and uploads a photo (once), then asks the server what's in it. */
+export function useDetectItems() {
+  const { session } = useAuth();
+  return useMutation({
+    mutationFn: async (photo: api.PickedPhoto): Promise<{ uploadedPath: string; items: api.DetectedItem[] }> => {
+      const userId = session?.user.id;
+      if (!userId) throw new Error('not_authenticated');
+      const uploadedPath = photo.uploadedPath ?? (await api.uploadPhoto(userId, (await api.preparePhoto(photo)).uri));
+      return { uploadedPath, items: await api.detectItems(uploadedPath) };
+    },
+  });
+}
+
+export function useSimilarItems(itemId: string | undefined, postId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['similar', itemId],
+    queryFn: () => api.similarItems(itemId!, postId!),
+    enabled: enabled && !!itemId && !!postId,
+    staleTime: 60 * 60_000,
+    retry: false,
+  });
+}
+
 export function useLikePost() {
   return useMutation({ mutationFn: ({ id, like }: { id: string; like: boolean }) => api.setLike(id, like) });
 }
@@ -121,6 +144,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
       tags?: api.DraftTag[];
       searchable?: boolean;
       groupId?: string | null;
+      shopping?: boolean;
     }) => {
       const userId = session?.user.id;
       if (!userId) throw new Error('not_authenticated');
@@ -128,6 +152,10 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
       const total = input.photos.length;
       const uploads: string[] = [];
       for (const [i, photo] of input.photos.entries()) {
+        if (photo.uploadedPath) {
+          uploads.push(photo.uploadedPath); // already prepared and uploaded for detection
+          continue;
+        }
         onStage?.('preparing', i, total);
         const prepared = await api.preparePhoto(photo);
         onStage?.('uploading', i, total);
@@ -142,6 +170,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
         searchable: input.searchable,
         groupId: input.groupId,
         videoUploadId,
+        shopping: input.shopping,
       });
     },
     onSuccess: () => {

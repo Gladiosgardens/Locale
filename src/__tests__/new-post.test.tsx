@@ -12,7 +12,12 @@ jest.mock('expo-video', () => ({
   createVideoPlayer: () => ({ generateThumbnailsAsync: async () => [{}], release: jest.fn() }),
 }));
 jest.mock('@/features/onboarding/hooks', () => ({ useInterests: jest.fn(), useMyProfile: jest.fn() }));
-jest.mock('@/features/posts/hooks', () => ({ usePublishPost: jest.fn() }));
+const mockDetect = jest.fn();
+jest.mock('@/features/posts/hooks', () => ({ usePublishPost: jest.fn(), useDetectItems: () => ({ mutateAsync: mockDetect }) }));
+let mockShoppingDefault = true;
+jest.mock('@/features/settings/hooks', () => ({
+  usePrivateSettings: () => ({ query: { data: { shoppingDefault: mockShoppingDefault } } }),
+}));
 let mockLocal = false;
 jest.mock('@/lib/features', () => ({
   get LOCAL_FEATURES() {
@@ -23,6 +28,7 @@ jest.mock('@/lib/features', () => ({
 const mutateAsync = jest.fn();
 
 beforeEach(() => {
+  mockShoppingDefault = true;
   jest.clearAllMocks();
   mockParams = {};
   mockLocal = false;
@@ -66,6 +72,7 @@ describe('New post', () => {
       searchable: true,
       groupId: null,
       video: null,
+      shopping: true,
     });
   });
 
@@ -89,6 +96,22 @@ describe('New post', () => {
         }),
       ),
     );
+  });
+
+  it('can turn shopping off for a post, following the Settings default', async () => {
+    mockShoppingDefault = false;
+    mutateAsync.mockResolvedValue('post-id');
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///a.jpg', width: 100, height: 100 }],
+    });
+    await render(<NewPost />);
+    expect(screen.getByLabelText('Show shopping on this post').props.value).toBe(false);
+    await fireEvent.press(screen.getByRole('button', { name: /Add photos/ }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Tag items in photo 1' })).toBeNull());
+    expect(screen.getByText(/No tags or shop links will appear/)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ shopping: false, tags: [] })));
   });
 
   it('refuses videos over 60 seconds', async () => {

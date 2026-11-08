@@ -9,12 +9,13 @@ export type PrivateSettings = {
   notifyFollows: boolean;
   notifyComments: boolean;
   findableByEmail: boolean;
+  shoppingDefault: boolean;
 };
 
 export async function getPrivateSettings(userId: string): Promise<PrivateSettings> {
   const result = await supabase
     .from('profile_private')
-    .select('dm_policy, notify_messages, notify_groups, notify_follows, notify_comments, findable_by_email')
+    .select('dm_policy, notify_messages, notify_groups, notify_follows, notify_comments, findable_by_email, shopping_default')
     .eq('profile_id', userId)
     .maybeSingle();
   const row = unwrap(result) as {
@@ -24,6 +25,7 @@ export async function getPrivateSettings(userId: string): Promise<PrivateSetting
     notify_follows: boolean;
     notify_comments: boolean;
     findable_by_email: boolean;
+    shopping_default: boolean;
   } | null;
   return {
     dmPolicy: (row?.dm_policy ?? 'everyone') as DmPolicy,
@@ -32,11 +34,16 @@ export async function getPrivateSettings(userId: string): Promise<PrivateSetting
     notifyFollows: row?.notify_follows ?? true,
     notifyComments: row?.notify_comments ?? true,
     findableByEmail: row?.findable_by_email ?? true,
+    shoppingDefault: row?.shopping_default ?? true,
   };
 }
 
 export async function setDmPolicy(policy: DmPolicy): Promise<void> {
   check(await supabase.rpc('set_dm_policy', { p_policy: policy }));
+}
+
+export async function setShoppingDefault(enabled: boolean): Promise<void> {
+  check(await supabase.rpc('set_shopping_default', { p_enabled: enabled }));
 }
 
 export async function setFindableByEmail(findable: boolean): Promise<void> {

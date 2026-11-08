@@ -11,7 +11,8 @@ import { groupBySection } from '@/features/onboarding/sections';
 import { MAX_PHOTOS, MAX_POST_INTERESTS, type DraftTag, type PickedPhoto, type PickedVideo } from '@/features/posts/api';
 import { MAX_VIDEO_MS } from '@/features/video/mux';
 import { createVideoPlayer } from 'expo-video';
-import { usePublishPost, type PublishStage } from '@/features/posts/hooks';
+import { useDetectItems, usePublishPost, type PublishStage } from '@/features/posts/hooks';
+import { usePrivateSettings } from '@/features/settings/hooks';
 import { friendlyError } from '@/lib/errors';
 import { LOCAL_FEATURES } from '@/lib/features';
 import { fonts, radius, space } from '@/theme';
@@ -33,6 +34,11 @@ export default function NewPost() {
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   // A post is photos or one video. The video's poster frame stands in as photo 0 for tagging.
   const [video, setVideo] = useState<PickedVideo | null>(null);
+  // "Show shopping on this post": off means no tags, no links, no detection.
+  const settings = usePrivateSettings();
+  const [shoppingChoice, setShoppingChoice] = useState<boolean | null>(null);
+  const shopping = shoppingChoice ?? settings.query.data?.shoppingDefault ?? true;
+  const detectMut = useDetectItems();
   const [caption, setCaption] = useState('');
   const [tags, setTags] = useState<number[]>([]);
   const [itemTags, setItemTags] = useState<DraftTag[]>([]);
@@ -112,7 +118,8 @@ export default function NewPost() {
         video,
         caption,
         interestIds: tags,
-        tags: itemTags,
+        tags: shopping ? itemTags : [],
+        shopping,
         // Kid-related posts are never shown outside the area (also enforced server-side).
         searchable: !(nearbyOnly || familySelected),
         groupId: groupId ?? null,
@@ -159,7 +166,7 @@ export default function NewPost() {
                   <Text style={styles.removeText}>×</Text>
                 </Pressable>
               ) : null}
-              {!busy ? (
+              {!busy && shopping ? (
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={video ? 'Tag items in the video' : `Tag items in photo ${i + 1}`}
@@ -254,6 +261,21 @@ export default function NewPost() {
           </>
         )}
 
+        <View style={styles.switchRow}>
+          <Switch
+            accessibilityLabel="Show shopping on this post"
+            value={shopping}
+            onValueChange={setShoppingChoice}
+            disabled={busy}
+          />
+          <Text style={styles.switchText}>Show shopping on this post</Text>
+        </View>
+        <Text style={styles.notice}>
+          {shopping
+            ? 'Tagged items and where to buy them appear on the post.'
+            : 'No tags or shop links will appear on this post, and it won’t be scanned for items.'}
+        </Text>
+
         <ErrorText>{error}</ErrorText>
         {progress ? <Text style={styles.progress}>{progress}</Text> : null}
         <Button label="Post" onPress={submit} disabled={photos.length === 0} loading={busy} />
@@ -265,6 +287,17 @@ export default function NewPost() {
         remainingForPost={MAX_POST_TAGS - itemTags.length}
         onChange={(next) => setItemTags((prev) => [...prev.filter((t) => t.media !== tagging), ...next])}
         onClose={() => setTagging(null)}
+        onDetect={
+          shopping && !video && tagging != null
+            ? async () => {
+                const index = tagging;
+                const { uploadedPath, items } = await detectMut.mutateAsync(photos[index]);
+                // Remember the upload so publishing doesn't upload this photo again.
+                setPhotos((prev) => prev.map((p, i) => (i === index ? { ...p, uploadedPath } : p)));
+                return items;
+              }
+            : undefined
+        }
       />
     </SafeAreaView>
   );

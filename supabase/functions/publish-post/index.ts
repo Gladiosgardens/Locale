@@ -2,7 +2,7 @@
 //
 // POST { uploads: ["<uid>/<uuid>.jpg", ...] | video: { uploadId }, caption?: string,
 //        interestIds?: number[], tags?: [{ media, x, y, item: {...} }], searchable?: boolean,
-//        groupId?: string }
+//        groupId?: string, shopping?: boolean }
 //   -> 200 { id } | 4xx/5xx { error: "<code>" }
 //
 // Steps: verify the caller, re-sanitise every image (strip EXIF/GPS/XMP/IPTC,
@@ -61,6 +61,7 @@ const json = (status: number, body: unknown) =>
 type Body = {
   uploads?: unknown;
   video?: unknown;
+  shopping?: unknown;
   caption?: unknown;
   interestIds?: unknown;
   tags?: unknown;
@@ -108,6 +109,7 @@ function parseBody(body: Body, uid: string) {
   }
 
   return {
+    shopping: body.shopping !== false,
     videoUploadId: videoUploadId as string | null,
     uploads: uploads as string[],
     caption: caption as string | null,
@@ -194,7 +196,8 @@ Deno.serve(async (req) => {
       p_caption: input.caption,
       p_interest_ids: input.interestIds,
       p_media: media,
-      p_tags: input.tags,
+      // With shopping off, nothing is tagged.
+      p_tags: input.shopping ? input.tags : [],
       p_searchable: input.searchable,
       p_group_id: input.groupId,
     });
@@ -204,6 +207,9 @@ Deno.serve(async (req) => {
       throw new Error(`create_post_record failed: ${rpcError.message}`);
     }
 
+    if (!input.shopping) {
+      await admin.from('posts').update({ shopping_enabled: false }).eq('id', postId);
+    }
     return json(200, { id: postId });
   } catch (e) {
     if (written.length) await admin.storage.from('post-media').remove(written);

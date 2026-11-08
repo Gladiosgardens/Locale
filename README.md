@@ -39,7 +39,22 @@ Built so far:
 
 13. **Short videos (Mux):** a post can be one video of up to 60 seconds instead of photos. The phone uploads straight to Mux with a one-time URL from `create-video-upload` (20 a day per person); the app polls `video-status` until Mux has processed it, then `publish-post` re-checks it with Mux (uploaded by this person, ready, at most 60 s) before `create_post_record` attaches it. Items are tagged on the video's poster frame and listed in the "Shop this" strip (no dots on moving video). In feeds, the video on screen plays muted on a loop; tap for sound. Grids show a play icon. Mux credentials are Supabase secrets: `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`.
 
+14. **Automatic item detection:** in the tagging screen, **Find items automatically** sends the photo to `detect-items`, which asks an Anthropic vision model for the shoppable items it sees (never people) and looks each up with Google Lens through SerpApi (photo plus a search phrase). The poster picks a match, tags it by name without a link, or ignores it; nothing is tagged without their choice. A photo uploaded for detection is reused when publishing. Viewers get **Find similar online** in an item's sheet (`similar-items`, cached for a week). Limits: 30 detections and 40 new similar lookups per person per day. **Show shopping on this post** (default in Settings → Shopping) turns off tags, links and detection for a post. Secrets: `ANTHROPIC_API_KEY`, `SERPAPI_KEY`, optional `ANTHROPIC_MODEL` (default `claude-haiku-5-5`).
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 14
+
+```
+git pull && npm install
+npx supabase secrets set ANTHROPIC_API_KEY=... SERPAPI_KEY=...
+npx supabase db push --remote
+npx supabase functions deploy detect-items
+npx supabase functions deploy similar-items
+npx supabase functions deploy publish-post
+```
+
+No new build is needed beyond step 13's.
 
 ### Updating an existing install to step 13
 
@@ -225,6 +240,8 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - CAPTCHA on sign-in (Supabase Auth supports hCaptcha/Turnstile) and a custom SMTP provider with sensible rate limits.
 - The 18+ gate is self-attested; get the age-rating questionnaire and COPPA position reviewed.
 - Moderation for area and display names.
+- **Unused uploads.** Photos uploaded for detection but never posted stay in `post-uploads`; add a daily cleanup of files older than a day.
+- **Automatic results are third-party data.** SerpApi reads Google's results; review its terms and the Legal Shield plan before relying on it at scale, and disclose "found automatically" (the app already labels similar items).
 - **Video privacy and moderation.** Switch Mux playback to signed URLs (tokens issued only for posts the viewer may see), delete the Mux asset when a post is deleted or removed, and scan videos for illegal content (the same requirement as photos) before they go public.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 

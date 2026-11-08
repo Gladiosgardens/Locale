@@ -215,7 +215,14 @@ export async function deletePost(postId: string): Promise<void> {
   check(await supabase.rpc('delete_my_post', { p_post_id: postId }));
 }
 
-export type PickedPhoto = { uri: string; width: number; height: number; thumbnail?: ImageRef };
+export type PickedPhoto = {
+  uri: string;
+  width: number;
+  height: number;
+  thumbnail?: ImageRef;
+  /** Set once the photo has been prepared and uploaded (for detection), so publishing reuses it. */
+  uploadedPath?: string;
+};
 
 // Re-encode as JPEG, at most 2048 px on the long edge. Re-rendering applies
 // the orientation and drops EXIF (incl. GPS) on the device; the server strips
@@ -275,6 +282,30 @@ async function invokeFn<T>(name: string, body: Record<string, unknown>, fallback
   return data!;
 }
 
+export type ShopMatch = {
+  title: string;
+  store: string | null;
+  url: string;
+  host: string;
+  priceCents: number | null;
+  currency: string | null;
+  thumbnail: string | null;
+};
+
+export type DetectedItem = { name: string; category: string; x: number; y: number; query: string; matches: ShopMatch[] };
+
+/** Finds shoppable items in an uploaded photo, with suggested places to buy each. */
+export async function detectItems(uploadPath: string): Promise<DetectedItem[]> {
+  const res = await invokeFn<{ items: DetectedItem[] }>('detect-items', { path: uploadPath }, 'detection_failed');
+  return res.items ?? [];
+}
+
+/** Similar products for an item on a post (for items with or without a link). */
+export async function similarItems(itemId: string, postId: string): Promise<ShopMatch[]> {
+  const res = await invokeFn<{ matches: ShopMatch[] }>('similar-items', { itemId, postId }, 'detection_failed');
+  return res.matches ?? [];
+}
+
 export type PickedVideo = { uri: string; width: number; height: number; durationMs: number };
 
 export function createVideoUpload(): Promise<{ uploadId: string; url: string }> {
@@ -305,11 +336,13 @@ export async function publishPost(input: {
   searchable?: boolean;
   groupId?: string | null;
   videoUploadId?: string | null;
+  shopping?: boolean;
 }): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ id: string }>('publish-post', {
     body: {
       uploads: input.uploads,
       ...(input.videoUploadId ? { video: { uploadId: input.videoUploadId } } : {}),
+      ...(input.shopping === false ? { shopping: false } : {}),
       caption: input.caption.trim() || null,
       interestIds: input.interestIds,
       tags: input.tags ?? [],

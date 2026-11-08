@@ -15,6 +15,7 @@ jest.mock('@/features/posts/hooks', () => ({
   useDeletePost: jest.fn(),
   useLikePost: () => ({ mutate: mockLike }),
   useSavePost: () => ({ mutate: mockSave }),
+  useSimilarItems: () => ({ data: undefined, isPending: false }),
 }));
 jest.mock('@/features/social/hooks', () => ({
   useItemSaved: () => ({ data: false }),
