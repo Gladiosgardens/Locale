@@ -45,18 +45,39 @@ Deno.serve(async (req) => {
   try {
     const { data: file, error } = await admin.storage.from('post-uploads').download(path);
     if (error || !file) return json(404, { error: 'upload_missing' });
-    const items = await detectItems(
+    const { items, note } = await detectItems(
       anthropicKey,
-      Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-haiku-5-5',
+      Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5-5',
       toBase64(new Uint8Array(await file.arrayBuffer())),
     );
-    if (!items.length) return json(200, { items: [] });
-
     const { data: signed } = await admin.storage.from('post-uploads').createSignedUrl(path, SIGNED_SECONDS);
+
+    if (!items.length) {
+      // Visible in the dashboard's function logs, to see why nothing was found.
+      console.log('detect-items: no items from model', note);
+      // Fall back to Google Lens on the whole photo: usually finds the main product.
+      if (!signed?.signedUrl) return json(200, { items: [] });
+      const matches = await lensMatches(serpKey, signed.signedUrl, null).catch((e) => {
+        console.error('detect-items lens fallback', e);
+        return [];
+      });
+      return json(200, {
+        items: matches.length
+          ? [{ name: 'Similar to this photo', category: 'other', x: 0.5, y: 0.5, query: '', matches }]
+          : [],
+      });
+    }
+
     if (!signed?.signedUrl) return json(200, { items: items.map((it) => ({ ...it, matches: [] })) });
     // Look items up in parallel; one failed lookup just leaves that item without matches.
     const results = await Promise.all(
-      items.map(async (it) => ({ ...it, matches: await lensMatches(serpKey, signed.signedUrl, it.query).catch(() => []) })),
+      items.map(async (it) => ({
+        ...it,
+        matches: await lensMatches(serpKey, signed.signedUrl, it.query).catch((e) => {
+          console.error('detect-items lens', it.query, e);
+          return [];
+        }),
+      })),
     );
     return json(200, { items: results });
   } catch (e) {

@@ -1,4 +1,4 @@
-import { DETECTION_PROMPT, parseDetection, parseLensMatches } from '../../supabase/functions/_shared/detect';
+import { DETECTION_PROMPT, parseDetection, parseLensMatches, readDetectionResponse } from '../../supabase/functions/_shared/detect';
 
 describe('parseDetection', () => {
   it('reads items, clamps positions, trims text and caps the count', () => {
@@ -52,5 +52,23 @@ describe('parseLensMatches', () => {
   it('copes with empty or odd responses', () => {
     expect(parseLensMatches(null)).toEqual([]);
     expect(parseLensMatches({ error: 'Google hasn’t returned any results' })).toEqual([]);
+  });
+});
+
+describe('readDetectionResponse', () => {
+  it('reads the forced tool call', () => {
+    const r = readDetectionResponse({
+      stop_reason: 'tool_use',
+      content: [{ type: 'tool_use', input: { items: [{ name: 'Oak desk', category: 'Furniture', x: 0.4, y: 1.4, query: 'light oak desk' }] } }],
+    });
+    expect(r.items).toEqual([{ name: 'Oak desk', category: 'furniture', x: 0.4, y: 0.98, query: 'light oak desk' }]);
+    expect(r.note).toContain('tool=true');
+  });
+
+  it('falls back to JSON in text, and explains an empty answer', () => {
+    expect(readDetectionResponse({ content: [{ type: 'text', text: '{"items":[{"name":"Lamp","category":"lighting","x":0.1,"y":0.2,"query":"brass lamp"}]}' }] }).items).toHaveLength(1);
+    const empty = readDetectionResponse({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'No products here.' }] });
+    expect(empty.items).toEqual([]);
+    expect(empty.note).toBe('stop=end_turn tool=false text=No products here.');
   });
 });

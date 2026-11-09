@@ -25,23 +25,53 @@ Rules:
 - At most ${MAX_ITEMS} items, the most prominent first. Skip anything tiny, blurry or cut off.
 - Never describe or identify people, faces, bodies, or anything about who someone is. Describe only the products.
 - For each item give: "name" (2-5 words, e.g. "Camel wool coat"), "category" (one word), "x" and "y" (where the item's centre is, as fractions of the image width and height from the top-left, 0 to 1), and "query" (a shopping search phrase with colour, material, style and a visible brand only if you can read it, e.g. "camel double breasted wool coat women").
-Reply with JSON only, no other text: {"items":[{"name":"","category":"","x":0.5,"y":0.5,"query":""}]}`;
+Report them with the report_items tool. If there is nothing to buy, report an empty list.`;
+
+// Forcing a tool call makes the reply structured JSON, not prose to parse.
+export const REPORT_TOOL = {
+  name: 'report_items',
+  description: 'Report the shoppable items found in the photo.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      items: {
+        type: 'array',
+        maxItems: MAX_ITEMS,
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: '2-5 words, e.g. "Camel wool coat"' },
+            category: { type: 'string', description: 'One word' },
+            x: { type: 'number', description: "Centre of the item, fraction of image width from the left (0-1)" },
+            y: { type: 'number', description: "Centre of the item, fraction of image height from the top (0-1)" },
+            query: { type: 'string', description: 'Shopping search phrase: colour, material, style, readable brand' },
+          },
+          required: ['name', 'category', 'x', 'y', 'query'],
+        },
+      },
+    },
+    required: ['items'],
+  },
+} as const;
 
 const clamp01 = (n: unknown) => Math.min(Math.max(Number(n), 0.02), 0.98);
 const clean = (s: unknown, max: number) =>
   typeof s === 'string' ? s.replace(/[\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max) : '';
 
-/** Reads the model's JSON reply; drops anything malformed. */
+/** Reads the model's JSON reply (text containing JSON); drops anything malformed. */
 export function parseDetection(text: string): DetectedItem[] {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start < 0 || end <= start) return [];
-  let raw: unknown;
   try {
-    raw = JSON.parse(text.slice(start, end + 1));
+    return toItems(JSON.parse(text.slice(start, end + 1)));
   } catch {
     return [];
   }
+}
+
+/** Reads the report_items tool input (or an equivalent parsed object). */
+export function toItems(raw: unknown): DetectedItem[] {
   const items = (raw as { items?: unknown[] })?.items;
   if (!Array.isArray(items)) return [];
   return items
@@ -109,13 +139,26 @@ export function parseLensMatches(json: unknown, limit = MATCHES_PER_ITEM): Match
   return out;
 }
 
-export async function detectItems(apiKey: string, model: string, jpegBase64: string): Promise<DetectedItem[]> {
+export type Detection = { items: DetectedItem[]; note: string };
+
+/** Reads a Messages API response: the tool call if there is one, else any JSON in the text. */
+export function readDetectionResponse(body: unknown): Detection {
+  const b = body as { stop_reason?: string; content?: { type: string; text?: string; input?: unknown }[] };
+  const tool = b.content?.find((c) => c.type === 'tool_use');
+  const text = b.content?.find((c) => c.type === 'text')?.text ?? '';
+  const items = tool ? toItems(tool.input) : parseDetection(text);
+  return { items, note: `stop=${b.stop_reason ?? '?'} tool=${!!tool} text=${clean(text, 200)}` };
+}
+
+export async function detectItems(apiKey: string, model: string, jpegBase64: string): Promise<Detection> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
     body: JSON.stringify({
       model,
-      max_tokens: 1024,
+      max_tokens: 1500,
+      tools: [REPORT_TOOL],
+      tool_choice: { type: 'tool', name: 'report_items' },
       messages: [
         {
           role: 'user',
@@ -127,13 +170,13 @@ export async function detectItems(apiKey: string, model: string, jpegBase64: str
       ],
     }),
   });
-  if (!res.ok) throw new Error(`anthropic ${res.status}`);
-  const body = (await res.json()) as { content?: { type: string; text?: string }[] };
-  return parseDetection(body.content?.find((c) => c.type === 'text')?.text ?? '');
+  if (!res.ok) throw new Error(`anthropic ${res.status}: ${clean(await res.text(), 300)}`);
+  return readDetectionResponse(await res.json());
 }
 
-export async function lensMatches(serpApiKey: string, imageUrl: string, query: string): Promise<Match[]> {
-  const params = new URLSearchParams({ engine: 'google_lens', url: imageUrl, q: query, hl: 'en', country: 'us', api_key: serpApiKey });
+export async function lensMatches(serpApiKey: string, imageUrl: string, query: string | null): Promise<Match[]> {
+  const params = new URLSearchParams({ engine: 'google_lens', url: imageUrl, hl: 'en', country: 'us', api_key: serpApiKey });
+  if (query) params.set('q', query);
   const res = await fetch(`https://serpapi.com/search.json?${params}`);
   if (!res.ok) throw new Error(`serpapi ${res.status}`);
   return parseLensMatches(await res.json());
