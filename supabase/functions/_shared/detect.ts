@@ -150,6 +150,23 @@ export function readDetectionResponse(body: unknown): Detection {
   return { items, note: `stop=${b.stop_reason ?? '?'} tool=${!!tool} text=${clean(text, 200)}` };
 }
 
+/**
+ * Gives each item its matches. Items whose own lookup found nothing get the
+ * whole-photo matches, the most prominent item (listed first) first; the rest
+ * stay empty rather than repeat the same shops.
+ */
+export function assignMatches<T extends DetectedItem>(items: T[], perItem: Match[][], wholePhoto: Match[]): (T & { matches: Match[] })[] {
+  let wholeUsed = false;
+  return items.map((it, i) => {
+    let matches = perItem[i] ?? [];
+    if (!matches.length && !wholeUsed && wholePhoto.length) {
+      matches = wholePhoto.slice(0, MATCHES_PER_ITEM);
+      wholeUsed = true;
+    }
+    return { ...it, matches };
+  });
+}
+
 export async function detectItems(apiKey: string, model: string, jpegBase64: string): Promise<Detection> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -179,6 +196,9 @@ export async function lensMatches(serpApiKey: string, imageUrl: string, query: s
   const params = new URLSearchParams({ engine: 'google_lens', url: imageUrl, hl: 'en', country: 'us', api_key: serpApiKey });
   if (query) params.set('q', query);
   const res = await fetch(`https://serpapi.com/search.json?${params}`);
-  if (!res.ok) throw new Error(`serpapi ${res.status}`);
-  return parseLensMatches(await res.json());
+  if (!res.ok) throw new Error(`serpapi ${res.status}: ${clean(await res.text(), 200)}`);
+  const body = (await res.json()) as { error?: string };
+  // SerpApi reports some failures (no results, bad image URL) as 200 with "error".
+  if (body.error && !/hasn't returned any results/i.test(body.error)) throw new Error(`serpapi: ${clean(body.error, 200)}`);
+  return parseLensMatches(body);
 }

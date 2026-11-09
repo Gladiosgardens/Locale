@@ -351,10 +351,10 @@ export default function NewPost() {
           shopping && !video && tagging != null
             ? async () => {
                 const index = tagging;
-                const { uploadedPath, items } = await detectMut.mutateAsync(photos[index]);
+                const { uploadedPath, items, note } = await detectMut.mutateAsync(photos[index]);
                 // Remember the upload so publishing doesn't upload this photo again.
                 setPhotos((prev) => prev.map((p, i) => (i === index ? { ...p, uploadedPath } : p)));
-                return items;
+                return { items, note };
               }
             : undefined
         }

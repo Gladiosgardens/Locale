@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, colors, ErrorText, Field } from '@/components/ui';
-import type { DetectedItem, DraftTag, PickedPhoto, ShopMatch } from '@/features/posts/api';
+import type { Detection, DetectedItem, DraftTag, PickedPhoto, ShopMatch } from '@/features/posts/api';
 import { friendlyError } from '@/lib/errors';
 import { checkItemLink, formatPrice, parsePriceCents } from './link';
 import { fonts, radius, space } from '@/theme';
@@ -33,7 +33,7 @@ type Props = {
   onChange: (tags: DraftTag[]) => void;
   onClose: () => void;
   /** Finds items in the photo automatically. Omitted for videos and when shopping is off. */
-  onDetect?: () => Promise<DetectedItem[]>;
+  onDetect?: () => Promise<Detection>;
 };
 
 /**
@@ -55,6 +55,7 @@ export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange,
   const [error, setError] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
   const [suggestions, setSuggestions] = useState<DetectedItem[] | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const [picking, setPicking] = useState<DetectedItem | null>(null);
 
   const width = screen;
@@ -75,7 +76,8 @@ export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange,
     setError(null);
     try {
       const found = await onDetect();
-      setSuggestions(found);
+      setSuggestions(found.items);
+      setNote(found.note ?? null);
     } catch (e) {
       // Development builds also show the technical reason, to help set things up.
       const detail = __DEV__ ? (e as { detail?: string }).detail : undefined;
@@ -273,6 +275,7 @@ export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange,
                   ) : suggestions ? (
                     <Text style={styles.hint}>We didn’t spot anything to tag. Tap the photo to tag items by hand.</Text>
                   ) : null}
+                  {__DEV__ && note ? <Text style={styles.hint}>Shop lookup: {note}</Text> : null}
                   {error && !pending ? <ErrorText>{error}</ErrorText> : null}
                   <Text style={styles.hint}>
                     {canAdd

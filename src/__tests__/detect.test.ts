@@ -1,4 +1,4 @@
-import { DETECTION_PROMPT, parseDetection, parseLensMatches, readDetectionResponse } from '../../supabase/functions/_shared/detect';
+import { DETECTION_PROMPT, parseDetection, parseLensMatches, readDetectionResponse, assignMatches } from '../../supabase/functions/_shared/detect';
 
 describe('parseDetection', () => {
   it('reads items, clamps positions, trims text and caps the count', () => {
@@ -70,5 +70,17 @@ describe('readDetectionResponse', () => {
     const empty = readDetectionResponse({ stop_reason: 'end_turn', content: [{ type: 'text', text: 'No products here.' }] });
     expect(empty.items).toEqual([]);
     expect(empty.note).toBe('stop=end_turn tool=false text=No products here.');
+  });
+});
+
+describe('assignMatches', () => {
+  const item = (name: string) => ({ name, category: 'x', x: 0.5, y: 0.5, query: name });
+  const m = (url: string) => ({ title: url, store: null, url, host: 'shop.com', priceCents: null, currency: null, thumbnail: null });
+  it('keeps each item’s own matches', () => {
+    expect(assignMatches([item('chair')], [[m('a')]], [m('w')])[0].matches.map((x) => x.url)).toEqual(['a']);
+  });
+  it('gives whole-photo shops to the first item without any, only once', () => {
+    const r = assignMatches([item('chair'), item('lamp'), item('rug')], [[], [m('b')], []], [m('w1'), m('w2')]);
+    expect(r.map((x) => x.matches.map((y) => y.url))).toEqual([['w1', 'w2'], ['b'], []]);
   });
 });

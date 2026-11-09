@@ -342,9 +342,12 @@ export type ShopMatch = {
 export type DetectedItem = { name: string; category: string; x: number; y: number; query: string; matches: ShopMatch[] };
 
 /** Finds shoppable items in an uploaded photo, with suggested places to buy each. */
-export async function detectItems(uploadPath: string): Promise<DetectedItem[]> {
-  const res = await invokeFn<{ items: DetectedItem[] }>('detect-items', { path: uploadPath }, 'detection_failed');
-  return res.items ?? [];
+/** `note` says why no shops were found (shown in development builds). */
+export type Detection = { items: DetectedItem[]; note?: string };
+
+export async function detectItems(uploadPath: string): Promise<Detection> {
+  const res = await invokeFn<Detection>('detect-items', { path: uploadPath }, 'detection_failed');
+  return { items: res.items ?? [], note: res.note };
 }
 
 /** Similar products for an item on a post (for items with or without a link). */

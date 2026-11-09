@@ -156,7 +156,7 @@ describe('automatic detection while tagging', () => {
 
   it('suggests items and turns a chosen match into a tag', async () => {
     const onChange = jest.fn();
-    const onDetect = jest.fn().mockResolvedValue(found);
+    const onDetect = jest.fn().mockResolvedValue({ items: found });
     await render(
       <TagEditor photo={photo} mediaIndex={0} tags={[]} remainingForPost={20} onChange={onChange} onClose={jest.fn()} onDetect={onDetect} />,
     );

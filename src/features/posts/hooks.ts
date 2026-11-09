@@ -105,11 +105,11 @@ export function usePost(postId: string | undefined) {
 export function useDetectItems() {
   const { session } = useAuth();
   return useMutation({
-    mutationFn: async (photo: api.PickedPhoto): Promise<{ uploadedPath: string; items: api.DetectedItem[] }> => {
+    mutationFn: async (photo: api.PickedPhoto): Promise<api.Detection & { uploadedPath: string }> => {
       const userId = session?.user.id;
       if (!userId) throw new Error('not_authenticated');
       const uploadedPath = photo.uploadedPath ?? (await api.uploadPhoto(userId, (await api.preparePhoto(photo)).uri));
-      return { uploadedPath, items: await api.detectItems(uploadedPath) };
+      return { uploadedPath, ...(await api.detectItems(uploadedPath)) };
     },
   });
 }

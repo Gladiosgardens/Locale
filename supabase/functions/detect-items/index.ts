@@ -4,7 +4,7 @@
 //   -> 200 { items: [{ name, category, x, y, query, matches: [...] }] }
 // Suggestions only: the poster chooses what becomes a tag. 30 photos a day.
 
-import { detectItems, lensMatches } from '../_shared/detect.ts';
+import { assignMatches, detectItems, lensMatches } from '../_shared/detect.ts';
 import { admin, callerId, json } from '../_shared/server.ts';
 
 const DAILY_LIMIT = 30;
@@ -69,17 +69,19 @@ Deno.serve(async (req) => {
     }
 
     if (!signed?.signedUrl) return json(200, { items: items.map((it) => ({ ...it, matches: [] })) });
-    // Look items up in parallel; one failed lookup just leaves that item without matches.
-    const results = await Promise.all(
-      items.map(async (it) => ({
-        ...it,
-        matches: await lensMatches(serpKey, signed.signedUrl, it.query).catch((e) => {
-          console.error('detect-items lens', it.query, e);
-          return [];
-        }),
-      })),
-    );
-    return json(200, { items: results });
+    // Each item with its phrase, plus the whole photo with no phrase (what
+    // Google's own image search does). A failed lookup just leaves no matches.
+    const errors: string[] = [];
+    const lookup = (q: string | null) =>
+      lensMatches(serpKey, signed.signedUrl, q).catch((e) => {
+        console.error('detect-items lens', q, e);
+        errors.push(String(e instanceof Error ? e.message : e).slice(0, 200));
+        return [];
+      });
+    const [whole, ...perItem] = await Promise.all([lookup(null), ...items.map((it) => lookup(it.query))]);
+    const results = assignMatches(items, perItem, whole);
+    const found = results.some((r) => r.matches.length);
+    return json(200, { items: results, ...(found ? {} : { note: errors[0] ?? 'Google Lens found no shops' }) });
   } catch (e) {
     console.error('detect-items', e);
     // The upstream status and message (never a key), so problems can be seen in dev builds.
