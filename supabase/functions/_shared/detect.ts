@@ -25,7 +25,7 @@ Rules:
 - At most ${MAX_ITEMS} items, the most prominent first. Skip anything tiny, blurry or cut off.
 - Never describe or identify people, faces, bodies, or anything about who someone is. Describe only the products.
 - For each item give: "name" (2-5 words, e.g. "Camel wool coat"), "category" (one word), "x" and "y" (where the item's centre is, as fractions of the image width and height from the top-left, 0 to 1), and "query" (a shopping search phrase with colour, material, style and a visible brand only if you can read it, e.g. "camel double breasted wool coat women").
-Report them with the report_items tool. If there is nothing to buy, report an empty list.`;
+Always answer by calling the report_items tool, even if the list is empty. If you can't use the tool, reply with JSON only: {"items":[{"name":"","category":"","x":0.5,"y":0.5,"query":""}]}`;
 
 // Forcing a tool call makes the reply structured JSON, not prose to parse.
 export const REPORT_TOOL = {
@@ -157,8 +157,9 @@ export async function detectItems(apiKey: string, model: string, jpegBase64: str
     body: JSON.stringify({
       model,
       max_tokens: 1500,
+      // Some models refuse a forced tool choice, so the prompt asks for the tool and
+      // a plain JSON reply is still accepted (readDetectionResponse handles both).
       tools: [REPORT_TOOL],
-      tool_choice: { type: 'tool', name: 'report_items' },
       messages: [
         {
           role: 'user',
