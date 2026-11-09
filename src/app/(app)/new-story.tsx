@@ -4,9 +4,10 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ErrorText } from '@/components/ui';
+import { useAuth } from '@/features/auth/AuthProvider';
 import { TagEditor } from '@/features/items/TagEditor';
 import { MentionSuggestions } from '@/features/people/MentionSuggestions';
 import type { DraftTag, PickedPhoto, PickedVideo } from '@/features/posts/api';
@@ -20,6 +21,7 @@ const MAX_VIDEO_MS = 60_000;
 // A story: one photo or video, an optional line of text and tagged items.
 export default function NewStory() {
   const { width } = useWindowDimensions();
+  const { session } = useAuth();
   const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [video, setVideo] = useState<PickedVideo | null>(null);
   const [caption, setCaption] = useState('');
@@ -80,9 +82,13 @@ export default function NewStory() {
         tags,
         story: true,
       });
-      router.back();
+      // Show the new story right away, so it's clear it was shared.
+      if (session?.user.id) router.replace({ pathname: '/stories/view', params: { author: session.user.id } });
+      else router.back();
     } catch (e) {
-      setError(friendlyError(e));
+      const message = friendlyError(e);
+      setError(message);
+      Alert.alert('Your story wasn’t shared', message);
     } finally {
       setProgress(null);
     }

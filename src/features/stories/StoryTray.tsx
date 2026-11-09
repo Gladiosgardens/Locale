@@ -33,7 +33,7 @@ export function StoryTray() {
             accessibilityRole="button"
             accessibilityLabel={mine ? 'Your story' : 'Add to your story'}
             onPress={() =>
-              mine ? router.push({ pathname: '/stories/view', params: { author: myId } }) : router.push('/new-story')
+              mine ? router.push({ pathname: '/stories/view', params: { author: myId } }) : router.navigate('/new-story')
             }
           >
             <StoryRing userId={myId} name={me.data?.displayName ?? ''} size={SIZE} state={mine ? 'seen' : 'none'} />
@@ -41,7 +41,7 @@ export function StoryTray() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Add to your story"
-            onPress={() => router.push('/new-story')}
+            onPress={() => router.navigate('/new-story')}
             style={styles.plus}
             hitSlop={8}
           >

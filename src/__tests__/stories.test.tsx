@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { Alert } from 'react-native';
 import NewStory from '@/app/(app)/new-story';
 import StoryViewer from '@/app/(app)/stories/view';
 import type { Story } from '@/features/stories/api';
@@ -11,7 +12,12 @@ const mockReplace = jest.fn();
 const mockBack = jest.fn();
 let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({
-  router: { push: (...a: unknown[]) => mockPush(...a), replace: (...a: unknown[]) => mockReplace(...a), back: () => mockBack() },
+  router: {
+    push: (...a: unknown[]) => mockPush(...a),
+    navigate: (...a: unknown[]) => mockPush(...a),
+    replace: (...a: unknown[]) => mockReplace(...a),
+    back: () => mockBack(),
+  },
   useLocalSearchParams: () => mockParams,
 }));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
@@ -26,7 +32,10 @@ jest.mock('@/features/posts/hooks', () => ({
   useDeletePost: () => ({ mutate: jest.fn() }),
   useSimilarItems: () => ({ data: undefined, isPending: false }),
 }));
-jest.mock('@/features/social/hooks', () => ({ useItemSaved: () => ({ data: false }), useSaveItem: () => ({ mutate: jest.fn() }) }));
+jest.mock('@/features/social/hooks', () => ({
+  useItemSaved: () => ({ data: false }),
+  useSaveItem: () => ({ mutate: jest.fn() }),
+}));
 jest.mock('@/features/safety/hooks', () => ({ useReport: () => ({ mutateAsync: jest.fn(), isPending: false }) }));
 jest.mock('@/features/people/hooks', () => ({ usePeopleSearch: () => ({ data: undefined }) }));
 
@@ -54,7 +63,17 @@ const story = (id: string, over: Partial<Story> = {}): Story => ({
   author: person('ana'),
   seen: false,
   viewCount: null,
-  media: { kind: 'image', path: `${id}/0.jpg`, width: 100, height: 200, url: `https://s/${id}`, videoUrl: null, duration: null, tags: [], people: [] },
+  media: {
+    kind: 'image',
+    path: `${id}/0.jpg`,
+    width: 100,
+    height: 200,
+    url: `https://s/${id}`,
+    videoUrl: null,
+    duration: null,
+    tags: [],
+    people: [],
+  },
   ...over,
 });
 
@@ -90,7 +109,10 @@ describe('Story viewer', () => {
     await fireEvent.press(screen.getByRole('button', { name: /Story 2 of 3/ }), { nativeEvent: { locationX: 300 } });
     expect(screen.getByRole('button', { name: /Story 3 of 3/ })).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: /Story 3 of 3/ }), { nativeEvent: { locationX: 300 } });
-    expect(mockReplace).toHaveBeenCalledWith({ pathname: '/stories/view', params: { author: 'ben', queue: 'ana,ben' } });
+    expect(mockReplace).toHaveBeenCalledWith({
+      pathname: '/stories/view',
+      params: { author: 'ben', queue: 'ana,ben' },
+    });
   });
 
   it('advances photos on a timer', async () => {
@@ -107,7 +129,17 @@ describe('Story viewer', () => {
 
   it('lets you shop tagged items', async () => {
     mockParams = { author: 'ana' };
-    const item = { id: 'i1', title: 'Oak desk', brand: null, storeName: 'Shop', url: 'https://shop.com/d', urlHost: 'shop.com', priceCents: 12000, currency: 'USD', isAffiliate: false };
+    const item = {
+      id: 'i1',
+      title: 'Oak desk',
+      brand: null,
+      storeName: 'Shop',
+      url: 'https://shop.com/d',
+      urlHost: 'shop.com',
+      priceCents: 12000,
+      currency: 'USD',
+      isAffiliate: false,
+    };
     mockStories = [story('s1', { media: { ...story('s1').media, tags: [{ id: 't1', x: 0.5, y: 0.5, item }] } })];
     await render(<StoryViewer />);
     await fireEvent.press(screen.getByRole('button', { name: 'Shop this' }));
@@ -144,7 +176,9 @@ describe('New story', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Choose a photo' }));
     await fireEvent.changeText(await screen.findByLabelText('Text on your story'), 'New desk');
     await fireEvent.press(screen.getByRole('button', { name: 'Share to your story' }));
-    await waitFor(() => expect(mockBack).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(mockReplace).toHaveBeenCalledWith({ pathname: '/stories/view', params: { author: 'me' } }),
+    );
     expect(mockPublish).toHaveBeenCalledWith({
       photos: [{ uri: 'file:///a.jpg', width: 1000, height: 1500 }],
       video: null,
@@ -153,6 +187,22 @@ describe('New story', () => {
       tags: [],
       story: true,
     });
+  });
+
+  it('says clearly when sharing fails', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///a.jpg', width: 1000, height: 1500 }],
+    });
+    mockPublish.mockRejectedValue(new Error('story_rate_limited'));
+    await render(<NewStory />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Choose a photo' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Share to your story' }));
+    await waitFor(() =>
+      expect(alert).toHaveBeenCalledWith('Your story wasn’t shared', expect.stringMatching(/a lot of stories/)),
+    );
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });
 
