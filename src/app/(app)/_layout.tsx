@@ -11,6 +11,8 @@ export default function Layout() {
       <Stack.Screen name="find-friends" />
       <Stack.Screen name="saved" />
       <Stack.Screen name="activity" />
+      <Stack.Screen name="insights/index" />
+      <Stack.Screen name="insights/[postId]" />
       <Stack.Screen name="new-story" options={{ presentation: 'modal' }} />
       <Stack.Screen name="stories/view" options={{ animation: 'fade', gestureEnabled: true }} />
       <Stack.Screen name="tag/[tag]" />

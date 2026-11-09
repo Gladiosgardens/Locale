@@ -134,6 +134,11 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
           {p.handle}
         </Text>
         {isTab ? (
+          <Pressable accessibilityRole="button" accessibilityLabel="Insights" onPress={() => router.push('/insights')} hitSlop={10}>
+            <Feather name="bar-chart-2" size={22} color={colors.ink} />
+          </Pressable>
+        ) : null}
+        {isTab ? (
           <Pressable accessibilityRole="button" accessibilityLabel="Find friends" onPress={() => router.push('/find-friends')} hitSlop={10}>
             <Feather name="user-plus" size={22} color={colors.ink} />
           </Pressable>

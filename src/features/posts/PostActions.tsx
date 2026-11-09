@@ -3,7 +3,7 @@ import { colors } from '@/components/ui';
 import type { FeedPost } from './api';
 import { fonts } from '@/theme';
 
-export type PostAction = 'edit' | 'collection' | 'untag' | 'story' | 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
+export type PostAction = 'insights' | 'edit' | 'collection' | 'untag' | 'story' | 'share' | 'delete' | 'report-post' | 'report-user' | 'block';
 
 export function PostActions({
   post,
@@ -23,6 +23,7 @@ export function PostActions({
     ? []
     : isMine
       ? [
+          { action: 'insights', label: 'View insights' },
           { action: 'edit', label: 'Edit caption' },
           { action: 'collection', label: 'Save to collection' },
           { action: 'story', label: 'Share to Stories' },

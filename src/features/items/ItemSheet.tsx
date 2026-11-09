@@ -1,11 +1,12 @@
 import * as WebBrowser from 'expo-web-browser';
 import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui';
 import type { Item } from '@/features/posts/api';
 import { useSimilarItems } from '@/features/posts/hooks';
 import { useItemSaved, useSaveItem } from '@/features/social/hooks';
+import { recordItemEvent } from '@/features/stats/api';
 import { friendlyError } from '@/lib/errors';
 import { colors, fonts, radius, space, type } from '@/theme';
 import { formatPrice } from './link';
@@ -16,6 +17,12 @@ export function ItemSheet({ item, postId, onClose }: { item: Item | null; postId
   const [showSimilar, setShowSimilar] = useState(false);
   const similar = useSimilarItems(item?.id, postId, showSimilar);
   const byline = item ? [...new Set([item.brand, item.storeName].filter(Boolean))].join(', ') : '';
+
+  // Counted for the poster's stats (their own taps are ignored by the server).
+  const itemId = item?.id;
+  useEffect(() => {
+    if (itemId && postId) void recordItemEvent(postId, itemId, 'open').catch(() => {});
+  }, [itemId, postId]);
 
   return (
     <Modal visible={!!item} transparent animationType="slide" onRequestClose={onClose}>
@@ -44,6 +51,7 @@ export function ItemSheet({ item, postId, onClose }: { item: Item | null; postId
                 <Button
                   label={`Shop on ${item.urlHost}`}
                   onPress={() => {
+                    if (postId) void recordItemEvent(postId, item.id, 'link').catch(() => {});
                     void WebBrowser.openBrowserAsync(item.url!, { dismissButtonStyle: 'close' });
                   }}
                 />

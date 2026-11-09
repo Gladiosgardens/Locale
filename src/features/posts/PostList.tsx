@@ -11,6 +11,7 @@ import { useBlockUser } from '@/features/safety/hooks';
 import { useInterests } from '@/features/onboarding/hooks';
 import { friendlyError } from '@/lib/errors';
 import type { FeedPost, Item } from './api';
+import { trackView } from '@/features/stats/api';
 import { EditCaptionSheet } from './EditCaptionSheet';
 import { useDeletePost, useRemoveMyTag } from './hooks';
 import { PostActions, type PostAction } from './PostActions';
@@ -45,6 +46,7 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   // FlatList needs this callback to stay the same for the list's lifetime.
   const onViewable = useCallback(({ viewableItems }: { viewableItems: { item: FeedPost; isViewable: boolean }[] }) => {
     setActiveId(viewableItems.find((v) => v.isViewable)?.item.id ?? null);
+    for (const v of viewableItems) if (v.isViewable) trackView(v.item.id);
   }, []);
 
   const interestMap = useMemo(() => new Map((interests.data ?? []).map((i) => [i.id, i])), [interests.data]);
@@ -53,6 +55,8 @@ export function PostList({ query, empty, header }: { query: PagedQuery; empty: R
   function onPick(action: PostAction, post: FeedPost) {
     const fail = (e: unknown) => Alert.alert(friendlyError(e));
     switch (action) {
+      case 'insights':
+        return router.push(`/insights/${post.id}`);
       case 'edit':
         return setEditing(post);
       case 'collection':

@@ -206,6 +206,34 @@ export type Database = {
       set_comment_like: { Args: { p_comment_id: string; p_like: boolean }; Returns: undefined };
       update_post_caption: { Args: { p_caption: string; p_post_id: string }; Returns: undefined };
       set_people_tags: { Args: { p_post_id: string; p_tags: Json }; Returns: undefined };
+      record_post_views: { Args: { p_post_ids: string[] }; Returns: undefined };
+      record_item_event: { Args: { p_post_id: string; p_item_id: string; p_kind: string }; Returns: undefined };
+      post_stats: {
+        Args: { p_post_id: string };
+        Returns: {
+          reach: number;
+          views: number;
+          likes: number;
+          comments: number;
+          saves: number;
+          item_opens: number;
+          link_taps: number;
+          items: Json;
+        }[];
+      };
+      my_stats: {
+        Args: { p_days?: number };
+        Returns: {
+          reach: number;
+          likes: number;
+          comments: number;
+          saves: number;
+          item_opens: number;
+          link_taps: number;
+          new_followers: number;
+          posts: Json;
+        }[];
+      };
       story_tray: {
         Args: Record<string, never>;
         Returns: {

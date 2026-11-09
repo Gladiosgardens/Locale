@@ -47,7 +47,18 @@ Built so far:
 
 17. **Stories with shoppable tags, and highlights:** the row of circles at the top of Home shows your story and the stories of people you follow (a black ring means something new, grey means seen). **+** opens **New story**: one photo or video (up to 60 s), an optional line of text, and item tags, with **Find items automatically** as in posts. A story lasts 24 hours and never appears in feeds, grids, search or hashtag pages. In the viewer, tap right for the next story and left for the previous one, hold to pause; tagged items show as blue dots and a **Shop this** button. Your own stories show **Seen by N** (who viewed them) and a menu with **Add to highlight** and **Delete story**. Highlights sit under your bio and keep stories past their 24 hours. A profile's photo has a ring when that person has a live story. Stories go through `publish-post` (`story: true`), so photos are cleaned the same way; limits are 30 stories a day (separate from 20 posts), 200 characters of text, 50 highlights of up to 100 stories. Mentions in stories don't notify, and people can't be tagged in stories yet.
 
+18. **Creator stats (Insights):** the chart icon on your profile opens **Insights** for the last 7, 30 or 90 days: accounts reached, new followers, item views and taps to shops (in ultramarine), likes, comments and saves, plus your top posts. **View insights** in a post's ••• menu breaks one post down: reach, views, likes, comments, saves, and for each tagged item how many people viewed it, tapped through to the shop and saved it to a wishlist. Stories with items have **Item insights** in their menu. The app records a view when 60% of a post is on screen (batched every few seconds, once per post per session) and an item event when someone opens an item or taps its shop link. Repeat views and taps within 10 minutes count once, authors' own views and taps never count, and only the author sees the numbers; nobody is listed.
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 18
+
+```
+git pull && npm install
+npx supabase db push --remote
+```
+
+No functions to deploy and no new build; restart with `npx expo start -c`.
 
 ### Updating an existing install to step 17
 
@@ -283,6 +294,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Profile photo moderation.** Profile photos are public (anyone with the link can load them) and not yet scanned; include them in image safety scanning and let people report a profile photo.
 - **Mention and tag spam.** Mentions are capped at 10 per caption or comment and tags at 20 per post, but there's no daily limit per person yet; add one (and let people limit tags to people they follow) before growth.
 - **Expired stories.** Stories past 24 hours that aren't in a highlight stay in storage (the author can still open them). Add an archive screen, or a daily job that deletes them after a set time.
+- **Stats disclosure.** Say in the privacy policy that views and item taps are recorded and shown to posters as totals (never who), and prune `post_views` and `item_events` older than 90 days.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

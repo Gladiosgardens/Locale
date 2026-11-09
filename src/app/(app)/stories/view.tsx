@@ -313,6 +313,17 @@ function Player({
             : isMine
               ? [
                   <Button key="v" label="Viewers" variant="quiet" onPress={() => setSheet('viewers')} />,
+                  items.length ? (
+                    <Button
+                      key="i"
+                      label="Item insights"
+                      variant="quiet"
+                      onPress={() => {
+                        setSheet(null);
+                        router.push(`/insights/${story.id}`);
+                      }}
+                    />
+                  ) : null,
                   <Button key="h" label="Add to highlight" variant="quiet" onPress={() => setSheet('highlight')} />,
                   highlightId ? (
                     <Button

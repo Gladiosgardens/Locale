@@ -110,6 +110,7 @@ describe('Feed', () => {
     await fireEvent.press(menus[0]);
     expect(screen.getByRole('button', { name: 'Delete post' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Edit caption' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'View insights' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Block/ })).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Cancel' }));
     await fireEvent.press(menus[1]);
