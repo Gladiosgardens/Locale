@@ -314,14 +314,17 @@ async function invokeFn<T>(name: string, body: Record<string, unknown>, fallback
   const { data, error } = await supabase.functions.invoke<T>(name, { body });
   if (error) {
     let code = fallback;
+    let detail: string = error.message;
     if (error instanceof FunctionsHttpError) {
       try {
-        code = (await error.context.json()).error ?? code;
+        const body = await error.context.json();
+        code = body.error ?? code;
+        detail = body.detail ?? `HTTP ${error.context.status}`;
       } catch {
-        // keep the generic code
+        detail = `HTTP ${error.context.status}`;
       }
     }
-    throw new Error(code);
+    throw Object.assign(new Error(code), { detail });
   }
   return data!;
 }

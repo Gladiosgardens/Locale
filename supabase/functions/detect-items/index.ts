@@ -39,12 +39,12 @@ Deno.serve(async (req) => {
     p_kind: 'detect',
     p_daily_limit: DAILY_LIMIT,
   });
-  if (limitError) return json(500, { error: 'detection_failed' });
+  if (limitError) return json(500, { error: 'detection_failed', detail: `limit: ${limitError.message}` });
   if (!allowed) return json(429, { error: 'detection_rate_limited' });
 
   try {
     const { data: file, error } = await admin.storage.from('post-uploads').download(path);
-    if (error || !file) return json(404, { error: 'upload_missing' });
+    if (error || !file) return json(404, { error: 'upload_missing', detail: error?.message ?? 'no file' });
     const { items, note } = await detectItems(
       anthropicKey,
       Deno.env.get('ANTHROPIC_MODEL') ?? 'claude-sonnet-5-5',
@@ -82,6 +82,7 @@ Deno.serve(async (req) => {
     return json(200, { items: results });
   } catch (e) {
     console.error('detect-items', e);
-    return json(502, { error: 'detection_failed' });
+    // The upstream status and message (never a key), so problems can be seen in dev builds.
+    return json(502, { error: 'detection_failed', detail: String(e instanceof Error ? e.message : e).slice(0, 300) });
   }
 });

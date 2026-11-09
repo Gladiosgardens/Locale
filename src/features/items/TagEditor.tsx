@@ -77,7 +77,9 @@ export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange,
       const found = await onDetect();
       setSuggestions(found);
     } catch (e) {
-      setError(friendlyError(e));
+      // Development builds also show the technical reason, to help set things up.
+      const detail = __DEV__ ? (e as { detail?: string }).detail : undefined;
+      setError(detail ? `${friendlyError(e)}\n\n${detail}` : friendlyError(e));
     } finally {
       setDetecting(false);
     }
