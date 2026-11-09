@@ -341,6 +341,8 @@ export default function NewPost() {
         onClose={() => setTaggingPeople(null)}
       />
       <TagEditor
+        // A fresh editor for each photo, so one photo's detection never shows on another.
+        key={tagging != null ? `${tagging}:${photos[tagging]?.uri}` : 'closed'}
         photo={tagging != null ? (photos[tagging] ?? null) : null}
         mediaIndex={tagging ?? 0}
         tags={itemTags.filter((t) => t.media === tagging)}

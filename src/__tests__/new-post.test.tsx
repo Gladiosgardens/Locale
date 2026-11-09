@@ -87,6 +87,30 @@ describe('New post', () => {
     });
   });
 
+  it('starts detection fresh for a new photo', async () => {
+    mockDetect.mockResolvedValue({
+      uploadedPath: 'u/1.jpg',
+      items: [{ name: 'Louis chair', category: 'furniture', x: 0.5, y: 0.5, query: 'chair', matches: [] }],
+    });
+    await render(<NewPost />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Tag items in photo 1' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Find items automatically' }));
+    expect(await screen.findByText('We found 1 item')).toBeTruthy();
+    await fireEvent.press(screen.getByRole('button', { name: 'Done' }));
+
+    // Swap the photo for another one.
+    await fireEvent.press(screen.getByRole('button', { name: 'Remove photo 1' }));
+    (ImagePicker.launchImageLibraryAsync as jest.Mock).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///b.jpg', width: 3000, height: 4000 }],
+    });
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
+    await fireEvent.press(await screen.findByRole('button', { name: 'Tag items in photo 1' }));
+    expect(screen.queryByText('We found 1 item')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Find items automatically' })).toBeTruthy();
+  });
+
   it('tags people on a photo and saves the tags after publishing', async () => {
     mutateAsync.mockResolvedValue('post-id');
     mockSetPeople.mockResolvedValue(undefined);
