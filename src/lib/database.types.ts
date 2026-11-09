@@ -206,6 +206,55 @@ export type Database = {
       set_comment_like: { Args: { p_comment_id: string; p_like: boolean }; Returns: undefined };
       update_post_caption: { Args: { p_caption: string; p_post_id: string }; Returns: undefined };
       set_people_tags: { Args: { p_post_id: string; p_tags: Json }; Returns: undefined };
+      story_tray: {
+        Args: Record<string, never>;
+        Returns: {
+          author_id: string;
+          author_handle: string;
+          author_display_name: string;
+          story_count: number;
+          latest_at: string;
+          all_seen: boolean;
+          is_me: boolean;
+        }[];
+      };
+      author_stories: { Args: { p_author_id: string }; Returns: {
+          id: string;
+          caption: string | null;
+          published_at: string;
+          expires_at: string;
+          author_id: string;
+          author_handle: string;
+          author_display_name: string;
+          media: Json;
+          seen: boolean;
+          view_count: number | null;
+        }[] };
+      highlight_story_rows: { Args: { p_highlight_id: string }; Returns: {
+          id: string;
+          caption: string | null;
+          published_at: string;
+          expires_at: string;
+          author_id: string;
+          author_handle: string;
+          author_display_name: string;
+          media: Json;
+          seen: boolean;
+          view_count: number | null;
+        }[] };
+      mark_story_seen: { Args: { p_post_id: string }; Returns: undefined };
+      story_viewers: {
+        Args: { p_post_id: string };
+        Returns: { profile_id: string; handle: string; display_name: string; viewed_at: string }[];
+      };
+      profile_highlights: {
+        Args: { p_profile_id: string };
+        Returns: { id: string; name: string; story_count: number; cover_path: string | null; cover_playback_id: string | null }[];
+      };
+      my_highlights: { Args: { p_post_id?: string }; Returns: { id: string; name: string; has_story: boolean }[] };
+      add_to_highlight: { Args: { p_post_id: string; p_highlight_id?: string; p_name?: string }; Returns: string };
+      remove_from_highlight: { Args: { p_highlight_id: string; p_post_id: string }; Returns: undefined };
+      delete_highlight: { Args: { p_highlight_id: string }; Returns: undefined };
       remove_my_people_tag: { Args: { p_post_id: string }; Returns: undefined };
       my_collections: {
         Args: Record<string, never>;

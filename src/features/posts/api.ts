@@ -94,7 +94,7 @@ type RawPost = {
 const cursorArgs = (cursor: FeedCursor) =>
   cursor ? { p_before_published_at: cursor.publishedAt, p_before_id: cursor.id } : {};
 
-async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
+export async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
   const paths = rows.flatMap((r) => (r.media as RawMedia[]).map((m) => m.path).filter((p): p is string => !!p));
   const urls = new Map<string, string>();
   if (paths.length) {
@@ -387,12 +387,15 @@ export async function publishPost(input: {
   groupId?: string | null;
   videoUploadId?: string | null;
   shopping?: boolean;
+  /** One photo or video that disappears after 24 hours. */
+  story?: boolean;
 }): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ id: string }>('publish-post', {
     body: {
       uploads: input.uploads,
       ...(input.videoUploadId ? { video: { uploadId: input.videoUploadId } } : {}),
       ...(input.shopping === false ? { shopping: false } : {}),
+      ...(input.story ? { story: true } : {}),
       caption: input.caption.trim() || null,
       interestIds: input.interestIds,
       tags: input.tags ?? [],

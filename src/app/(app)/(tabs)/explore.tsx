@@ -58,6 +58,7 @@ export default function Explore() {
       {hashtag && !/^[0-9_]+$/.test(hashtag) ? (
         <Pressable
           accessibilityRole="link"
+          accessibilityLabel={`See posts tagged #${hashtag}`}
           onPress={() => router.push(`/tag/${encodeURIComponent(hashtag)}`)}
           style={styles.hashtag}
           hitSlop={4}

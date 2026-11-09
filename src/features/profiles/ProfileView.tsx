@@ -10,7 +10,9 @@ import { PostGrid } from '@/features/posts/PostGrid';
 import { friendlyError } from '@/lib/errors';
 import { colors, fonts, space, type } from '@/theme';
 import { useFollow, useProfile } from './hooks';
-import { UserAvatar } from './UserAvatar';
+import { HighlightsRow } from '@/features/stories/HighlightsRow';
+import { useStories, useStoryTray } from '@/features/stories/hooks';
+import { StoryRing } from '@/features/stories/StoryRing';
 
 // A profile: masthead name, counts, follow and message, then a grid of posts.
 // Used for other people's profiles and for the Profile tab (where `isTab` hides Back).
@@ -22,6 +24,12 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
   const taggedFilter = useMemo(() => (id && tab === 'tagged' ? { taggedId: id } : null), [id, tab]);
   const tagged = useFilteredFeed(taggedFilter);
   const p = profile.data;
+  const tray = useStoryTray();
+  // The tray covers me and people I follow; anyone else's live stories are found by opening them.
+  const others = useStories(id && !tray.data?.some((e) => e.author.id === id) ? { authorId: id } : null);
+  const liveStory =
+    tray.data?.find((e) => e.author.id === id) ??
+    (others.data?.length ? { allSeen: others.data.every((s) => s.seen) } : undefined);
 
   if (profile.isPending) {
     return (
@@ -51,7 +59,14 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
   const header = (
     <View style={styles.info}>
       <View style={styles.identity}>
-        <UserAvatar userId={p.id} name={p.displayName} size={76} />
+        <Pressable
+          accessibilityRole={liveStory ? 'button' : undefined}
+          accessibilityLabel={liveStory ? `${p.displayName}’s story` : undefined}
+          disabled={!liveStory}
+          onPress={() => router.push({ pathname: '/stories/view', params: { author: p.id } })}
+        >
+          <StoryRing userId={p.id} name={p.displayName} size={76} state={liveStory ? (liveStory.allSeen ? 'seen' : 'unseen') : 'none'} />
+        </Pressable>
         <View style={styles.counts}>
           <Stat value={morePosts ? `${postCount}+` : String(postCount)} label={postCount === 1 ? 'post' : 'posts'} />
           <Stat value={p.followerCount.toLocaleString()} label={p.followerCount === 1 ? 'follower' : 'followers'} />
@@ -68,6 +83,7 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
         </Text>
       </View>
       {p.bio ? <Text style={type.body}>{p.bio}</Text> : null}
+      <HighlightsRow profileId={p.id} isMe={p.isMe} />
       {p.isMe ? (
         <View style={styles.actions}>
           <Button style={styles.flex} label="Edit profile" variant="secondary" onPress={() => router.push('/edit-profile')} />

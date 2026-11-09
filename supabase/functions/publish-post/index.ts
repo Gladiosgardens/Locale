@@ -2,7 +2,7 @@
 //
 // POST { uploads: ["<uid>/<uuid>.jpg", ...] | video: { uploadId }, caption?: string,
 //        interestIds?: number[], tags?: [{ media, x, y, item: {...} }], searchable?: boolean,
-//        groupId?: string, shopping?: boolean }
+//        groupId?: string, shopping?: boolean, story?: boolean }
 //   -> 200 { id } | 4xx/5xx { error: "<code>" }
 //
 // Steps: verify the caller, re-sanitise every image (strip EXIF/GPS/XMP/IPTC,
@@ -10,6 +10,8 @@
 // post id, create the post rows in one transaction, delete the originals.
 // For a video: check with Mux that it belongs to the caller, is ready and is at
 // most 60 seconds, then attach it.
+// A story (story: true) is one photo or video with an optional short caption
+// and item tags; it expires after 24 hours.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { JpegError, sanitizeJpeg } from '../_shared/jpeg.ts';
@@ -18,6 +20,7 @@ import { muxCredentials } from '../_shared/server.ts';
 
 const MAX_IMAGES = 10;
 const MAX_CAPTION = 2200;
+const MAX_STORY_CAPTION = 200;
 const MAX_DIMENSION = 8192;
 const MAX_BYTES = 10 * 1024 * 1024;
 const MAX_TAGS = 20;
@@ -53,6 +56,8 @@ const RPC_ERRORS: Record<string, number> = {
   shortened_url: 400,
   not_a_member: 403,
   invalid_video: 400,
+  story_rate_limited: 429,
+  invalid_caption: 400,
 };
 
 const json = (status: number, body: unknown) =>
@@ -67,6 +72,7 @@ type Body = {
   tags?: unknown;
   searchable?: unknown;
   groupId?: unknown;
+  story?: unknown;
 };
 
 function parseBody(body: Body, uid: string) {
@@ -75,7 +81,9 @@ function parseBody(body: Body, uid: string) {
   if (videoUploadId !== null && (typeof videoUploadId !== 'string' || !/^[A-Za-z0-9]{8,80}$/.test(videoUploadId))) {
     throw new PublishError(400, 'invalid_video');
   }
+  const story = body.story === true;
   const uploads = Array.isArray(body.uploads) ? body.uploads : [];
+  if (story && uploads.length > 1) throw new PublishError(400, 'media_count');
   if (videoUploadId ? uploads.length !== 0 : uploads.length < 1 || uploads.length > MAX_IMAGES) {
     throw new PublishError(400, 'media_count');
   }
@@ -85,7 +93,7 @@ function parseBody(body: Body, uid: string) {
   }
 
   const caption = body.caption ?? null;
-  if (caption !== null && (typeof caption !== 'string' || caption.length > MAX_CAPTION)) {
+  if (caption !== null && (typeof caption !== 'string' || caption.length > (story ? MAX_STORY_CAPTION : MAX_CAPTION))) {
     throw new PublishError(400, 'bad_caption');
   }
 
@@ -108,7 +116,10 @@ function parseBody(body: Body, uid: string) {
     throw new PublishError(400, 'bad_request');
   }
 
+  if (story && groupId !== null) throw new PublishError(400, 'bad_request');
+
   return {
+    story,
     shopping: body.shopping !== false,
     videoUploadId: videoUploadId as string | null,
     uploads: uploads as string[],
@@ -190,17 +201,26 @@ Deno.serve(async (req) => {
       media.push({ path: dest, width: clean.width, height: clean.height });
     }
 
-    const { error: rpcError } = await admin.rpc('create_post_record', {
-      p_post_id: postId,
-      p_author_id: uid,
-      p_caption: input.caption,
-      p_interest_ids: input.interestIds,
-      p_media: media,
-      // With shopping off, nothing is tagged.
-      p_tags: input.shopping ? input.tags : [],
-      p_searchable: input.searchable,
-      p_group_id: input.groupId,
-    });
+    // With shopping off, nothing is tagged.
+    const tags = input.shopping ? input.tags : [];
+    const { error: rpcError } = input.story
+      ? await admin.rpc('create_story_record', {
+          p_post_id: postId,
+          p_author_id: uid,
+          p_caption: input.caption,
+          p_media: media,
+          p_tags: tags,
+        })
+      : await admin.rpc('create_post_record', {
+          p_post_id: postId,
+          p_author_id: uid,
+          p_caption: input.caption,
+          p_interest_ids: input.interestIds,
+          p_media: media,
+          p_tags: tags,
+          p_searchable: input.searchable,
+          p_group_id: input.groupId,
+        });
     if (rpcError) {
       const status = RPC_ERRORS[rpcError.message];
       if (status) throw new PublishError(status, rpcError.message);

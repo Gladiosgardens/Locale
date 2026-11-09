@@ -45,7 +45,19 @@ Built so far:
 
 16. **People tags, @mentions, #hashtags and collections:** in the composer, **Tag people** on any photo: tap where someone is and pick them (up to 20 per post). Tagged people get a notification, show up as labels when you tap the photo and in a "With @…" line under the post, and the post appears on their profile's **Tagged** tab; they can take themselves off it from the ••• menu. Typing **@** in a caption or comment suggests people; mentions are tappable and notify the person (up to 10 per text; never yourself or anyone with a block). **#hashtags** in captions are tappable and open a page of posts with that tag; searching a single word in Explore offers its hashtag too. **Collections**: ••• → **Save to collection** (adding also saves the post), and Saved → Posts shows them as chips; long-press one to rename or delete it. Settings has a **Mentions and photo tags** push switch, and Activity shows mentions and tags.
 
+17. **Stories with shoppable tags, and highlights:** the row of circles at the top of Home shows your story and the stories of people you follow (a black ring means something new, grey means seen). **+** opens **New story**: one photo or video (up to 60 s), an optional line of text, and item tags, with **Find items automatically** as in posts. A story lasts 24 hours and never appears in feeds, grids, search or hashtag pages. In the viewer, tap right for the next story and left for the previous one, hold to pause; tagged items show as blue dots and a **Shop this** button. Your own stories show **Seen by N** (who viewed them) and a menu with **Add to highlight** and **Delete story**. Highlights sit under your bio and keep stories past their 24 hours. A profile's photo has a ring when that person has a live story. Stories go through `publish-post` (`story: true`), so photos are cleaned the same way; limits are 30 stories a day (separate from 20 posts), 200 characters of text, 50 highlights of up to 100 stories. Mentions in stories don't notify, and people can't be tagged in stories yet.
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Updating an existing install to step 17
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy publish-post
+```
+
+No new build is needed; restart the dev server with `npx expo start --dev-client --clear`.
 
 ### Updating an existing install to step 16
 
@@ -270,6 +282,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Video privacy and moderation.** Switch Mux playback to signed URLs (tokens issued only for posts the viewer may see), delete the Mux asset when a post is deleted or removed, and scan videos for illegal content (the same requirement as photos) before they go public.
 - **Profile photo moderation.** Profile photos are public (anyone with the link can load them) and not yet scanned; include them in image safety scanning and let people report a profile photo.
 - **Mention and tag spam.** Mentions are capped at 10 per caption or comment and tags at 20 per post, but there's no daily limit per person yet; add one (and let people limit tags to people they follow) before growth.
+- **Expired stories.** Stories past 24 hours that aren't in a highlight stay in storage (the author can still open them). Add an archive screen, or a daily job that deletes them after a set time.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

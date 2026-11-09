@@ -5,6 +5,12 @@ import { useFollow, useProfile } from '@/features/profiles/hooks';
 import { useAuthorFeed } from '@/features/posts/hooks';
 
 const mockPush = jest.fn();
+jest.mock('@/features/stories/hooks', () => ({
+  useStoryTray: () => ({ data: [] }),
+  useStories: () => ({ data: undefined }),
+  useProfileHighlights: () => ({ data: [] }),
+  useDeleteHighlight: () => ({ mutate: jest.fn() }),
+}));
 jest.mock('expo-router', () => ({
   router: { push: (...a: unknown[]) => mockPush(...a), back: jest.fn() },
   useLocalSearchParams: () => ({ id: 'u2' }),

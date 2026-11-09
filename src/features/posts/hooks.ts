@@ -153,6 +153,7 @@ export function useDeletePost() {
       qc.invalidateQueries({ queryKey: ['feed'] });
       qc.invalidateQueries({ queryKey: ['search'] });
       qc.invalidateQueries({ queryKey: ['group-feed'] });
+      qc.invalidateQueries({ queryKey: ['stories'] });
     },
   });
 }
@@ -170,6 +171,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
       searchable?: boolean;
       groupId?: string | null;
       shopping?: boolean;
+      story?: boolean;
     }) => {
       const userId = session?.user.id;
       if (!userId) throw new Error('not_authenticated');
@@ -196,6 +198,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
         groupId: input.groupId,
         videoUploadId,
         shopping: input.shopping,
+        story: input.story,
       });
     },
     onSuccess: () => {

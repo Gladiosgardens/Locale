@@ -11,6 +11,7 @@ import type { FeedScope } from '@/features/posts/api';
 import { useFeed } from '@/features/posts/hooks';
 import { PostList } from '@/features/posts/PostList';
 import { useProfile } from '@/features/profiles/hooks';
+import { StoryTray } from '@/features/stories/StoryTray';
 import { LOCAL_FEATURES } from '@/lib/features';
 import { colors, fonts, radius, space, type } from '@/theme';
 
@@ -80,6 +81,7 @@ export default function Home() {
           ) : null}
         </Pressable>
       </View>
+      <StoryTray />
       <View style={styles.scopes} accessibilityRole="tablist">
         {SCOPES.map(({ scope: s, label }) => {
           const active = scope === s;
