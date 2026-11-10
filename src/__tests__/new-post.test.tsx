@@ -84,7 +84,19 @@ describe('New post', () => {
       groupId: null,
       video: null,
       shopping: true,
+      asking: false,
     });
+  });
+
+  it('can ask “Where’s this from?”', async () => {
+    mutateAsync.mockResolvedValue('post-id');
+    await render(<NewPost />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Add photos' }));
+    await fireEvent(await screen.findByLabelText('Ask where something is from'), 'valueChange', true);
+    expect(screen.getByText(/its finder earns from sales through it/)).toBeTruthy();
+    await fireEvent.press(screen.getByRole('checkbox', { name: 'Dogs' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Post' }));
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ asking: true })));
   });
 
   it('starts detection fresh for a new photo', async () => {

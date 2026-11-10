@@ -2,7 +2,7 @@
 //
 // POST { uploads: ["<uid>/<uuid>.jpg", ...] | video: { uploadId }, caption?: string,
 //        interestIds?: number[], tags?: [{ media, x, y, item: {...} }], searchable?: boolean,
-//        groupId?: string, shopping?: boolean, story?: boolean }
+//        groupId?: string, shopping?: boolean, story?: boolean, asking?: boolean }
 //   -> 200 { id } | 4xx/5xx { error: "<code>" }
 //
 // Steps: verify the caller, re-sanitise every image (strip EXIF/GPS/XMP/IPTC,
@@ -73,6 +73,7 @@ type Body = {
   searchable?: unknown;
   groupId?: unknown;
   story?: unknown;
+  asking?: unknown;
 };
 
 function parseBody(body: Body, uid: string) {
@@ -120,6 +121,7 @@ function parseBody(body: Body, uid: string) {
 
   return {
     story,
+    asking: body.asking === true,
     shopping: body.shopping !== false,
     videoUploadId: videoUploadId as string | null,
     uploads: uploads as string[],
@@ -229,6 +231,9 @@ Deno.serve(async (req) => {
 
     if (!input.shopping) {
       await admin.from('posts').update({ shopping_enabled: false }).eq('id', postId);
+    } else if (input.asking && !input.story && !input.groupId) {
+      // "Where's this from?": others can suggest answers.
+      await admin.from('posts').update({ asking: true }).eq('id', postId);
     }
     return json(200, { id: postId });
   } catch (e) {

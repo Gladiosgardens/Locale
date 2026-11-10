@@ -12,6 +12,8 @@ export default function Layout() {
       <Stack.Screen name="saved" />
       <Stack.Screen name="activity" />
       <Stack.Screen name="earnings" />
+      <Stack.Screen name="asking" />
+      <Stack.Screen name="answers/[postId]" />
       <Stack.Screen name="insights/index" />
       <Stack.Screen name="insights/[postId]" />
       <Stack.Screen name="new-story" options={{ presentation: 'modal' }} />

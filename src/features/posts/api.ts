@@ -65,6 +65,9 @@ export type FeedPost = {
   commentCount: number;
   iLiked: boolean;
   iSaved: boolean;
+  /** "Where's this from?": the poster is asking, and others can answer. */
+  asking: boolean;
+  answerCount: number;
 };
 
 export type FeedCursor = { publishedAt: string; id: string } | null;
@@ -89,6 +92,8 @@ type RawPost = {
   comment_count?: number;
   i_liked?: boolean;
   i_saved?: boolean;
+  asking?: boolean;
+  answer_count?: number;
 };
 
 const cursorArgs = (cursor: FeedCursor) =>
@@ -116,6 +121,8 @@ export async function toFeedPosts(rows: RawPost[]): Promise<FeedPost[]> {
     commentCount: r.comment_count ?? 0,
     iLiked: r.i_liked ?? false,
     iSaved: r.i_saved ?? false,
+    asking: r.asking ?? false,
+    answerCount: r.answer_count ?? 0,
     media: (r.media as RawMedia[]).map((m) => ({
       kind: m.kind === 'video' ? ('video' as const) : ('image' as const),
       path: m.path ?? m.playback_id ?? '',
@@ -196,7 +203,7 @@ export async function fetchPost(postId: string): Promise<FeedPost | null> {
 }
 
 /** Posts with a hashtag, posts a person is tagged in, or one of my collections. */
-export type PostFilter = { hashtag: string } | { taggedId: string } | { collectionId: string };
+export type PostFilter = { hashtag: string } | { taggedId: string } | { collectionId: string } | { asking: true };
 
 export async function fetchFilteredPage(filter: PostFilter, cursor: FeedCursor): Promise<FeedPost[]> {
   return toFeedPosts(
@@ -206,6 +213,7 @@ export async function fetchFilteredPage(filter: PostFilter, cursor: FeedCursor):
         ...('hashtag' in filter ? { p_hashtag: filter.hashtag } : {}),
         ...('taggedId' in filter ? { p_tagged_id: filter.taggedId } : {}),
         ...('collectionId' in filter ? { p_collection_id: filter.collectionId } : {}),
+        ...('asking' in filter ? { p_asking: true } : {}),
         ...cursorArgs(cursor),
       }),
     ),
@@ -389,6 +397,8 @@ export async function publishPost(input: {
   shopping?: boolean;
   /** One photo or video that disappears after 24 hours. */
   story?: boolean;
+  /** Ask "Where's this from?" so others can suggest answers. */
+  asking?: boolean;
 }): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ id: string }>('publish-post', {
     body: {
@@ -396,6 +406,7 @@ export async function publishPost(input: {
       ...(input.videoUploadId ? { video: { uploadId: input.videoUploadId } } : {}),
       ...(input.shopping === false ? { shopping: false } : {}),
       ...(input.story ? { story: true } : {}),
+      ...(input.asking ? { asking: true } : {}),
       caption: input.caption.trim() || null,
       interestIds: input.interestIds,
       tags: input.tags ?? [],

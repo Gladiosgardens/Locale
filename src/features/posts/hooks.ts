@@ -172,6 +172,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
       groupId?: string | null;
       shopping?: boolean;
       story?: boolean;
+      asking?: boolean;
     }) => {
       const userId = session?.user.id;
       if (!userId) throw new Error('not_authenticated');
@@ -199,6 +200,7 @@ export function usePublishPost(onStage?: (stage: PublishStage, done: number, tot
         videoUploadId,
         shopping: input.shopping,
         story: input.story,
+        asking: input.asking,
       });
     },
     onSuccess: () => {

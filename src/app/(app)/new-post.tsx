@@ -48,6 +48,7 @@ export default function NewPost() {
   const settings = usePrivateSettings();
   const [shoppingChoice, setShoppingChoice] = useState<boolean | null>(null);
   const shopping = shoppingChoice ?? settings.query.data?.shoppingDefault ?? true;
+  const [asking, setAsking] = useState(false);
   const detectMut = useDetectItems();
   const [caption, setCaption] = useState('');
   const [captionCursor, setCaptionCursor] = useState(0);
@@ -139,6 +140,7 @@ export default function NewPost() {
         interestIds: tags,
         tags: shopping ? itemTags : [],
         shopping,
+        asking: shopping && asking && !groupId,
         // Kid-related posts are never shown outside the area (also enforced server-side).
         searchable: !(nearbyOnly || familySelected),
         groupId: groupId ?? null,
@@ -327,6 +329,19 @@ export default function NewPost() {
             ? 'Tagged items and where to buy them appear on the post.'
             : 'No tags or shop links will appear on this post, and it won’t be scanned for items.'}
         </Text>
+        {shopping && !groupId ? (
+          <>
+            <View style={styles.switchRow}>
+              <Switch accessibilityLabel="Ask where something is from" value={asking} onValueChange={setAsking} disabled={busy} />
+              <Text style={styles.switchText}>Ask “Where’s this from?”</Text>
+            </View>
+            <Text style={styles.notice}>
+              {asking
+                ? 'People can suggest where something in your photo is from. The answer you pick is added to the post, and its finder earns from sales through it.'
+                : 'Turn on if you’re looking for something in your photo.'}
+            </Text>
+          </>
+        ) : null}
 
         <ErrorText>{error}</ErrorText>
         {progress ? <Text style={styles.progress}>{progress}</Text> : null}

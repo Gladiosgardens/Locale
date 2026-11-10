@@ -9,7 +9,7 @@ import { VideoMedia } from '@/features/video/VideoMedia';
 import type { Interest } from '@/features/onboarding/api';
 import { timeAgo } from '@/lib/time';
 import { RichText } from '@/components/RichText';
-import { colors, fonts, space } from '@/theme';
+import { colors, fonts, radius, space } from '@/theme';
 import type { FeedMedia, FeedPost, Item } from './api';
 import { useLikePost, useSavePost } from './hooks';
 import { UserAvatar } from '@/features/profiles/UserAvatar';
@@ -244,6 +244,21 @@ export const PostCard = memo(function PostCard({ post, interests, onMenu, onOpen
         ) : null}
       </View>
 
+      {post.asking || post.answerCount ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Where’s this from? ${post.answerCount} ${post.answerCount === 1 ? 'answer' : 'answers'}`}
+          onPress={() => router.push(`/answers/${post.id}`)}
+          style={styles.asking}
+        >
+          <Ionicons name="search" size={15} color={colors.ultramarine} />
+          <Text style={styles.askingText}>
+            {post.asking ? 'Where’s this from?' : 'Found it'}
+            {post.answerCount ? `, ${post.answerCount} ${post.answerCount === 1 ? 'answer' : 'answers'}` : ', be the first to answer'}
+          </Text>
+        </Pressable>
+      ) : null}
+
       <View style={styles.actions}>
         <Pressable
           accessibilityRole="button"
@@ -393,6 +408,20 @@ const styles = StyleSheet.create({
   },
   badgeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.ultramarine },
   badgeText: { fontFamily: fonts.semibold, color: colors.ink, fontSize: 12 },
+  asking: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginHorizontal: space.lg,
+    marginTop: space.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.ultramarine,
+  },
+  askingText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.ultramarine },
   peopleBadge: {
     position: 'absolute',
     right: 12,

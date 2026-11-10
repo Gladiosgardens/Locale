@@ -40,7 +40,7 @@ const post = (over: Partial<FeedPost> = {}): FeedPost => ({
   caption: 'Living room',
   publishedAt: new Date().toISOString(),
   rankAt: new Date().toISOString(),
-  likeCount: 0, commentCount: 0, iLiked: false, iSaved: false,
+  likeCount: 0, commentCount: 0, iLiked: false, iSaved: false, asking: false, answerCount: 0,
   author: { id: 'u1', handle: 'amy', displayName: 'Amy' },
   areaName: null,
   interestIds: [],

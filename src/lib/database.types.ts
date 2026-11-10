@@ -181,6 +181,7 @@ export type Database = {
           p_hashtag?: string;
           p_tagged_id?: string;
           p_collection_id?: string;
+          p_asking?: boolean;
         };
         Returns: {
           area_name: string | null;
@@ -198,6 +199,8 @@ export type Database = {
           comment_count: number;
           i_liked: boolean;
           i_saved: boolean;
+          asking: boolean;
+          answer_count: number;
         }[];
       };
       set_post_like: { Args: { p_like: boolean; p_post_id: string }; Returns: undefined };
@@ -207,6 +210,43 @@ export type Database = {
       set_comment_like: { Args: { p_comment_id: string; p_like: boolean }; Returns: undefined };
       update_post_caption: { Args: { p_caption: string; p_post_id: string }; Returns: undefined };
       set_people_tags: { Args: { p_post_id: string; p_tags: Json }; Returns: undefined };
+      set_post_asking: { Args: { p_post_id: string; p_asking: boolean }; Returns: undefined };
+      submit_answer: {
+        Args: {
+          p_post_id: string;
+          p_title: string;
+          p_url?: string;
+          p_store_name?: string;
+          p_price_cents?: number;
+          p_currency?: string;
+          p_note?: string;
+          p_x?: number;
+          p_y?: number;
+        };
+        Returns: string;
+      };
+      list_answers: {
+        Args: { p_post_id: string };
+        Returns: {
+          id: string;
+          answerer_id: string;
+          answerer_handle: string;
+          answerer_display_name: string;
+          title: string;
+          store_name: string | null;
+          url: string | null;
+          url_host: string | null;
+          price_cents: number | null;
+          currency: string | null;
+          note: string | null;
+          status: string;
+          created_at: string;
+          is_mine: boolean;
+          can_accept: boolean;
+        }[];
+      };
+      delete_answer: { Args: { p_answer_id: string }; Returns: undefined };
+      accept_answer: { Args: { p_answer_id: string }; Returns: string };
       record_post_views: { Args: { p_post_ids: string[] }; Returns: undefined };
       my_earnings_summary: {
         Args: Record<string, never>;

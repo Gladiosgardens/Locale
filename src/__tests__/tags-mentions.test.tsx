@@ -63,7 +63,7 @@ const post = (over: Partial<FeedPost> = {}): FeedPost => ({
     kind: 'image', videoUrl: null, duration: null, path: 'p1/0.jpg', width: 100, height: 100, url: 'https://s/0', tags: [],
     people: [{ profileId: 'u-ben', handle: 'men_ben', x: 0.3, y: 0.4 }],
   }],
-  likeCount: 0, commentCount: 0, iLiked: false, iSaved: false, ...over,
+  likeCount: 0, commentCount: 0, iLiked: false, iSaved: false, asking: false, answerCount: 0, ...over,
 });
 
 describe('mentions and hashtags in text', () => {
@@ -102,6 +102,12 @@ describe('people tags on posts', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Show 1 tagged person' }));
     await fireEvent.press(screen.getByRole('link', { name: 'Tagged: @men_ben' }));
     expect(mockPush).toHaveBeenCalledWith('/profile/u-ben');
+  });
+
+  it('shows “Where’s this from?” on posts asking, opening the answers', async () => {
+    await render(<PostCard post={post({ asking: true, answerCount: 2 })} interests={new Map()} onMenu={jest.fn()} onOpenItem={jest.fn()} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'Where’s this from? 2 answers' }));
+    expect(mockPush).toHaveBeenCalledWith('/answers/p1');
   });
 
   it('lets a tagged person remove themselves, and anyone save to a collection', async () => {

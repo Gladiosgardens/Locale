@@ -3,7 +3,7 @@
 
 export type NotificationRow = {
   id: number;
-  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply' | 'mention' | 'comment_mention' | 'tag' | 'sale' | 'first_sale' | 'weekly_earnings' | 'payout_sent';
+  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply' | 'mention' | 'comment_mention' | 'tag' | 'sale' | 'first_sale' | 'weekly_earnings' | 'payout_sent' | 'answer' | 'answer_accepted';
   actor_id?: string | null;
   actor_name: string | null;
   group_name: string | null;
@@ -60,6 +60,12 @@ export function describe(row: NotificationRow): { title: string; body: string; u
       return row.post_id ? { title: actor, body: 'Mentioned you in a comment', url: `/comments/${row.post_id}` } : null;
     case 'tag':
       return row.post_id ? { title: actor, body: 'Tagged you in a post', url: `/post/${row.post_id}` } : null;
+    case 'answer':
+      return row.post_id ? { title: actor, body: 'Suggested where it’s from', url: `/answers/${row.post_id}` } : null;
+    case 'answer_accepted':
+      return row.post_id
+        ? { title: actor, body: 'Used your find. You’ll earn when people buy through it.', url: `/post/${row.post_id}` }
+        : null;
     case 'first_sale':
       return {
         title: 'Your first sale on Locale!',

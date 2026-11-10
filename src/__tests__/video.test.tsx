@@ -25,7 +25,7 @@ jest.mock('@/lib/supabase', () => ({
 const videoPost: FeedPost = {
   id: 'v1', caption: 'Setup tour', publishedAt: new Date().toISOString(), rankAt: new Date().toISOString(),
   author: { id: 'u1', handle: 'sami', displayName: 'Sami' }, areaName: null, interestIds: [], matchedItemIds: [],
-  likeCount: 0, commentCount: 0, iLiked: false, iSaved: false,
+  likeCount: 0, commentCount: 0, iLiked: false, iSaved: false, asking: false, answerCount: 0,
   media: [{ people: [],
     kind: 'video', path: 'pb1', width: 1080, height: 1920, duration: 14,
     url: 'https://image.mux.com/pb1/thumbnail.jpg?width=720&time=1', videoUrl: 'https://stream.mux.com/pb1.m3u8',

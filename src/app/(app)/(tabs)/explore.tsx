@@ -55,6 +55,18 @@ export default function Explore() {
       <Text style={type.title} accessibilityRole="header">
         {searching ? `“${query.trim()}”` : 'Explore'}
       </Text>
+      {!searching ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Help find: people asking where something is from"
+          onPress={() => router.push('/asking')}
+          style={styles.hashtag}
+          hitSlop={4}
+        >
+          <Feather name="help-circle" size={18} color={colors.ultramarine} />
+          <Text style={[styles.hashtagText, styles.helpFind]}>Help find: “Where’s this from?”</Text>
+        </Pressable>
+      ) : null}
       {hashtag && !/^[0-9_]+$/.test(hashtag) ? (
         <Pressable
           accessibilityRole="link"
@@ -127,6 +139,7 @@ export default function Explore() {
 const styles = StyleSheet.create({
   hashtag: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm },
   hashtagText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+  helpFind: { color: colors.ultramarine },
   screen: { flex: 1, backgroundColor: colors.paper },
   searchRow: { paddingHorizontal: space.lg, paddingTop: space.sm, paddingBottom: space.sm },
   search: {

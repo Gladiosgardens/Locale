@@ -53,6 +53,8 @@ Built so far:
 
 20. **Earnings notifications:** a push when someone buys through your post ("Your first sale on Locale!" the first time; later sales on the same post add up into one push), when a payout is sent, and a weekly "You earned $X this week" summary. They open Earnings, and Settings has a **Sales and payouts** switch. The weekly summary runs from pg_cron: `select cron.schedule('weekly-earnings', '0 17 * * 1', $$select public.weekly_earnings_digest()$$);` (Mondays 17:00 UTC; delivery goes through the notifications webhook as usual).
 
+21. **"Where's this from?":** in the composer, **Ask "Where's this from?"** marks a post as asking. It shows a blue "Where's this from?" pill (with the answer count) that opens the answers page, and Explore has **Help find**, a feed of posts still asking. Anyone who can see the post suggests an answer (what it is, a link and/or store, optional price and note; links follow the same rules as tags; up to 3 per person per post, 30 a day). The poster hears about new answers, and **Add to post** turns one into a tagged item *created by the answerer*, so shop taps on it credit the answerer's earnings (shop links now credit whoever created the item). The answerer is notified. **Found it: stop asking** ends the request.
+
 Before a public launch, work through the list at the bottom of this file.
 
 ### Going live with earnings
@@ -84,6 +86,17 @@ Before a public launch, work through the list at the bottom of this file.
        body := '{}'::jsonb);
    $$);
    ```
+
+### Updating an existing install to step 21
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy publish-post
+npx supabase functions deploy deliver-notifications
+```
+
+No new build.
 
 ### Updating an existing install to step 20
 
