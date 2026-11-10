@@ -211,6 +211,11 @@ export type Database = {
       set_comment_like: { Args: { p_comment_id: string; p_like: boolean }; Returns: undefined };
       update_post_caption: { Args: { p_caption: string; p_post_id: string }; Returns: undefined };
       set_people_tags: { Args: { p_post_id: string; p_tags: Json }; Returns: undefined };
+      my_instagram: {
+        Args: Record<string, never>;
+        Returns: { connected: boolean; username: string | null; expires_at: string | null; imported: number }[];
+      };
+      disconnect_instagram: { Args: Record<string, never>; Returns: undefined };
       set_post_asking: { Args: { p_post_id: string; p_asking: boolean }; Returns: undefined };
       submit_answer: {
         Args: {

@@ -58,6 +58,7 @@ Built so far:
 22. **Price-drop and back-in-stock alerts:** once a day `check-prices` reads the product page of every wishlisted item that has a link (the schema.org Product/Offer data most stores publish, or their price meta tags), up to 100 items a run, each at most once every 20 hours. The first read sets a baseline; a drop of 10% or more in the same currency, or a return to stock, notifies everyone who saved it ("Price drop: Oak desk, now $160.00 (was $185.00)"), opening Saved. The wishlist shows the latest price, the tagged price struck through when it's lower, and "Sold out". Pages without readable prices are skipped after 5 failed reads. Settings has **Price drops on my wishlist**. Setup: `npx supabase secrets set PRICES_SECRET=$(openssl rand -hex 32)`, deploy `check-prices --no-verify-jwt`, and schedule it daily with pg_cron (same pattern as the payouts job, header `x-prices-secret`, e.g. `'0 14 * * *'`).
 
 23. **Share to Locale from any store:** on a product page in a store's app or the browser, tap **Share → Locale**. Locale opens a new post with "Ready to tag: <product>" (read by `link-preview` from the page's schema.org Product data and Open Graph tags: name, brand, store, price, image); add your own photo, tap **Tag items** and tap where it is, and the form starts filled in. In any tag form, **Fill in from the link** fills the empty fields from a pasted link. The share target is `expo-share-intent` (iOS share extension; Android `text/*` intent), so this step needs a **new build**; on iOS, EAS asks to set up credentials for the extra extension target. `link-preview` fetches only public https pages on real host names.
+24. **Import from Instagram:** **Edit profile → Import posts from Instagram** (or the button on an empty profile). Connect through Instagram's own sign-in page, pick up to 10 photos or carousels at a time, and they're added to your profile with their captions and original dates (so they don't flood followers' feeds as new posts). Already-imported posts are greyed out; videos are skipped; imports count toward the 20-posts-a-day limit. Works with Instagram professional accounts (Creator or Business). The access token never leaves the server (`instagram_connections`, service-role only) and is refreshed before its 60 days run out. **Disconnect** deletes the token; imported posts stay.
 
 Before a public launch, work through the list at the bottom of this file.
 
@@ -90,6 +91,26 @@ Before a public launch, work through the list at the bottom of this file.
        body := '{}'::jsonb);
    $$);
    ```
+
+### Updating an existing install to step 24
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy instagram-connect
+npx supabase functions deploy instagram-callback --no-verify-jwt
+```
+
+No new build is needed. Import stays off ("Instagram import isn't switched on yet") until you add a Meta app:
+
+1. At developers.facebook.com, create an app (type **Business**) and add the **Instagram** product, choosing **API setup with Instagram login**.
+2. Under **Set up Instagram business login**, add the redirect URL `https://<project-ref>.supabase.co/functions/v1/instagram-callback`.
+3. Copy the **Instagram app ID** and **Instagram app secret** from that page, then set them (type each value after `=`; don't paste them anywhere else):
+   ```
+   npx supabase secrets set INSTAGRAM_APP_ID=
+   npx supabase secrets set INSTAGRAM_APP_SECRET=
+   ```
+4. While the app is in development, only Instagram accounts added under **App roles → Roles** as Instagram testers can connect (accept the invite in Instagram: Settings → Website permissions → Apps and websites). For everyone, submit **instagram_business_basic** for App Review (Advanced Access) with a screen recording of the import flow and your privacy policy URL on your domain.
 
 ### Updating an existing install to step 23
 
@@ -390,6 +411,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Stats disclosure.** Say in the privacy policy that views and item taps are recorded and shown to posters as totals (never who), and prune `post_views` and `item_events` older than 90 days.
 - **Earnings before going live.** Have a lawyer review the creator terms, payout and clawback rules; confirm Stripe Connect's 1099 reporting is on; add automatic sync from the network's reporting API once approved (replacing CSV imports); flag unusual patterns (many sales from one buyer, new accounts with big earnings) before payouts; and make account deletion keep payout records (payouts block deleting a profile today).
 - **Price checks.** Some stores block automated page reads or show prices only after scripts run; those items simply get no alerts. Respect stores' terms, keep the daily volume modest, and consider a product-data API for big retailers as usage grows.
+- **Instagram import.** Pass Meta App Review before launch, follow Meta's Platform Terms (delete a person's Instagram data when they disconnect or ask, which Disconnect does for the token), and mention the import in the privacy policy.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

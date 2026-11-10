@@ -158,6 +158,9 @@ export default function EditProfile() {
           <Text style={styles.count}>{`${values.bio.length}/${MAX_BIO}`}</Text>
           <ErrorText>{error}</ErrorText>
           <Button label="Save" onPress={save} loading={saving} disabled={!values.displayName.trim() || !values.handle.trim()} />
+          <Pressable accessibilityRole="link" onPress={() => router.push('/import-instagram')} hitSlop={8}>
+            <Text style={styles.link}>Import posts from Instagram</Text>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

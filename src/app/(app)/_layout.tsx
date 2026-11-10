@@ -15,6 +15,7 @@ export default function Layout() {
         <Stack.Screen name="saved" />
         <Stack.Screen name="activity" />
         <Stack.Screen name="earnings" />
+        <Stack.Screen name="import-instagram" />
         <Stack.Screen name="asking" />
         <Stack.Screen name="answers/[postId]" />
         <Stack.Screen name="insights/index" />

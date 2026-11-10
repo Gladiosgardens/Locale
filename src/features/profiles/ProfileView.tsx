@@ -177,6 +177,9 @@ export function ProfileView({ id, isTab }: { id: string | undefined; isTab?: boo
             <View style={styles.empty}>
               <Text style={type.bodyMuted}>{p.isMe ? 'Your posts will appear here.' : 'No posts yet.'}</Text>
               {p.isMe ? <Button label="Create a post" onPress={() => router.push('/new-post')} /> : null}
+              {p.isMe ? (
+                <Button label="Import from Instagram" variant="secondary" onPress={() => router.push('/import-instagram')} />
+              ) : null}
             </View>
           )
         }
