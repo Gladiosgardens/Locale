@@ -6,6 +6,7 @@ import { Button } from '@/components/ui';
 import type { Item } from '@/features/posts/api';
 import { useSimilarItems } from '@/features/posts/hooks';
 import { useItemSaved, useSaveItem } from '@/features/social/hooks';
+import { shopLink } from '@/features/earnings/api';
 import { recordItemEvent } from '@/features/stats/api';
 import { friendlyError } from '@/lib/errors';
 import { colors, fonts, radius, space, type } from '@/theme';
@@ -17,6 +18,24 @@ export function ItemSheet({ item, postId, onClose }: { item: Item | null; postId
   const [showSimilar, setShowSimilar] = useState(false);
   const similar = useSimilarItems(item?.id, postId, showSimilar);
   const byline = item ? [...new Set([item.brand, item.storeName].filter(Boolean))].join(', ') : '';
+
+  // Through shop-link so a purchase can credit the poster; if that's slow or
+  // fails, the plain link opens anyway.
+  async function openShop(it: Item) {
+    let url = it.url!;
+    if (postId) {
+      void recordItemEvent(postId, it.id, 'link').catch(() => {});
+      try {
+        url = await Promise.race([
+          shopLink(postId, it.id),
+          new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+        ]);
+      } catch {
+        url = it.url!;
+      }
+    }
+    void WebBrowser.openBrowserAsync(url, { dismissButtonStyle: 'close' });
+  }
 
   // Counted for the poster's stats (their own taps are ignored by the server).
   const itemId = item?.id;
@@ -50,12 +69,11 @@ export function ItemSheet({ item, postId, onClose }: { item: Item | null; postId
               <>
                 <Button
                   label={`Shop on ${item.urlHost}`}
-                  onPress={() => {
-                    if (postId) void recordItemEvent(postId, item.id, 'link').catch(() => {});
-                    void WebBrowser.openBrowserAsync(item.url!, { dismissButtonStyle: 'close' });
-                  }}
+                  onPress={() => void openShop(item)}
                 />
-                <Text style={styles.note}>Opens {item.urlHost}, a site outside Locale.</Text>
+                <Text style={styles.note}>
+                  Opens {item.urlHost}, a site outside Locale. If you buy, the poster and Locale may earn a commission.
+                </Text>
               </>
             ) : item.storeName ? (
               <Text style={styles.note}>Available at {item.storeName}. No link was added.</Text>

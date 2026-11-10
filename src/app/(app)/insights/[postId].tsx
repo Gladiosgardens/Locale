@@ -5,6 +5,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui';
 import { usePost } from '@/features/posts/hooks';
+import { formatUsd } from '@/features/earnings/api';
+import { usePostEarnings } from '@/features/earnings/hooks';
 import { usePostStats } from '@/features/stats/hooks';
 import { StatTile } from '@/features/stats/Stat';
 import { friendlyError } from '@/lib/errors';
@@ -17,6 +19,7 @@ export default function PostInsights() {
   const stats = usePostStats(postId);
   const post = usePost(postId);
   const s = stats.data;
+  const earned = usePostEarnings(postId);
   const media = post.data?.media[0];
 
   return (
@@ -66,6 +69,11 @@ export default function PostInsights() {
                 <View style={styles.grid}>
                   <StatTile value={s.itemOpens} label="people viewed items" shop />
                   <StatTile value={s.linkTaps} label="people tapped to shops" shop />
+                  <StatTile value={earned.data?.sales ?? 0} label="sales" shop />
+                  <View style={styles.earnedTile} accessible accessibilityLabel={`${formatUsd(earned.data?.earnedCents ?? 0)} earned`}>
+                    <Text style={styles.earnedValue}>{formatUsd(earned.data?.earnedCents ?? 0)}</Text>
+                    <Text style={styles.meta}>you earned</Text>
+                  </View>
                 </View>
                 {s.items.map((it) => (
                   <View
@@ -123,6 +131,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.hairline,
   },
+  earnedTile: { width: '50%', paddingVertical: 14, gap: 2 },
+  earnedValue: { fontFamily: fonts.display, fontSize: 34, lineHeight: 38, color: colors.ultramarine },
   item: { flexDirection: 'row', gap: space.md, alignItems: 'center', paddingVertical: 10 },
   dot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.ultramarine },
   itemText: { flex: 1, gap: 2 },

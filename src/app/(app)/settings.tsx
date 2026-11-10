@@ -56,6 +56,7 @@ export default function Settings() {
             />
           </View>
           <Text style={styles.muted}>You can still change it for each post. When it’s off, posts have no tags or shop links.</Text>
+          <Button label="Earnings and payouts" variant="secondary" onPress={() => router.push('/earnings')} />
         </View>
 
         <View style={styles.section}>

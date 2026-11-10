@@ -6,6 +6,8 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui';
 import { usePost } from '@/features/posts/hooks';
+import { formatUsd } from '@/features/earnings/api';
+import { useEarnings } from '@/features/earnings/hooks';
 import { useSummary } from '@/features/stats/hooks';
 import { StatTile } from '@/features/stats/Stat';
 import { colors, fonts, radius, space, type } from '@/theme';
@@ -43,6 +45,7 @@ export default function Insights() {
           ))}
         </View>
 
+        <EarningsCard />
         {summary.isPending ? <ActivityIndicator style={styles.loading} color={colors.ink} /> : null}
         {summary.isError ? (
           <View style={styles.empty}>
@@ -84,6 +87,25 @@ export default function Insights() {
         ) : null}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function EarningsCard() {
+  const earnings = useEarnings();
+  const e = earnings.data;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={e ? `Earnings: ${formatUsd(e.availableCents)} ready, ${formatUsd(e.pendingCents)} pending` : 'Earnings'}
+      onPress={() => router.push('/earnings')}
+      style={styles.earnings}
+    >
+      <View style={styles.rowText}>
+        <Text style={styles.earningsValue}>{e ? formatUsd(e.availableCents + e.pendingCents) : '—'}</Text>
+        <Text style={styles.meta}>Earned from sales through your posts</Text>
+      </View>
+      <Feather name="chevron-right" size={20} color={colors.muted} />
+    </Pressable>
   );
 }
 
@@ -141,5 +163,15 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: 2 },
   caption: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
   meta: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
+  earnings: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.wash,
+    borderRadius: radius.tag,
+    padding: space.lg,
+    marginBottom: space.sm,
+  },
+  earningsValue: { fontFamily: fonts.display, fontSize: 28, color: colors.ultramarine },
   note: { fontFamily: fonts.body, fontSize: 13, lineHeight: 18, color: colors.muted, marginTop: space.xl },
 });

@@ -207,6 +207,41 @@ export type Database = {
       update_post_caption: { Args: { p_caption: string; p_post_id: string }; Returns: undefined };
       set_people_tags: { Args: { p_post_id: string; p_tags: Json }; Returns: undefined };
       record_post_views: { Args: { p_post_ids: string[] }; Returns: undefined };
+      my_earnings_summary: {
+        Args: Record<string, never>;
+        Returns: {
+          pending_cents: number;
+          available_cents: number;
+          paid_cents: number;
+          share_percent: number;
+          minimum_payout_cents: number;
+          next_payout_on: string;
+          has_account: boolean;
+          details_submitted: boolean;
+          payouts_enabled: boolean;
+          country: string | null;
+        }[];
+      };
+      my_commissions: {
+        Args: { p_limit?: number; p_before?: string };
+        Returns: {
+          id: string;
+          occurred_at: string;
+          status: string;
+          creator_cents: number;
+          sale_cents: number | null;
+          currency: string;
+          post_id: string | null;
+          item_title: string | null;
+          post_media_path: string | null;
+          post_playback_id: string | null;
+        }[];
+      };
+      my_payouts: {
+        Args: Record<string, never>;
+        Returns: { id: string; amount_cents: number; currency: string; status: string; created_at: string; completed_at: string | null }[];
+      };
+      post_earnings: { Args: { p_post_id: string }; Returns: { sales: number; earned_cents: number }[] };
       record_item_event: { Args: { p_post_id: string; p_item_id: string; p_kind: string }; Returns: undefined };
       post_stats: {
         Args: { p_post_id: string };

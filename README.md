@@ -49,7 +49,49 @@ Built so far:
 
 18. **Creator stats (Insights):** the chart icon on your profile opens **Insights** for the last 7, 30 or 90 days: accounts reached, new followers, item views and taps to shops (in ultramarine), likes, comments and saves, plus your top posts. **View insights** in a post's ••• menu breaks one post down: reach, views, likes, comments, saves, and for each tagged item how many people viewed it, tapped through to the shop and saved it to a wishlist. Stories with items have **Item insights** in their menu. The app records a view when 60% of a post is on screen (batched every few seconds, once per post per session) and an item event when someone opens an item or taps its shop link. Repeat views and taps within 10 minutes count once, authors' own views and taps never count, and only the author sees the numbers; nobody is listed.
 
+19. **Creator earnings (built, switched off until accounts exist):** anyone can earn **70%** of the affiliate commission when someone buys through an item they tagged. Tapping **Shop on …** goes through `shop-link`, which records the tap (`affiliate_clicks`) and returns the network's tracked link with our click id as the custom ID; the item sheet says "the poster and Locale may earn a commission". Sales come in through `import-commissions` (from the network's CSV export with `scripts/import-commissions.mjs`, or its API later) and are credited by `import_commission`: buying through your own post, and links the poster marked as their own affiliate links, aren't credited. A sale is *pending* until the network locks it after the store's return window, then *available*. On the 1st of each month `run-payouts` pays everyone with at least **$25** available and a ready Stripe account by Stripe transfer; a sale returned after payout is taken out of the next one. Creators set up payouts from **Earnings** (Insights card, or Settings → Earnings and payouts) with Stripe Connect Express in any country Stripe can pay, see sales and payouts, and open Stripe's dashboard for bank and tax details. Post insights show sales and earnings per post. Until `AFFILIATE_LINK_TEMPLATE` is set, links open untracked; until `STRIPE_SECRET_KEY` is set, payout setup says payouts aren't on.
+
 Before a public launch, work through the list at the bottom of this file.
+
+### Going live with earnings
+
+1. **Website on your own domain** (affiliate networks require one), with Privacy Policy and Terms that cover commissions, payouts and the creator rules above.
+2. **Affiliate network:** get approved by Sovrn Commerce and/or Skimlinks, then set the link template from their link-wrapping docs, with `{url}` for the destination and `{sub}` for our click id in their custom/sub-ID parameter:
+   `npx supabase secrets set AFFILIATE_LINK_TEMPLATE='https://…{url}…{sub}'`
+3. **Stripe:** create a Stripe account for your US business, turn on **Connect** (Express accounts, cross-border payouts, and 1099 tax reporting in the Connect settings), then `npx supabase secrets set STRIPE_SECRET_KEY=sk_live_…` (use `sk_test_…` first). Keep enough balance in Stripe to cover payouts (commissions arrive from the network to your bank; move funds to Stripe before the 1st).
+4. **Secrets for the jobs:** `npx supabase secrets set IMPORT_SECRET=$(openssl rand -hex 32) PAYOUT_SECRET=$(openssl rand -hex 32)` (note both values).
+5. **Deploy:**
+   ```
+   npx supabase db push --remote
+   npx supabase functions deploy shop-link
+   npx supabase functions deploy stripe-connect
+   npx supabase functions deploy stripe-return --no-verify-jwt
+   npx supabase functions deploy import-commissions --no-verify-jwt
+   npx supabase functions deploy run-payouts --no-verify-jwt
+   ```
+6. **Import sales** at least weekly: export the network's commission report as CSV, then
+   `SUPABASE_URL=https://REF.supabase.co IMPORT_SECRET=… node scripts/import-commissions.mjs --network sovrn --file report.csv --id "<transaction id column>" --sub "<custom id column>" --commission "<commission column>" --sale "<order value column>" --currency "<currency column>" --status "<status column>" --date "<date column>"`
+7. **Monthly payouts:** schedule with pg_cron on the 1st (after importing the latest sales):
+   ```sql
+   select vault.create_secret('<PAYOUT_SECRET>', 'payout_secret');
+   select cron.schedule('run-payouts', '0 15 1 * *', $$
+     select net.http_post(
+       url := 'https://<project-ref>.supabase.co/functions/v1/run-payouts',
+       headers := jsonb_build_object('Content-Type', 'application/json', 'x-payout-secret',
+         (select decrypted_secret from vault.decrypted_secrets where name = 'payout_secret')),
+       body := '{}'::jsonb);
+   $$);
+   ```
+
+### Updating an existing install to step 19
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy shop-link
+```
+
+The rest of the earnings setup waits for the accounts above. No new build is needed.
 
 ### Updating an existing install to step 18
 
@@ -295,6 +337,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Mention and tag spam.** Mentions are capped at 10 per caption or comment and tags at 20 per post, but there's no daily limit per person yet; add one (and let people limit tags to people they follow) before growth.
 - **Expired stories.** Stories past 24 hours that aren't in a highlight stay in storage (the author can still open them). Add an archive screen, or a daily job that deletes them after a set time.
 - **Stats disclosure.** Say in the privacy policy that views and item taps are recorded and shown to posters as totals (never who), and prune `post_views` and `item_events` older than 90 days.
+- **Earnings before going live.** Have a lawyer review the creator terms, payout and clawback rules; confirm Stripe Connect's 1099 reporting is on; add automatic sync from the network's reporting API once approved (replacing CSV imports); flag unusual patterns (many sales from one buyer, new accounts with big earnings) before payouts; and make account deletion keep payout records (payouts block deleting a profile today).
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

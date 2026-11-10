@@ -310,7 +310,7 @@ export type DraftTag = {
   };
 };
 
-async function invokeFn<T>(name: string, body: Record<string, unknown>, fallback: string): Promise<T> {
+export async function invokeFn<T>(name: string, body: Record<string, unknown>, fallback: string): Promise<T> {
   const { data, error } = await supabase.functions.invoke<T>(name, { body });
   if (error) {
     let code = fallback;
