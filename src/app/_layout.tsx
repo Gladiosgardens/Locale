@@ -12,6 +12,7 @@ import {
 import Feather from '@expo/vector-icons/Feather';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import { ShareIntentProvider } from 'expo-share-intent';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, Text } from 'react-native';
@@ -38,14 +39,16 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
 
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <StatusBar style="dark" />
-          <RootNavigator />
-        </AuthProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <ShareIntentProvider>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <StatusBar style="dark" />
+            <RootNavigator />
+          </AuthProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </ShareIntentProvider>
   );
 }
 

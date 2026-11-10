@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Chip, colors, ErrorText } from '@/components/ui';
@@ -14,6 +14,7 @@ import {
   MAX_CAPTION,
   MAX_PHOTOS,
   MAX_POST_INTERESTS,
+  linkPreview,
   setPeopleTags,
   type DraftTag,
   type PeopleTagDraft,
@@ -38,7 +39,32 @@ function stageText(stage: PublishStage, done: number, total: number) {
 }
 
 export default function NewPost() {
-  const { groupId, groupName } = useLocalSearchParams<{ groupId?: string; groupName?: string }>();
+  const { groupId, groupName, sharedUrl } = useLocalSearchParams<{ groupId?: string; groupName?: string; sharedUrl?: string }>();
+  // A product page shared to Locale from another app: read it, then tag it on the photo.
+  const [shared, setShared] = useState<{ url: string; title?: string; brand?: string; store?: string; priceCents?: number | null } | null>(
+    sharedUrl ? { url: sharedUrl } : null,
+  );
+  useEffect(() => {
+    if (!sharedUrl) return;
+    let live = true;
+    linkPreview(sharedUrl)
+      .then((p) => {
+        if (live)
+          setShared({
+            url: sharedUrl,
+            title: p.title ?? undefined,
+            brand: p.brand ?? undefined,
+            store: p.store ?? undefined,
+            priceCents: p.currency === 'USD' ? p.priceCents : null,
+          });
+      })
+      .catch(() => {
+        // Keep just the link; the poster fills in the rest.
+      });
+    return () => {
+      live = false;
+    };
+  }, [sharedUrl]);
   const profile = useMyProfile();
   const interests = useInterests();
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
@@ -56,6 +82,7 @@ export default function NewPost() {
   const [taggingPeople, setTaggingPeople] = useState<number | null>(null);
   const [tags, setTags] = useState<number[]>([]);
   const [itemTags, setItemTags] = useState<DraftTag[]>([]);
+  const sharedTagged = !!shared && itemTags.some((t) => t.item.url === shared.url);
   const [tagging, setTagging] = useState<number | null>(null);
   const [nearbyOnly, setNearbyOnly] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -175,6 +202,16 @@ export default function NewPost() {
       </View>
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+        {shared && !sharedTagged ? (
+          <View style={styles.shared} accessible accessibilityLabel={`Ready to tag ${shared.title ?? shared.url}`}>
+            <Text style={styles.sharedTitle} numberOfLines={2}>
+              Ready to tag: {shared.title ?? shared.url}
+            </Text>
+            <Text style={styles.sharedHint}>
+              {photos.length ? 'Tap Tag items on your photo, then tap where it is.' : 'Add a photo of it, then tap Tag items and tap where it is.'}
+            </Text>
+          </View>
+        ) : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbs}>
           {photos.map((p, i) => (
             <View key={`${p.uri}-${i}`}>
@@ -364,6 +401,8 @@ export default function NewPost() {
         remainingForPost={MAX_POST_TAGS - itemTags.length}
         onChange={(next) => setItemTags((prev) => [...prev.filter((t) => t.media !== tagging), ...next])}
         onClose={() => setTagging(null)}
+        onLookupLink={shopping ? linkPreview : undefined}
+        prefill={shopping && shared && !sharedTagged ? shared : null}
         onDetect={
           shopping && !video && tagging != null
             ? async () => {
@@ -381,6 +420,9 @@ export default function NewPost() {
 }
 
 const styles = StyleSheet.create({
+  shared: { backgroundColor: colors.wash, borderRadius: radius.tag, padding: space.md, gap: 4, borderLeftWidth: 3, borderLeftColor: colors.ultramarine },
+  sharedTitle: { fontFamily: fonts.semibold, fontSize: 15, color: colors.ink },
+  sharedHint: { fontFamily: fonts.body, fontSize: 13, color: colors.muted },
   screen: { flex: 1, backgroundColor: colors.paper },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: space.lg, paddingVertical: space.md },
   cancel: { fontFamily: fonts.medium, color: colors.ink, fontSize: 15, width: 60 },

@@ -235,6 +235,20 @@ export async function removeMyPeopleTag(postId: string): Promise<void> {
   check(await supabase.rpc('remove_my_people_tag', { p_post_id: postId }));
 }
 
+export type LinkPreview = {
+  title: string | null;
+  brand: string | null;
+  store: string | null;
+  image: string | null;
+  priceCents: number | null;
+  currency: string | null;
+};
+
+/** Reads a product link (name, brand, store, price) to fill in a tag. */
+export async function linkPreview(url: string): Promise<LinkPreview> {
+  return invokeFn<LinkPreview>('link-preview', { url }, 'preview_failed');
+}
+
 export const MIN_QUERY_LENGTH = 2;
 
 export async function searchPosts(query: string, cursor: FeedCursor): Promise<FeedPost[]> {

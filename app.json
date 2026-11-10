@@ -56,6 +56,19 @@
         {
           "contactsPermission": "Locale checks your contacts’ email addresses to find friends who are already on Locale. They’re scrambled on your phone first and never stored."
         }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsWebPageWithMaxCount": 1,
+            "NSExtensionActivationSupportsText": true
+          },
+          "androidIntentFilters": [
+            "text/*"
+          ]
+        }
       ]
     ],
     "experiments": {

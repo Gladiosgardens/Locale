@@ -57,6 +57,8 @@ Built so far:
 
 22. **Price-drop and back-in-stock alerts:** once a day `check-prices` reads the product page of every wishlisted item that has a link (the schema.org Product/Offer data most stores publish, or their price meta tags), up to 100 items a run, each at most once every 20 hours. The first read sets a baseline; a drop of 10% or more in the same currency, or a return to stock, notifies everyone who saved it ("Price drop: Oak desk, now $160.00 (was $185.00)"), opening Saved. The wishlist shows the latest price, the tagged price struck through when it's lower, and "Sold out". Pages without readable prices are skipped after 5 failed reads. Settings has **Price drops on my wishlist**. Setup: `npx supabase secrets set PRICES_SECRET=$(openssl rand -hex 32)`, deploy `check-prices --no-verify-jwt`, and schedule it daily with pg_cron (same pattern as the payouts job, header `x-prices-secret`, e.g. `'0 14 * * *'`).
 
+23. **Share to Locale from any store:** on a product page in a store's app or the browser, tap **Share → Locale**. Locale opens a new post with "Ready to tag: <product>" (read by `link-preview` from the page's schema.org Product data and Open Graph tags: name, brand, store, price, image); add your own photo, tap **Tag items** and tap where it is, and the form starts filled in. In any tag form, **Fill in from the link** fills the empty fields from a pasted link. The share target is `expo-share-intent` (iOS share extension; Android `text/*` intent), so this step needs a **new build**; on iOS, EAS asks to set up credentials for the extra extension target. `link-preview` fetches only public https pages on real host names.
+
 Before a public launch, work through the list at the bottom of this file.
 
 ### Going live with earnings
@@ -88,6 +90,16 @@ Before a public launch, work through the list at the bottom of this file.
        body := '{}'::jsonb);
    $$);
    ```
+
+### Updating an existing install to step 23
+
+```
+git pull && npm install
+npx supabase functions deploy link-preview
+npx eas-cli@27.4.1 build --profile development --platform android
+```
+
+A **new build is needed** (the share target is native code). Install it over the old app.
 
 ### Updating an existing install to step 22
 

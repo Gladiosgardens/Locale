@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, colors, ErrorText, Field } from '@/components/ui';
-import type { Detection, DetectedItem, DraftTag, PickedPhoto, ShopMatch } from '@/features/posts/api';
+import type { Detection, DetectedItem, DraftTag, LinkPreview, PickedPhoto, ShopMatch } from '@/features/posts/api';
 import { friendlyError } from '@/lib/errors';
 import { checkItemLink, formatPrice, parsePriceCents } from './link';
 import { fonts, radius, space } from '@/theme';
@@ -34,6 +34,10 @@ type Props = {
   onClose: () => void;
   /** Finds items in the photo automatically. Omitted for videos and when shopping is off. */
   onDetect?: () => Promise<Detection>;
+  /** Reads a product link to fill in the form ("Fill from link"). */
+  onLookupLink?: (url: string) => Promise<LinkPreview>;
+  /** A product shared from another app: the next tap on the photo starts with it filled in. */
+  prefill?: { title?: string; brand?: string; store?: string; url: string; priceCents?: number | null } | null;
 };
 
 /**
@@ -48,7 +52,16 @@ export function toFramePoint(p: { x: number; y: number }, photo: { width: number
   return { x: clamp((p.x * photo.width * scale - offX) / frameW), y: clamp((p.y * photo.height * scale - offY) / frameH) };
 }
 
-export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange, onClose, onDetect }: Props) {
+const formFrom = (p: NonNullable<Props['prefill']> | LinkPreview, url: string) => ({
+  ...EMPTY_FORM,
+  title: p.title ?? '',
+  brand: p.brand ?? '',
+  store: 'store' in p ? (p.store ?? '') : '',
+  url,
+  price: p.priceCents != null ? (p.priceCents / 100).toFixed(2) : '',
+});
+
+export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange, onClose, onDetect, onLookupLink, prefill }: Props) {
   const { width: screen } = useWindowDimensions();
   const [pending, setPending] = useState<{ x: number; y: number } | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -66,8 +79,33 @@ export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange,
   function startAt(x: number, y: number) {
     if (!canAdd) return;
     setPending({ x: Math.min(Math.max(x / width, 0), 1), y: Math.min(Math.max(y / height, 0), 1) });
-    setForm(EMPTY_FORM);
+    // A shared product goes on the first spot tapped, unless it's already tagged.
+    const shared = prefill && !tags.some((t) => t.item.url === prefill.url) ? prefill : null;
+    setForm(shared ? formFrom(shared, shared.url) : EMPTY_FORM);
     setError(null);
+  }
+
+  const [looking, setLooking] = useState(false);
+  async function fillFromLink() {
+    if (!onLookupLink || !link?.ok) return;
+    setLooking(true);
+    setError(null);
+    try {
+      const p = await onLookupLink(form.url.trim());
+      const filled = formFrom(p, form.url.trim());
+      // Keep anything already typed; fill only the empty fields.
+      setForm((f) => ({
+        ...f,
+        title: f.title || filled.title,
+        brand: f.brand || filled.brand,
+        store: f.store || filled.store,
+        price: f.price || (p.currency === 'USD' ? filled.price : ''),
+      }));
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setLooking(false);
+    }
   }
 
   async function detect() {
@@ -224,6 +262,9 @@ export function TagEditor({ photo, mediaIndex, tags, remainingForPost, onChange,
                     placeholder="https://"
                   />
                   {link?.ok ? <Text style={styles.host}>Opens {link.host}</Text> : null}
+                  {link?.ok && onLookupLink ? (
+                    <Button label="Fill in from the link" variant="quiet" onPress={() => void fillFromLink()} loading={looking} />
+                  ) : null}
                   {link?.ok ? (
                     <View style={styles.row}>
                       <Switch

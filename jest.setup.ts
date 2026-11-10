@@ -11,3 +11,10 @@ jest.mock('@/features/profiles/avatars', () => ({
   loadAvatarPath: jest.fn(async () => null),
   useAvatarUrl: () => null,
 }));
+
+// The share sheet target is native; screens under test never receive a share.
+jest.mock('expo-share-intent', () => ({
+  ShareIntentProvider: ({ children }: { children: unknown }) => children,
+  useShareIntentContext: () => ({ hasShareIntent: false, shareIntent: {}, resetShareIntent: jest.fn(), isReady: true, error: null }),
+  getShareExtensionKey: () => 'localeShareKey',
+}));

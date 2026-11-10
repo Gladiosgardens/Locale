@@ -27,6 +27,7 @@ const MESSAGES: Record<string, string> = {
   payouts_failed: 'We couldn’t reach Stripe. Try again in a moment.',
   stripe_rejected: 'Stripe couldn’t set up payouts for that country.',
   no_payout_account: 'Set up payouts first.',
+  preview_failed: 'We couldn’t read that page. Fill in the details yourself.',
   own_post: 'You can’t answer your own question.',
   answer_rate_limited: 'You’ve sent a lot of answers today. Try again tomorrow.',
   answer_limit: 'You can suggest up to 3 answers per post.',

@@ -88,6 +88,13 @@ describe('New post', () => {
     });
   });
 
+  it('opens with a product shared from another app, ready to tag', async () => {
+    mockParams = { sharedUrl: 'https://lamps.example.com/m' };
+    await render(<NewPost />);
+    expect(screen.getByText(/Ready to tag: https:\/\/lamps.example.com\/m/)).toBeTruthy();
+    expect(screen.getByText(/Add a photo of it/)).toBeTruthy();
+  });
+
   it('can ask “Where’s this from?”', async () => {
     mutateAsync.mockResolvedValue('post-id');
     await render(<NewPost />);
