@@ -25,14 +25,23 @@ import { colors, fonts, radius, space, type } from '@/theme';
 
 function SavedItemRow({ s, onOpen }: { s: SavedItem; onOpen: () => void }) {
   const save = useSaveItem();
-  const price = s.item.priceCents != null && s.item.currency ? formatPrice(s.item.priceCents, s.item.currency) : null;
+  const tagged = s.item.priceCents != null && s.item.currency ? { priceCents: s.item.priceCents, currency: s.item.currency } : null;
+  // The latest checked price beats the one tagged when posted.
+  const shown = s.current ?? tagged;
+  const price = shown ? formatPrice(shown.priceCents, shown.currency) : null;
+  const was =
+    s.current && tagged && tagged.currency === s.current.currency && s.current.priceCents < tagged.priceCents
+      ? formatPrice(tagged.priceCents, tagged.currency)
+      : null;
   const where = s.item.brand ?? s.item.storeName ?? s.item.urlHost;
   return (
     <View style={styles.itemRow}>
       <Pressable
         style={styles.itemMain}
         accessibilityRole="button"
-        accessibilityLabel={[s.item.title, where, price].filter(Boolean).join(', ')}
+        accessibilityLabel={[s.item.title, where, price, was ? `was ${was}` : null, s.inStock === false ? 'sold out' : null]
+          .filter(Boolean)
+          .join(', ')}
         onPress={onOpen}
       >
         <Image
@@ -46,7 +55,13 @@ function SavedItemRow({ s, onOpen }: { s: SavedItem; onOpen: () => void }) {
           <Text style={styles.title} numberOfLines={2}>
             {s.item.title}
           </Text>
-          {price ? <Text style={styles.price}>{price}</Text> : null}
+          {price ? (
+            <Text style={styles.price}>
+              {price}
+              {was ? <Text style={styles.was}> {was}</Text> : null}
+            </Text>
+          ) : null}
+          {s.inStock === false ? <Text style={styles.soldOut}>Sold out. We’ll tell you when it’s back.</Text> : null}
         </View>
       </Pressable>
       <View style={styles.itemActions}>
@@ -250,6 +265,8 @@ export default function Saved() {
 }
 
 const styles = StyleSheet.create({
+  was: { fontFamily: fonts.body, color: colors.muted, textDecorationLine: 'line-through' },
+  soldOut: { fontFamily: fonts.body, fontSize: 12, color: colors.muted },
   screen: { flex: 1, backgroundColor: colors.paper },
   topbar: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: space.sm },
   tabs: { flexDirection: 'row', gap: space.sm, paddingHorizontal: space.lg, paddingBottom: space.md },

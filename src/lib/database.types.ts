@@ -62,6 +62,7 @@ export type Database = {
           notify_comments: boolean;
           notify_mentions: boolean;
           notify_earnings: boolean;
+          notify_price_alerts: boolean;
           notify_follows: boolean;
           notify_groups: boolean;
           notify_messages: boolean;
@@ -421,6 +422,10 @@ export type Database = {
           post_id: string;
           price_cents: number | null;
           saved_at: string;
+          current_price_cents: number | null;
+          current_currency: string | null;
+          in_stock: boolean | null;
+          price_changed_at: string | null;
           store_name: string | null;
           title: string;
           url: string | null;
@@ -522,7 +527,7 @@ export type Database = {
         }[];
       };
       set_notification_preferences: {
-        Args: { p_comments?: boolean; p_earnings?: boolean; p_follows?: boolean; p_groups?: boolean; p_mentions?: boolean; p_messages?: boolean };
+        Args: { p_comments?: boolean; p_earnings?: boolean; p_price_alerts?: boolean; p_follows?: boolean; p_groups?: boolean; p_mentions?: boolean; p_messages?: boolean };
         Returns: undefined;
       };
       set_findable_by_email: { Args: { p_findable: boolean }; Returns: undefined };

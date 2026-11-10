@@ -128,6 +128,14 @@ export default function Settings() {
             />
           </View>
           <View style={styles.row}>
+            <Text style={styles.text}>Price drops on my wishlist</Text>
+            <Switch
+              accessibilityLabel="Notify me when wishlist items drop in price or come back in stock"
+              value={prefs?.notifyPriceAlerts ?? true}
+              onValueChange={(priceAlerts) => settings.setNotifications.mutate({ priceAlerts }, { onError: fail })}
+            />
+          </View>
+          <View style={styles.row}>
             <Text style={styles.text}>Sales and payouts</Text>
             <Switch
               accessibilityLabel="Notify me about sales from my posts and payouts"

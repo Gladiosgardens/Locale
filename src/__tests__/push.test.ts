@@ -54,6 +54,18 @@ describe('push messages', () => {
     expect(d('payout_sent', { cents: 3500 })?.body).toBe('$35.00 is on its way to your bank.');
   });
 
+  it('describes price drops and restocks, opening the wishlist', () => {
+    const d = (kind: 'price_drop' | 'back_in_stock', data: object) =>
+      describeRow(row({ kind, actor_name: null, post_id: 'p9', conversation_id: null, data }));
+    expect(d('price_drop', { item: 'Oak desk', old_cents: 18500, new_cents: 16000, currency: 'USD' })).toEqual({
+      title: 'Price drop: Oak desk',
+      body: 'Now $160.00 (was $185.00).',
+      url: '/saved',
+    });
+    expect(d('price_drop', { item: 'Lamp', old_cents: 5000, new_cents: 4000, currency: 'SEK' })?.body).toBe('Now 40.00 SEK (was 50.00 SEK).');
+    expect(d('back_in_stock', { item: 'Oak desk' })).toEqual({ title: 'Back in stock', body: 'Oak desk is available again.', url: '/saved' });
+  });
+
   it('links a new follower to their profile', () => {
     expect(describeRow(row({ kind: 'new_follower', actor_id: 'u9', actor_name: 'Ana', conversation_id: null }))).toEqual({
       title: 'Ana',

@@ -67,7 +67,16 @@ export async function deleteComment(commentId: string): Promise<void> {
   check(await supabase.rpc('delete_comment', { p_comment_id: commentId }));
 }
 
-export type SavedItem = { item: Item; postId: string; photoUrl: string | null; photoPath: string | null; savedAt: string };
+export type SavedItem = {
+  item: Item;
+  postId: string;
+  photoUrl: string | null;
+  photoPath: string | null;
+  savedAt: string;
+  /** The price on the store's page at the last daily check, if known. */
+  current: { priceCents: number; currency: string } | null;
+  inStock: boolean | null;
+};
 
 const SIGNED_URL_SECONDS = 60 * 60;
 
@@ -97,6 +106,8 @@ export async function listSavedItems(before: string | null): Promise<SavedItem[]
     photoPath: r.photo_path,
     photoUrl: r.photo_path ? (urls.get(r.photo_path) ?? null) : null,
     savedAt: r.saved_at,
+    current: r.current_price_cents != null && r.current_currency ? { priceCents: r.current_price_cents, currency: r.current_currency } : null,
+    inStock: r.in_stock,
   }));
 }
 

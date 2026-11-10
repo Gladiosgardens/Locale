@@ -55,6 +55,8 @@ Built so far:
 
 21. **"Where's this from?":** in the composer, **Ask "Where's this from?"** marks a post as asking. It shows a blue "Where's this from?" pill (with the answer count) that opens the answers page, and Explore has **Help find**, a feed of posts still asking. Anyone who can see the post suggests an answer (what it is, a link and/or store, optional price and note; links follow the same rules as tags; up to 3 per person per post, 30 a day). The poster hears about new answers, and **Add to post** turns one into a tagged item *created by the answerer*, so shop taps on it credit the answerer's earnings (shop links now credit whoever created the item). The answerer is notified. **Found it: stop asking** ends the request.
 
+22. **Price-drop and back-in-stock alerts:** once a day `check-prices` reads the product page of every wishlisted item that has a link (the schema.org Product/Offer data most stores publish, or their price meta tags), up to 100 items a run, each at most once every 20 hours. The first read sets a baseline; a drop of 10% or more in the same currency, or a return to stock, notifies everyone who saved it ("Price drop: Oak desk, now $160.00 (was $185.00)"), opening Saved. The wishlist shows the latest price, the tagged price struck through when it's lower, and "Sold out". Pages without readable prices are skipped after 5 failed reads. Settings has **Price drops on my wishlist**. Setup: `npx supabase secrets set PRICES_SECRET=$(openssl rand -hex 32)`, deploy `check-prices --no-verify-jwt`, and schedule it daily with pg_cron (same pattern as the payouts job, header `x-prices-secret`, e.g. `'0 14 * * *'`).
+
 Before a public launch, work through the list at the bottom of this file.
 
 ### Going live with earnings
@@ -86,6 +88,18 @@ Before a public launch, work through the list at the bottom of this file.
        body := '{}'::jsonb);
    $$);
    ```
+
+### Updating an existing install to step 22
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase secrets set PRICES_SECRET=$(openssl rand -hex 32)
+npx supabase functions deploy check-prices --no-verify-jwt
+npx supabase functions deploy deliver-notifications
+```
+
+Then schedule `check-prices` daily (step 22 above). No new build.
 
 ### Updating an existing install to step 21
 
@@ -363,6 +377,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Expired stories.** Stories past 24 hours that aren't in a highlight stay in storage (the author can still open them). Add an archive screen, or a daily job that deletes them after a set time.
 - **Stats disclosure.** Say in the privacy policy that views and item taps are recorded and shown to posters as totals (never who), and prune `post_views` and `item_events` older than 90 days.
 - **Earnings before going live.** Have a lawyer review the creator terms, payout and clawback rules; confirm Stripe Connect's 1099 reporting is on; add automatic sync from the network's reporting API once approved (replacing CSV imports); flag unusual patterns (many sales from one buyer, new accounts with big earnings) before payouts; and make account deletion keep payout records (payouts block deleting a profile today).
+- **Price checks.** Some stores block automated page reads or show prices only after scripts run; those items simply get no alerts. Respect stores' terms, keep the daily volume modest, and consider a product-data API for big retailers as usage grows.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

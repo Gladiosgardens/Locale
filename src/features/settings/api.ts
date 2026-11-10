@@ -10,6 +10,7 @@ export type PrivateSettings = {
   notifyComments: boolean;
   notifyMentions: boolean;
   notifyEarnings: boolean;
+  notifyPriceAlerts: boolean;
   findableByEmail: boolean;
   shoppingDefault: boolean;
 };
@@ -17,7 +18,7 @@ export type PrivateSettings = {
 export async function getPrivateSettings(userId: string): Promise<PrivateSettings> {
   const result = await supabase
     .from('profile_private')
-    .select('dm_policy, notify_messages, notify_groups, notify_follows, notify_comments, notify_mentions, notify_earnings, findable_by_email, shopping_default')
+    .select('dm_policy, notify_messages, notify_groups, notify_follows, notify_comments, notify_mentions, notify_earnings, notify_price_alerts, findable_by_email, shopping_default')
     .eq('profile_id', userId)
     .maybeSingle();
   const row = unwrap(result) as {
@@ -28,6 +29,7 @@ export async function getPrivateSettings(userId: string): Promise<PrivateSetting
     notify_comments: boolean;
     notify_mentions: boolean;
     notify_earnings: boolean;
+    notify_price_alerts: boolean;
     findable_by_email: boolean;
     shopping_default: boolean;
   } | null;
@@ -39,6 +41,7 @@ export async function getPrivateSettings(userId: string): Promise<PrivateSetting
     notifyComments: row?.notify_comments ?? true,
     notifyMentions: row?.notify_mentions ?? true,
     notifyEarnings: row?.notify_earnings ?? true,
+    notifyPriceAlerts: row?.notify_price_alerts ?? true,
     findableByEmail: row?.findable_by_email ?? true,
     shoppingDefault: row?.shopping_default ?? true,
   };
@@ -63,6 +66,7 @@ export async function setNotificationPreferences(prefs: {
   comments?: boolean;
   mentions?: boolean;
   earnings?: boolean;
+  priceAlerts?: boolean;
 }): Promise<void> {
   check(
     await supabase.rpc('set_notification_preferences', {
@@ -72,6 +76,7 @@ export async function setNotificationPreferences(prefs: {
       ...(prefs.comments != null ? { p_comments: prefs.comments } : {}),
       ...(prefs.mentions != null ? { p_mentions: prefs.mentions } : {}),
       ...(prefs.earnings != null ? { p_earnings: prefs.earnings } : {}),
+      ...(prefs.priceAlerts != null ? { p_price_alerts: prefs.priceAlerts } : {}),
     }),
   );
 }

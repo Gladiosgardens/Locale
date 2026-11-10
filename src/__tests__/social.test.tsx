@@ -144,6 +144,11 @@ describe('Saved', () => {
       data: { pages: [[{
         item: { id: 'i1', title: 'Desk lamp', brand: 'BenQ', storeName: null, url: null, urlHost: null, priceCents: 17900, currency: 'USD', isAffiliate: false },
         postId: 'p1', photoUrl: 'https://s/0', photoPath: 'p1/0.jpg', savedAt: new Date().toISOString(),
+        current: null, inStock: null,
+      }, {
+        item: { id: 'i2', title: 'Oak desk', brand: null, storeName: 'Shop', url: 'https://shop.com/d', urlHost: 'shop.com', priceCents: 20000, currency: 'USD', isAffiliate: false },
+        postId: 'p1', photoUrl: null, photoPath: null, savedAt: new Date().toISOString(),
+        current: { priceCents: 16000, currency: 'USD' }, inStock: false,
       }]] }, isPending: false, isError: false, hasNextPage: false,
     } as never);
     jest.spyOn(postHooks, 'useFeed').mockReturnValue({ data: { pages: [[]] }, isPending: false } as never);
@@ -152,6 +157,9 @@ describe('Saved', () => {
     await render(<Saved />);
     expect(screen.getByText('Desk lamp')).toBeTruthy();
     expect(screen.getByText(/179/)).toBeTruthy();
+    // Latest checked price, the tagged price struck through, and stock.
+    expect(screen.getByLabelText('Oak desk, Shop, $160.00, was $200.00, sold out')).toBeTruthy();
+    expect(screen.getByText(/We’ll tell you when it’s back/)).toBeTruthy();
     await fireEvent.press(screen.getByRole('link', { name: 'See the post Desk lamp is from' }));
     expect(mockPush).toHaveBeenCalledWith('/post/p1');
     await fireEvent.press(screen.getByRole('button', { name: 'Remove Desk lamp from your wishlist' }));

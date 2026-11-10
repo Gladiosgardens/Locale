@@ -3,7 +3,7 @@
 
 export type NotificationRow = {
   id: number;
-  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply' | 'mention' | 'comment_mention' | 'tag' | 'sale' | 'first_sale' | 'weekly_earnings' | 'payout_sent' | 'answer' | 'answer_accepted';
+  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply' | 'mention' | 'comment_mention' | 'tag' | 'sale' | 'first_sale' | 'weekly_earnings' | 'payout_sent' | 'answer' | 'answer_accepted' | 'price_drop' | 'back_in_stock';
   actor_id?: string | null;
   actor_name: string | null;
   group_name: string | null;
@@ -11,7 +11,14 @@ export type NotificationRow = {
   group_id: string | null;
   post_id?: string | null;
   /** Amounts and item names for earnings pushes. */
-  data?: { cents?: number; count?: number; item?: string | null } | null;
+  data?: {
+    cents?: number;
+    count?: number;
+    item?: string | null;
+    old_cents?: number | null;
+    new_cents?: number;
+    currency?: string;
+  } | null;
   tokens: string[];
 };
 
@@ -34,6 +41,9 @@ const clip = (s: string | null, max = 60) => {
 };
 
 const usd = (cents: number | undefined) => `$${((cents ?? 0) / 100).toFixed(2)}`;
+const SYMBOL: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', CAD: 'CA$', AUD: 'A$', JPY: '¥' };
+const price = (cents: number, currency: string) =>
+  SYMBOL[currency] ? `${SYMBOL[currency]}${(cents / 100).toFixed(2)}` : `${(cents / 100).toFixed(2)} ${currency}`;
 
 // No message text ever goes into a push: only who, and what kind of event.
 export function describe(row: NotificationRow): { title: string; body: string; url: string } | null {
@@ -66,6 +76,17 @@ export function describe(row: NotificationRow): { title: string; body: string; u
       return row.post_id
         ? { title: actor, body: 'Used your find. You’ll earn when people buy through it.', url: `/post/${row.post_id}` }
         : null;
+    case 'price_drop': {
+      const cur = row.data?.currency ?? 'USD';
+      const money = (c: number | null | undefined) => (c == null ? '' : price(c, cur));
+      return {
+        title: `Price drop: ${clip(row.data?.item ?? 'an item on your wishlist', 40)}`,
+        body: `Now ${money(row.data?.new_cents)}${row.data?.old_cents ? ` (was ${money(row.data.old_cents)})` : ''}.`,
+        url: '/saved',
+      };
+    }
+    case 'back_in_stock':
+      return { title: 'Back in stock', body: `${clip(row.data?.item ?? 'An item on your wishlist', 50)} is available again.`, url: '/saved' };
     case 'first_sale':
       return {
         title: 'Your first sale on Locale!',
