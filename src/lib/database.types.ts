@@ -61,6 +61,7 @@ export type Database = {
           shopping_default: boolean;
           notify_comments: boolean;
           notify_mentions: boolean;
+          notify_earnings: boolean;
           notify_follows: boolean;
           notify_groups: boolean;
           notify_messages: boolean;
@@ -481,7 +482,7 @@ export type Database = {
         }[];
       };
       set_notification_preferences: {
-        Args: { p_comments?: boolean; p_follows?: boolean; p_groups?: boolean; p_mentions?: boolean; p_messages?: boolean };
+        Args: { p_comments?: boolean; p_earnings?: boolean; p_follows?: boolean; p_groups?: boolean; p_mentions?: boolean; p_messages?: boolean };
         Returns: undefined;
       };
       set_findable_by_email: { Args: { p_findable: boolean }; Returns: undefined };

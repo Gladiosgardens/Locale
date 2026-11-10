@@ -41,6 +41,19 @@ describe('push messages', () => {
     expect(d('tag')).toEqual({ title: 'Ana', body: 'Tagged you in a post', url: '/post/p9' });
   });
 
+  it('celebrates sales and payouts with the amount, opening Earnings', () => {
+    const d = (kind: 'first_sale' | 'sale' | 'weekly_earnings' | 'payout_sent', data: object) =>
+      describeRow(row({ kind, actor_name: null, post_id: 'p9', conversation_id: null, data }));
+    expect(d('first_sale', { cents: 700, item: 'Oak desk' })).toEqual({
+      title: 'Your first sale on Locale!',
+      body: 'Someone bought Oak desk through your post. You’ll earn $7.00.',
+      url: '/earnings',
+    });
+    expect(d('sale', { cents: 2100, count: 2, item: 'Oak desk' })?.title).toBe('2 sales from your post');
+    expect(d('weekly_earnings', { cents: 2800, count: 3 })).toMatchObject({ title: 'You earned $28.00 this week', body: 'From 3 sales through your posts.' });
+    expect(d('payout_sent', { cents: 3500 })?.body).toBe('$35.00 is on its way to your bank.');
+  });
+
   it('links a new follower to their profile', () => {
     expect(describeRow(row({ kind: 'new_follower', actor_id: 'u9', actor_name: 'Ana', conversation_id: null }))).toEqual({
       title: 'Ana',

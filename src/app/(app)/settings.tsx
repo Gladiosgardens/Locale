@@ -128,6 +128,14 @@ export default function Settings() {
             />
           </View>
           <View style={styles.row}>
+            <Text style={styles.text}>Sales and payouts</Text>
+            <Switch
+              accessibilityLabel="Notify me about sales from my posts and payouts"
+              value={prefs?.notifyEarnings ?? true}
+              onValueChange={(earnings) => settings.setNotifications.mutate({ earnings }, { onError: fail })}
+            />
+          </View>
+          <View style={styles.row}>
             <Text style={styles.text}>Mentions and photo tags</Text>
             <Switch
               accessibilityLabel="Notify me when someone mentions or tags me"

@@ -51,6 +51,8 @@ Built so far:
 
 19. **Creator earnings (built, switched off until accounts exist):** anyone can earn **70%** of the affiliate commission when someone buys through an item they tagged. Tapping **Shop on …** goes through `shop-link`, which records the tap (`affiliate_clicks`) and returns the network's tracked link with our click id as the custom ID; the item sheet says "the poster and Locale may earn a commission". Sales come in through `import-commissions` (from the network's CSV export with `scripts/import-commissions.mjs`, or its API later) and are credited by `import_commission`: buying through your own post, and links the poster marked as their own affiliate links, aren't credited. A sale is *pending* until the network locks it after the store's return window, then *available*. On the 1st of each month `run-payouts` pays everyone with at least **$25** available and a ready Stripe account by Stripe transfer; a sale returned after payout is taken out of the next one. Creators set up payouts from **Earnings** (Insights card, or Settings → Earnings and payouts) with Stripe Connect Express in any country Stripe can pay, see sales and payouts, and open Stripe's dashboard for bank and tax details. Post insights show sales and earnings per post. Until `AFFILIATE_LINK_TEMPLATE` is set, links open untracked; until `STRIPE_SECRET_KEY` is set, payout setup says payouts aren't on.
 
+20. **Earnings notifications:** a push when someone buys through your post ("Your first sale on Locale!" the first time; later sales on the same post add up into one push), when a payout is sent, and a weekly "You earned $X this week" summary. They open Earnings, and Settings has a **Sales and payouts** switch. The weekly summary runs from pg_cron: `select cron.schedule('weekly-earnings', '0 17 * * 1', $$select public.weekly_earnings_digest()$$);` (Mondays 17:00 UTC; delivery goes through the notifications webhook as usual).
+
 Before a public launch, work through the list at the bottom of this file.
 
 ### Going live with earnings
@@ -82,6 +84,16 @@ Before a public launch, work through the list at the bottom of this file.
        body := '{}'::jsonb);
    $$);
    ```
+
+### Updating an existing install to step 20
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy deliver-notifications
+```
+
+Then schedule the weekly summary (SQL above). No new build.
 
 ### Updating an existing install to step 19
 

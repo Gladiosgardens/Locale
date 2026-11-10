@@ -3,13 +3,15 @@
 
 export type NotificationRow = {
   id: number;
-  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply' | 'mention' | 'comment_mention' | 'tag';
+  kind: 'message' | 'message_request' | 'group_join_request' | 'group_join_approved' | 'new_follower' | 'comment' | 'reply' | 'mention' | 'comment_mention' | 'tag' | 'sale' | 'first_sale' | 'weekly_earnings' | 'payout_sent';
   actor_id?: string | null;
   actor_name: string | null;
   group_name: string | null;
   conversation_id: string | null;
   group_id: string | null;
   post_id?: string | null;
+  /** Amounts and item names for earnings pushes. */
+  data?: { cents?: number; count?: number; item?: string | null } | null;
   tokens: string[];
 };
 
@@ -30,6 +32,8 @@ const clip = (s: string | null, max = 60) => {
   const t = (s ?? '').trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 };
+
+const usd = (cents: number | undefined) => `$${((cents ?? 0) / 100).toFixed(2)}`;
 
 // No message text ever goes into a push: only who, and what kind of event.
 export function describe(row: NotificationRow): { title: string; body: string; url: string } | null {
@@ -56,6 +60,30 @@ export function describe(row: NotificationRow): { title: string; body: string; u
       return row.post_id ? { title: actor, body: 'Mentioned you in a comment', url: `/comments/${row.post_id}` } : null;
     case 'tag':
       return row.post_id ? { title: actor, body: 'Tagged you in a post', url: `/post/${row.post_id}` } : null;
+    case 'first_sale':
+      return {
+        title: 'Your first sale on Locale!',
+        body: `Someone bought ${row.data?.item ? clip(row.data.item, 40) : 'an item'} through your post. You’ll earn ${usd(row.data?.cents)}.`,
+        url: '/earnings',
+      };
+    case 'sale': {
+      const n = row.data?.count ?? 1;
+      return {
+        title: n > 1 ? `${n} sales from your post` : 'You made a sale',
+        body: `${n > 1 ? 'People bought' : 'Someone bought'} ${row.data?.item ? clip(row.data.item, 40) : 'an item'}. You’ll earn ${usd(row.data?.cents)} once it’s final.`,
+        url: '/earnings',
+      };
+    }
+    case 'weekly_earnings': {
+      const n = row.data?.count ?? 0;
+      return {
+        title: `You earned ${usd(row.data?.cents)} this week`,
+        body: `From ${n} ${n === 1 ? 'sale' : 'sales'} through your posts.`,
+        url: '/earnings',
+      };
+    }
+    case 'payout_sent':
+      return { title: 'Payout sent', body: `${usd(row.data?.cents)} is on its way to your bank.`, url: '/earnings' };
     case 'new_follower':
       return row.actor_id ? { title: actor, body: 'Started following you', url: `/profile/${row.actor_id}` } : null;
     default:
