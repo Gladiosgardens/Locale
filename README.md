@@ -265,7 +265,7 @@ The app links the Terms and Privacy Policy from sign-in, and Settings → About 
 
 **One-time setup on Cloudflare** (the domain is registered there). The site runs as a Worker named `locale`, configured by `wrangler.jsonc` at the repo root, which serves `website/` as static files:
 1. **Workers & Pages → Create application → Import a repository**, then pick `Gladiosgardens/Locale`, leaving the build command empty (the deploy command is `npx wrangler deploy`).
-2. In the Worker, go to **Settings → Domains & Routes → Add → Custom domain**, and add `shoplocale.app` and `www.shoplocale.app`.
+2. The custom domains `shoplocale.app` and `www.shoplocale.app` are attached by `routes` in `wrangler.jsonc` on every deploy (the domain must be in the same Cloudflare account).
 3. **Email:** under the domain, open **Email → Email Routing**, turn it on, and add `hello@shoplocale.app` and `privacy@shoplocale.app`, each forwarding to your own inbox. The site and policies use these two addresses.
 4. **Invite links:** add `EXPO_PUBLIC_WEB_URL=https://shoplocale.app` to the EAS environment variables. With that set, invite links and QR codes become `https://shoplocale.app/u/<handle>`, which work for people without the app, from the next build.
 
