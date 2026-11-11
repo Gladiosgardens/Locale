@@ -7,6 +7,10 @@
     "directory": "./website",
     "not_found_handling": "404-page"
   },
+  "routes": [
+    { "pattern": "shoplocale.app", "custom_domain": true },
+    { "pattern": "www.shoplocale.app", "custom_domain": true }
+  ],
   "workers_dev": true,
   "preview_urls": false
 }
