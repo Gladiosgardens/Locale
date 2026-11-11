@@ -1,0 +1,12 @@
+// Cloudflare Worker that serves the website (website/) at shoplocale.app.
+// No build step: the files in website/ are published as they are.
+{
+  "name": "locale",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./website",
+    "not_found_handling": "404-page"
+  },
+  "workers_dev": true,
+  "preview_urls": false
+}

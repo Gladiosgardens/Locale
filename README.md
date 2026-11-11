@@ -259,16 +259,15 @@ A new build is needed: video playback is native code.
 
 ## Website (shoplocale.app)
 
-The `website/` folder is the public site: the landing page, `/privacy`, `/terms`, `/delete-account` (the data-deletion page Meta asks for), and `/u/<handle>`, where invite links land for people without the app. It's plain HTML and CSS with no build step, hosted on Cloudflare Pages. Every push to `main` that changes it redeploys it.
+The `website/` folder is the public site: the landing page, `/privacy`, `/terms`, `/delete-account` (the data-deletion page Meta asks for), and `/u/<handle>`, where invite links land for people without the app. It's plain HTML and CSS with no build step, served by a Cloudflare Worker. Every push to `main` that changes it redeploys it.
 
 The app links the Terms and Privacy Policy from sign-in, and Settings → About links all three pages (`src/lib/links.ts`).
 
-**One-time setup on Cloudflare** (the domain is registered there):
-1. **Workers & Pages → Create → Pages → Connect to Git**, then pick `Gladiosgardens/Locale`.
-2. Set the production branch to `main`, the framework preset to **None**, the build command to empty, and the build output directory to `website`. Click **Save and deploy**.
-3. In the project, go to **Custom domains → Set up a custom domain**, enter `shoplocale.app`, and confirm. Add `www.shoplocale.app` too.
-4. **Email:** under the domain, open **Email → Email Routing**, turn it on, and add `hello@shoplocale.app` and `privacy@shoplocale.app`, each forwarding to your own inbox. The site and policies use these two addresses.
-5. **Invite links:** add `EXPO_PUBLIC_WEB_URL=https://shoplocale.app` to the EAS environment variables. With that set, invite links and QR codes become `https://shoplocale.app/u/<handle>`, which work for people without the app, from the next build.
+**One-time setup on Cloudflare** (the domain is registered there). The site runs as a Worker named `locale`, configured by `wrangler.jsonc` at the repo root, which serves `website/` as static files:
+1. **Workers & Pages → Create application → Import a repository**, then pick `Gladiosgardens/Locale`, leaving the build command empty (the deploy command is `npx wrangler deploy`).
+2. In the Worker, go to **Settings → Domains & Routes → Add → Custom domain**, and add `shoplocale.app` and `www.shoplocale.app`.
+3. **Email:** under the domain, open **Email → Email Routing**, turn it on, and add `hello@shoplocale.app` and `privacy@shoplocale.app`, each forwarding to your own inbox. The site and policies use these two addresses.
+4. **Invite links:** add `EXPO_PUBLIC_WEB_URL=https://shoplocale.app` to the EAS environment variables. With that set, invite links and QR codes become `https://shoplocale.app/u/<handle>`, which work for people without the app, from the next build.
 
 The policies describe what the app does today. Update them whenever data use changes (a new provider, analytics, ads, location), and have a lawyer review both before launch. Add the legal entity's name once Locale is a company.
 
