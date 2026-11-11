@@ -257,6 +257,21 @@ A new build is needed: video playback is native code.
 2. `npx supabase db push --remote` applies `20261105100000_global_mode.sql`.
 3. Make a new development build (`npx eas-cli@latest build --profile development --platform android`), because the new packages include native code. Install it over the old app.
 
+## Website (shoplocale.app)
+
+The `website/` folder is the public site: the landing page, `/privacy`, `/terms`, `/delete-account` (the data-deletion page Meta asks for), and `/u/<handle>`, where invite links land for people without the app. It's plain HTML and CSS with no build step, hosted on Cloudflare Pages. Every push to `main` that changes it redeploys it.
+
+The app links the Terms and Privacy Policy from sign-in, and Settings → About links all three pages (`src/lib/links.ts`).
+
+**One-time setup on Cloudflare** (the domain is registered there):
+1. **Workers & Pages → Create → Pages → Connect to Git**, then pick `Gladiosgardens/Locale`.
+2. Set the production branch to `main`, the framework preset to **None**, the build command to empty, and the build output directory to `website`. Click **Save and deploy**.
+3. In the project, go to **Custom domains → Set up a custom domain**, enter `shoplocale.app`, and confirm. Add `www.shoplocale.app` too.
+4. **Email:** under the domain, open **Email → Email Routing**, turn it on, and add `hello@shoplocale.app` and `privacy@shoplocale.app`, each forwarding to your own inbox. The site and policies use these two addresses.
+5. **Invite links:** add `EXPO_PUBLIC_WEB_URL=https://shoplocale.app` to the EAS environment variables. With that set, invite links and QR codes become `https://shoplocale.app/u/<handle>`, which work for people without the app, from the next build.
+
+The policies describe what the app does today. Update them whenever data use changes (a new provider, analytics, ads, location), and have a lawyer review both before launch. Add the legal entity's name once Locale is a company.
+
 ## Stack
 
 Expo SDK 58 (Expo Router, TypeScript strict) · TanStack Query · Supabase (Postgres + RLS, Auth, Storage, Edge Functions) · Jest + React Native Testing Library · pgTAP.
@@ -412,6 +427,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Stats disclosure.** Say in the privacy policy that views and item taps are recorded and shown to posters as totals (never who), and prune `post_views` and `item_events` older than 90 days.
 - **Earnings before going live.** Have a lawyer review the creator terms, payout and clawback rules; confirm Stripe Connect's 1099 reporting is on; add automatic sync from the network's reporting API once approved (replacing CSV imports); flag unusual patterns (many sales from one buyer, new accounts with big earnings) before payouts; and make account deletion keep payout records (payouts block deleting a profile today).
 - **Price checks.** Some stores block automated page reads or show prices only after scripts run; those items simply get no alerts. Respect stores' terms, keep the daily volume modest, and consider a product-data API for big retailers as usage grows.
+- **Policies and the website.** Have a lawyer review `website/privacy.html` and `website/terms.html`. Register a DMCA agent with the US Copyright Office and name it in the terms. Add **Delete account** to Settings (an App Store requirement, already listed above) and update `/delete-account` when it's there.
 - **Instagram import.** Pass Meta App Review before launch, follow Meta's Platform Terms (delete a person's Instagram data when they disconnect or ask, which Disconnect does for the token), and mention the import in the privacy policy.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 

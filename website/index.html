@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Locale: Share your life. Shop what you see.</title>
+<meta name="description" content="Locale is a photo app where you tag what's in your photos, so anyone can find and buy it, and you earn when they do. Coming soon to iPhone and Android.">
+<meta property="og:title" content="Locale: Share your life. Shop what you see.">
+<meta property="og:description" content="Post a photo, tag what's in it, and earn when someone buys through your tag.">
+<meta property="og:url" content="https://shoplocale.app/">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://shoplocale.app/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500..700;1,6..96,500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<style>
+  /* The hero: the wordmark is tagged like a photo on Locale. */
+  .hero { padding-top: clamp(40px, 7vw, 88px); }
+  .masthead {
+    margin: 0;
+    font: italic 500 clamp(112px, 27vw, 312px)/0.86 var(--display);
+    letter-spacing: -0.045em;
+    margin-left: -0.04em;
+  }
+  .masthead .t { position: relative; display: inline-block; }
+  .dot {
+    position: absolute; z-index: 1;
+    width: 34px; height: 34px; margin: -17px 0 0 -17px;
+    border-radius: 50%;
+    background: var(--ultramarine); color: var(--paper);
+    box-shadow: 0 0 0 3px var(--paper);
+    font: 600 15px/34px var(--body); font-style: normal; letter-spacing: 0; text-align: center;
+  }
+  .t1 .dot { left: 46%; top: 54%; }
+  .t2 .dot { left: 48%; top: 52%; }
+  .t3 .dot { left: 50%; top: 40%; }
+
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 96px); margin-top: clamp(28px, 4vw, 48px); align-items: start; }
+  .hero h1 { font: 600 clamp(34px, 4.6vw, 54px)/1.04 var(--display); letter-spacing: -0.02em; margin: 0 0 18px; max-width: 14ch; }
+  .hero .sub { font-size: 19px; color: var(--graphite); max-width: 40ch; margin: 0 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; }
+  .soon { color: var(--muted); font-size: 15px; }
+
+  .shop-this h2 { font: 600 15px/1 var(--body); margin: 6px 0 14px; }
+  .tags { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .tag {
+    position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+    padding: 14px 18px 14px 30px; border: 1px solid var(--hairline); border-radius: 8px 14px 14px 8px; background: var(--paper);
+  }
+  .tag::before { /* the hang-tag hole */
+    content: ''; position: absolute; left: 11px; top: 50%; width: 8px; height: 8px; margin-top: -4px;
+    border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--hairline);
+  }
+  .tag .n { width: 24px; height: 24px; border-radius: 50%; background: var(--ultramarine); color: var(--paper); font: 600 12px/24px var(--body); text-align: center; }
+  .tag b { display: block; font-weight: 600; font-size: 16px; line-height: 1.25; }
+  .tag span.store { display: block; color: var(--muted); font-size: 14px; }
+  .tag .price { font-weight: 600; color: var(--ultramarine); font-size: 16px; }
+  .shop-this .fine { color: var(--muted); font-size: 13px; margin: 12px 0 0; }
+
+  /* One load moment: the dots land on the wordmark, then their tags appear. */
+  @media (prefers-reduced-motion: no-preference) {
+    .dot { animation: land 520ms cubic-bezier(.2, 1.4, .4, 1) both; }
+    .t1 .dot { animation-delay: 350ms; }
+    .t2 .dot { animation-delay: 560ms; }
+    .t3 .dot { animation-delay: 770ms; }
+    .tag { animation: appear 420ms ease-out both; }
+    .tag:nth-child(1) { animation-delay: 450ms; }
+    .tag:nth-child(2) { animation-delay: 660ms; }
+    .tag:nth-child(3) { animation-delay: 870ms; }
+  }
+  @keyframes land { from { transform: scale(0); } to { transform: scale(1); } }
+  @keyframes appear { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* How it works: a real sequence, marked with the same numbered dots. */
+  .section { margin-top: clamp(80px, 11vw, 136px); }
+  .section > h2 { font: 600 clamp(32px, 4vw, 44px)/1.08 var(--display); letter-spacing: -0.02em; margin: 0 0 32px; max-width: 20ch; }
+  .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; counter-reset: step; }
+  .steps li { border-top: 1.5px solid var(--ink); padding-top: 20px; counter-increment: step; }
+  .steps li::before {
+    content: counter(step); display: block; width: 28px; height: 28px; margin-bottom: 16px; border-radius: 50%;
+    background: var(--ultramarine); color: var(--paper); font: 600 13px/28px var(--body); text-align: center;
+  }
+  .steps h3, .more h3 { font: 600 24px/1.15 var(--display); margin: 0 0 8px; }
+  .steps p, .more p { margin: 0; color: var(--graphite); max-width: 36ch; }
+
+  .more { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 56px; }
+  .more div { padding: 26px 0; border-top: 1px solid var(--hairline); }
+
+  .earn { background: var(--wash); border-radius: 20px; padding: clamp(28px, 5vw, 56px); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px 56px; align-items: end; }
+  .earn h2 { font: 600 clamp(32px, 4vw, 44px)/1.08 var(--display); letter-spacing: -0.02em; margin: 0; }
+  .earn p { margin: 0 0 12px; color: var(--graphite); }
+  .earn p:last-child { margin: 0; }
+
+  .closing { text-align: left; }
+  .closing h2 { margin-bottom: 20px; }
+
+  @media (max-width: 820px) {
+    .hero-grid, .earn { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; gap: 28px; }
+    .more { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .dot { width: 22px; height: 22px; margin: -11px 0 0 -11px; font-size: 11px; line-height: 22px; box-shadow: 0 0 0 2px var(--paper); }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <div class="wrap">
+    <a class="wordmark" href="/" aria-label="Locale home">Locale</a>
+    <nav aria-label="Site">
+      <a href="#how">How it works</a>
+      <a class="wide" href="#earn">Earn</a>
+      <a href="mailto:hello@shoplocale.app">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <section class="hero wrap" aria-labelledby="headline">
+    <p class="masthead" aria-hidden="true">L<span class="t t1">o<span class="dot">1</span></span><span class="t t2">c<span class="dot">2</span></span>al<span class="t t3">e<span class="dot">3</span></span></p>
+
+    <div class="hero-grid">
+      <div>
+        <h1 id="headline">Share your life. Shop what you see.</h1>
+        <p class="sub">Post a photo and tag what's in it: the jacket, the lamp, the mugs. Anyone who loves it can tap a tag and buy it, and when they do, you earn.</p>
+        <div class="cta">
+          <a class="button" href="mailto:hello@shoplocale.app?subject=Early%20access%20to%20Locale">Get early access</a>
+          <span class="soon">Coming soon to iPhone and Android</span>
+        </div>
+      </div>
+
+      <aside class="shop-this" aria-label="Example tags">
+        <h2>Shop this</h2>
+        <ol class="tags">
+          <li class="tag"><span class="n" aria-hidden="true">1</span><span><b>Linen overshirt</b><span class="store">Ferrow &amp; Co.</span></span><span class="price">$68</span></li>
+          <li class="tag"><span class="n" aria-hidden="true">2</span><span><b>Brass desk lamp</b><span class="store">Oda Studio</span></span><span class="price">$179</span></li>
+          <li class="tag"><span class="n" aria-hidden="true">3</span><span><b>Stoneware cups, set of 4</b><span class="store">Hearth</span></span><span class="price">$36</span></li>
+        </ol>
+        <p class="fine">Example tags. On Locale, every tag names the real store before you leave the app.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="how" class="section wrap" aria-labelledby="how-title">
+    <h2 id="how-title">How it works</h2>
+    <ol class="steps">
+      <li>
+        <h3>Post a photo</h3>
+        <p>Your outfit, your desk, your dinner, your trip. Anything you'd happily recommend.</p>
+      </li>
+      <li>
+        <h3>Tap what's in it</h3>
+        <p>Drop a tag on each thing and say where it's from, or let Locale find the items in the photo for you.</p>
+      </li>
+      <li>
+        <h3>People shop it</h3>
+        <p>Friends tap a tag to see what it is and where to get it. No more "where's that from?" in your messages.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="section wrap" aria-labelledby="more-title">
+    <h2 id="more-title">Made for people who notice things</h2>
+    <div class="more">
+      <div>
+        <h3>Where's this from?</h3>
+        <p>Spotted something you can't place? Ask, and people who know will answer. If an answer finds it, they get the credit.</p>
+      </div>
+      <div>
+        <h3>Price drops on your wishlist</h3>
+        <p>Save an item and Locale tells you when it gets cheaper or comes back in stock.</p>
+      </div>
+      <div>
+        <h3>Share from any store</h3>
+        <p>Found it in a store's app? Share it to Locale and the tag fills itself in: name, store and price.</p>
+      </div>
+      <div>
+        <h3>Bring your Instagram</h3>
+        <p>Import the photos you're proudest of, with their original dates, then tag what's in them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="earn" class="section wrap" aria-labelledby="earn-title">
+    <div class="earn">
+      <h2 id="earn-title">Anyone can earn. You keep 70% of the commission.</h2>
+      <div>
+        <p>When someone buys through an item you tagged, the store pays a commission and 70% of it goes to you. No follower minimum, no application.</p>
+        <p>Payouts go out monthly through Stripe once you've earned $25. <a href="/terms#earnings">How earnings work</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap closing" aria-labelledby="close-title">
+    <h2 id="close-title">Locale is almost here.</h2>
+    <div class="cta">
+      <a class="button" href="mailto:hello@shoplocale.app?subject=Early%20access%20to%20Locale">Get early access</a>
+      <span class="soon">We'll email you when it's ready.</span>
+    </div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <a class="wordmark" href="/">Locale</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+    <a href="/delete-account">Delete your account</a>
+    <a href="mailto:hello@shoplocale.app">hello@shoplocale.app</a>
+  </div>
+</footer>
+</body>
+</html>

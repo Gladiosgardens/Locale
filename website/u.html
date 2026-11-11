@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>On Locale</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500..700;1,6..96,500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+<style>
+  .card { max-width: 560px; padding-top: clamp(56px, 12vw, 120px); }
+  .card h1 { font: 600 clamp(40px, 8vw, 64px)/1.02 var(--display); letter-spacing: -0.02em; margin: 0 0 16px; overflow-wrap: anywhere; }
+  .card p { color: var(--graphite); font-size: 19px; margin: 0 0 28px; }
+  .card .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card .soon { color: var(--muted); font-size: 15px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<header class="site-head"><div class="wrap"><a class="wordmark" href="/">Locale</a></div></header>
+<main class="wrap card">
+  <h1 id="who">Someone shared their profile with you</h1>
+  <p>Open it in the Locale app to see their posts and shop what's in them.</p>
+  <div class="cta">
+    <a class="button" id="open" href="locale://">Open in Locale</a>
+    <a class="button secondary" href="/">What's Locale?</a>
+  </div>
+  <p class="soon">Locale is coming soon to iPhone and Android. If the button doesn't work, you don't have the app yet.</p>
+</main>
+<script>
+  // Invite links look like shoplocale.app/u/<handle>. Usernames are 3-20 letters, numbers or underscores.
+  (function () {
+    var m = location.pathname.match(/^\/u\/([A-Za-z0-9_]{3,20})\/?$/);
+    if (!m) return;
+    var handle = m[1].toLowerCase();
+    document.getElementById('who').textContent = '@' + handle + ' is on Locale';
+    document.getElementById('open').href = 'locale://u/' + handle;
+    document.title = '@' + handle + ' on Locale';
+  })();
+</script>
+</body>
+</html>

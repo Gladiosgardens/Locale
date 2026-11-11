@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ErrorText, Field } from '@/components/ui';
 import { sendSignInCode } from '@/features/auth/api';
+import { openPage, PRIVACY_URL, TERMS_URL } from '@/lib/links';
 import { colors, fonts, space, type } from '@/theme';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,6 +55,17 @@ export default function SignIn() {
           <ErrorText>{error}</ErrorText>
           <Button label="Continue with email" onPress={submit} disabled={!valid} loading={sending} />
           <Text style={styles.fine}>We’ll email you a 6-digit code. No password needed.</Text>
+          <Text style={styles.fine}>
+            By continuing, you agree to Locale’s{' '}
+            <Text accessibilityRole="link" style={styles.fineLink} onPress={() => openPage(TERMS_URL)}>
+              Terms
+            </Text>{' '}
+            and{' '}
+            <Text accessibilityRole="link" style={styles.fineLink} onPress={() => openPage(PRIVACY_URL)}>
+              Privacy Policy
+            </Text>
+            .
+          </Text>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -69,4 +81,5 @@ const styles = StyleSheet.create({
   lede: { marginTop: space.lg, maxWidth: 340 },
   form: { gap: space.lg, paddingBottom: space.xl, maxWidth: 480, width: '100%', alignSelf: 'center' },
   fine: { fontFamily: fonts.body, fontSize: 12, color: colors.muted, textAlign: 'center' },
+  fineLink: { color: colors.ink, textDecorationLine: 'underline' },
 });
