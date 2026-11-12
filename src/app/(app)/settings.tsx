@@ -11,7 +11,7 @@ import { useBlocked, useUnblockUser } from '@/features/safety/hooks';
 import { usePrivateSettings } from '@/features/settings/hooks';
 import { friendlyError } from '@/lib/errors';
 import { LOCAL_FEATURES } from '@/lib/features';
-import { DELETE_ACCOUNT_URL, openPage, PRIVACY_URL, TERMS_URL } from '@/lib/links';
+import { openPage, PRIVACY_URL, TERMS_URL } from '@/lib/links';
 import { fonts, space, type } from '@/theme';
 
 export default function Settings() {
@@ -212,13 +212,16 @@ export default function Settings() {
           {[
             ['Privacy Policy', PRIVACY_URL],
             ['Terms of Service', TERMS_URL],
-            ['Delete your account', DELETE_ACCOUNT_URL],
           ].map(([label, url]) => (
             <Pressable key={url} accessibilityRole="link" style={styles.row} onPress={() => openPage(url)}>
               <Text style={styles.text}>{label}</Text>
               <Feather name="external-link" size={16} color={colors.muted} />
             </Pressable>
           ))}
+          <Pressable accessibilityRole="button" style={styles.row} onPress={() => router.push('/delete-account')}>
+            <Text style={[styles.text, { color: colors.danger }]}>Delete account</Text>
+            <Feather name="chevron-right" size={18} color={colors.muted} />
+          </Pressable>
         </View>
 
         <Button label="Sign out" variant="secondary" onPress={signOut} />

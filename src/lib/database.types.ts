@@ -216,6 +216,10 @@ export type Database = {
         Returns: { connected: boolean; username: string | null; expires_at: string | null; imported: number }[];
       };
       disconnect_instagram: { Args: Record<string, never>; Returns: undefined };
+      account_deletion_summary: {
+        Args: Record<string, never>;
+        Returns: { handle: string; post_count: number; unpaid_cents: number; payout_in_progress: boolean }[];
+      };
       set_post_asking: { Args: { p_post_id: string; p_asking: boolean }; Returns: undefined };
       submit_answer: {
         Args: {

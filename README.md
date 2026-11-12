@@ -61,6 +61,8 @@ Built so far:
 
 24. **Import from Instagram:** **Edit profile → Import posts from Instagram** (or the button on an empty profile). Connect through Instagram's own sign-in page, pick up to 10 photos or carousels at a time, and they're added to your profile with their captions and original dates (so they don't flood followers' feeds as new posts). Already-imported posts are greyed out; videos are skipped; imports count toward the 20-posts-a-day limit. Works with Instagram professional accounts (Creator or Business). The access token never leaves the server (`instagram_connections`, service-role only) and is refreshed before its 60 days run out. **Disconnect** deletes the token; imported posts stay.
 
+25. **Delete account:** **Settings → About → Delete account** (an App Store requirement). The screen lists what goes, warns about unpaid earnings (they're given up), and needs your username typed to confirm. The `delete-account` Edge Function deletes the auth user, which cascades through the profile to everything the person made, then removes their photos, avatar and leftover uploads from Storage and their videos from Mux. Payout and commission records are kept without the link to the person, for tax. Deletion waits while a payout is being sent.
+
 Before a public launch, work through the list at the bottom of this file.
 
 ### Going live with earnings
@@ -92,6 +94,16 @@ Before a public launch, work through the list at the bottom of this file.
        body := '{}'::jsonb);
    $$);
    ```
+
+### Updating an existing install to step 25
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy delete-account
+```
+
+No new build is needed for testing with `npx expo start`; your next build includes it too.
 
 ### Updating an existing install to step 24
 
@@ -413,7 +425,6 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Malicious-link screening.** Check item links against a URL reputation service (e.g. Google Web Risk) in `publish-post`. The current rules stop disguised links, not bad sites.
 - **Reporting, blocking and a moderation queue.** Global discovery makes this more urgent. Blocked users must disappear from each other's feeds.
 - **Storage cleanup job.** It should purge images of deleted posts and holding uploads older than a day; abandoned uploads currently stay in storage.
-- In-app account deletion (an App Store requirement) that removes the profile and the user's storage objects.
 - CAPTCHA on sign-in (Supabase Auth supports hCaptcha/Turnstile) and a custom SMTP provider with sensible rate limits.
 - The 18+ gate is self-attested; get the age-rating questionnaire and COPPA position reviewed.
 - Moderation for area and display names.
@@ -424,9 +435,9 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Mention and tag spam.** Mentions are capped at 10 per caption or comment and tags at 20 per post, but there's no daily limit per person yet; add one (and let people limit tags to people they follow) before growth.
 - **Expired stories.** Stories past 24 hours that aren't in a highlight stay in storage (the author can still open them). Add an archive screen, or a daily job that deletes them after a set time.
 - **Stats disclosure.** Say in the privacy policy that views and item taps are recorded and shown to posters as totals (never who), and prune `post_views` and `item_events` older than 90 days.
-- **Earnings before going live.** Have a lawyer review the creator terms, payout and clawback rules; confirm Stripe Connect's 1099 reporting is on; add automatic sync from the network's reporting API once approved (replacing CSV imports); flag unusual patterns (many sales from one buyer, new accounts with big earnings) before payouts; and make account deletion keep payout records (payouts block deleting a profile today).
+- **Earnings before going live.** Have a lawyer review the creator terms, payout and clawback rules; confirm Stripe Connect's 1099 reporting is on; add automatic sync from the network's reporting API once approved (replacing CSV imports); flag unusual patterns (many sales from one buyer, new accounts with big earnings) before payouts.
 - **Price checks.** Some stores block automated page reads or show prices only after scripts run; those items simply get no alerts. Respect stores' terms, keep the daily volume modest, and consider a product-data API for big retailers as usage grows.
-- **Policies and the website.** Have a lawyer review `website/privacy.html` and `website/terms.html`. Register a DMCA agent with the US Copyright Office and name it in the terms. Add **Delete account** to Settings (an App Store requirement, already listed above) and update `/delete-account` when it's there.
+- **Policies and the website.** Have a lawyer review `website/privacy.html` and `website/terms.html`. Register a DMCA agent with the US Copyright Office and name it in the terms.
 - **Instagram import.** Pass Meta App Review before launch, follow Meta's Platform Terms (delete a person's Instagram data when they disconnect or ask, which Disconnect does for the token), and mention the import in the privacy policy.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
