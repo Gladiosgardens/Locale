@@ -413,6 +413,8 @@ export async function publishPost(input: {
   story?: boolean;
   /** Ask "Where's this from?" so others can suggest answers. */
   asking?: boolean;
+  /** A post from an Instagram download: published once, with its Instagram date. */
+  imported?: { key: string; takenAt: string };
 }): Promise<string> {
   const { data, error } = await supabase.functions.invoke<{ id: string }>('publish-post', {
     body: {
@@ -421,6 +423,7 @@ export async function publishPost(input: {
       ...(input.shopping === false ? { shopping: false } : {}),
       ...(input.story ? { story: true } : {}),
       ...(input.asking ? { asking: true } : {}),
+      ...(input.imported ? { imported: input.imported } : {}),
       caption: input.caption.trim() || null,
       interestIds: input.interestIds,
       tags: input.tags ?? [],
