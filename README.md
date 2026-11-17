@@ -59,7 +59,7 @@ Built so far:
 
 23. **Share to Locale from any store:** on a product page in a store's app or the browser, tap **Share → Locale**. Locale opens a new post with "Ready to tag: <product>" (read by `link-preview` from the page's schema.org Product data and Open Graph tags: name, brand, store, price, image); add your own photo, tap **Tag items** and tap where it is, and the form starts filled in. In any tag form, **Fill in from the link** fills the empty fields from a pasted link. The share target is `expo-share-intent` (iOS share extension; Android `text/*` intent), so this step needs a **new build**; on iOS, EAS asks to set up credentials for the extra extension target. `link-preview` fetches only public https pages on real host names.
 
-24. **Import from Instagram:** **Edit profile → Import posts from Instagram** (or the button on an empty profile). Connect through Instagram's own sign-in page, pick up to 10 photos or carousels at a time, and they're added to your profile with their captions and original dates (so they don't flood followers' feeds as new posts). Already-imported posts are greyed out; videos are skipped; imports count toward the 20-posts-a-day limit. Works with Instagram professional accounts (Creator or Business). The access token never leaves the server (`instagram_connections`, service-role only) and is refreshed before its 60 days run out. **Disconnect** deletes the token; imported posts stay.
+24. **Import from Instagram (from the download):** **Edit profile → Import posts from Instagram** (or the button on an empty profile). Meta no longer lets new apps use Instagram Login (new apps get "Unified login", which needs Facebook sign-in and a linked Facebook Page), so the import works from the copy of their posts that anyone can download from Instagram (Accounts Center → Your information and permissions → Download your information, Format **JSON**). The phone opens the zip with a small reader (`src/features/instagram/zip.ts`, ZIP64-aware, reading only the parts it needs, so multi-gigabyte downloads are fine), lists the photo posts and carousels from `posts_N.json` (videos are skipped; Meta's garbled accents and emoji are repaired), and imports up to 10 chosen posts at a time through `publish-post` (`imported: { key, takenAt }` → `create_imported_post`). Imported posts keep their captions, hashtags and original dates; @names in them aren't linked or notified, since an Instagram username may belong to someone else on Locale. Each post imports once (until its Locale post is deleted), and imports count toward the 20-posts-a-day limit. Works with any Instagram account, needs no Meta app or review, and nothing but the chosen posts leaves the phone. The earlier API import (`instagram-connect`, `instagram-callback`) is still in the repo for apps that have Instagram Login, but the app no longer uses it.
 
 25. **Delete account:** **Settings → About → Delete account** (an App Store requirement). The screen lists what goes, warns about unpaid earnings (they're given up), and needs your username typed to confirm. The `delete-account` Edge Function deletes the auth user, which cascades through the profile to everything the person made, then removes their photos, avatar and leftover uploads from Storage and their videos from Mux. Payout and commission records are kept without the link to the person, for tax. Deletion waits while a payout is being sent.
 
@@ -99,6 +99,16 @@ Before a public launch, work through the list at the bottom of this file.
 
 - **iPhone simulator (Mac with Xcode):** `npx eas-cli@27.4.1 build --profile development-simulator --platform ios`, download the `.tar.gz` when it finishes, unzip it, drag `Locale.app` onto the open Simulator window, then `npx expo start --dev-client --clear` and press `i`.
 - **Android emulator (Android Studio):** start a virtual device from Android Studio's Device Manager, drag the development `.apk` onto it, then `npx expo start --dev-client --clear` and press `a`.
+
+### Updating to the Instagram download import
+
+```
+git pull && npm install
+npx supabase db push --remote
+npx supabase functions deploy publish-post
+```
+
+No new build is needed. The Meta app and the `INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` secrets aren't needed for this import.
 
 ### Updating an existing install to step 25
 
@@ -443,7 +453,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 - **Earnings before going live.** Have a lawyer review the creator terms, payout and clawback rules; confirm Stripe Connect's 1099 reporting is on; add automatic sync from the network's reporting API once approved (replacing CSV imports); flag unusual patterns (many sales from one buyer, new accounts with big earnings) before payouts.
 - **Price checks.** Some stores block automated page reads or show prices only after scripts run; those items simply get no alerts. Respect stores' terms, keep the daily volume modest, and consider a product-data API for big retailers as usage grows.
 - **Policies and the website.** Have a lawyer review `website/privacy.html` and `website/terms.html`. Register a DMCA agent with the US Copyright Office and name it in the terms.
-- **Instagram import.** Pass Meta App Review before launch, follow Meta's Platform Terms (delete a person's Instagram data when they disconnect or ask, which Disconnect does for the token), and mention the import in the privacy policy.
+- **Instagram import.** It reads people's own Instagram downloads, so there's no Meta review. Remind people to import only posts that are theirs (the terms say so), and test with large downloads on older phones.
 - **Contacts matching disclosures.** Describe it in the privacy policy and in the App Store / Play data-safety forms (hashed emails, not stored). Email hashes can be guessed for common addresses, so keep the daily limit and the opt-out.
 
 ## License

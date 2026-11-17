@@ -35,7 +35,7 @@ beforeEach(() => {
 });
 
 it('explains how to get the download and opens Instagram’s page', async () => {
-  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+  const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   await render(<ImportInstagram />);
   expect(screen.getByText('Ask Instagram for your posts')).toBeTruthy();
   expect(screen.getByText(/set Format to JSON/)).toBeTruthy();
