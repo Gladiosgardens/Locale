@@ -2,7 +2,8 @@
 //
 // POST { uploads: ["<uid>/<uuid>.jpg", ...] | video: { uploadId }, caption?: string,
 //        interestIds?: number[], tags?: [{ media, x, y, item: {...} }], searchable?: boolean,
-//        groupId?: string, shopping?: boolean, story?: boolean, asking?: boolean }
+//        groupId?: string, shopping?: boolean, story?: boolean, asking?: boolean,
+//        imported?: { key: string, takenAt: string } }
 //   -> 200 { id } | 4xx/5xx { error: "<code>" }
 //
 // Steps: verify the caller, re-sanitise every image (strip EXIF/GPS/XMP/IPTC,
@@ -12,6 +13,9 @@
 // most 60 seconds, then attach it.
 // A story (story: true) is one photo or video with an optional short caption
 // and item tags; it expires after 24 hours.
+// An import from an Instagram download (imported: { key, takenAt }) is a photo
+// post with its Instagram caption and date, published once per key and
+// without mentions (create_imported_post).
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { JpegError, sanitizeJpeg } from '../_shared/jpeg.ts';
@@ -58,6 +62,7 @@ const RPC_ERRORS: Record<string, number> = {
   invalid_video: 400,
   story_rate_limited: 429,
   invalid_caption: 400,
+  already_imported: 409,
 };
 
 const json = (status: number, body: unknown) =>
@@ -74,6 +79,7 @@ type Body = {
   groupId?: unknown;
   story?: unknown;
   asking?: unknown;
+  imported?: unknown;
 };
 
 function parseBody(body: Body, uid: string) {
@@ -119,6 +125,23 @@ function parseBody(body: Body, uid: string) {
 
   if (story && groupId !== null) throw new PublishError(400, 'bad_request');
 
+  let imported: { key: string; takenAt: string } | null = null;
+  if (body.imported !== undefined) {
+    const im = body.imported as { key?: unknown; takenAt?: unknown } | null;
+    const at = typeof im?.takenAt === 'string' ? Date.parse(im.takenAt) : NaN;
+    if (
+      typeof im?.key !== 'string' ||
+      !/^[A-Za-z0-9:_.-]{1,200}$/.test(im.key) ||
+      !Number.isFinite(at) ||
+      story ||
+      videoUploadId ||
+      groupId !== null
+    ) {
+      throw new PublishError(400, 'bad_request');
+    }
+    imported = { key: im.key, takenAt: new Date(at).toISOString() };
+  }
+
   return {
     story,
     asking: body.asking === true,
@@ -130,6 +153,7 @@ function parseBody(body: Body, uid: string) {
     tags,
     searchable,
     groupId: groupId as string | null,
+    imported,
   };
 }
 
@@ -205,7 +229,16 @@ Deno.serve(async (req) => {
 
     // With shopping off, nothing is tagged.
     const tags = input.shopping ? input.tags : [];
-    const { error: rpcError } = input.story
+    const { error: rpcError } = input.imported
+      ? await admin.rpc('create_imported_post', {
+          p_post_id: postId,
+          p_author_id: uid,
+          p_caption: input.caption,
+          p_media: media,
+          p_key: input.imported.key,
+          p_taken_at: input.imported.takenAt,
+        })
+      : input.story
       ? await admin.rpc('create_story_record', {
           p_post_id: postId,
           p_author_id: uid,
