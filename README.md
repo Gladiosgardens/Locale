@@ -95,6 +95,11 @@ Before a public launch, work through the list at the bottom of this file.
    $$);
    ```
 
+### Running in a simulator or emulator
+
+- **iPhone simulator (Mac with Xcode):** `npx eas-cli@27.4.1 build --profile development-simulator --platform ios`, download the `.tar.gz` when it finishes, unzip it, drag `Locale.app` onto the open Simulator window, then `npx expo start --dev-client --clear` and press `i`.
+- **Android emulator (Android Studio):** start a virtual device from Android Studio's Device Manager, drag the development `.apk` onto it, then `npx expo start --dev-client --clear` and press `a`.
+
 ### Updating an existing install to step 25
 
 ```
