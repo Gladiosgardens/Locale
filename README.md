@@ -429,7 +429,7 @@ npm run db:test     # pgTAP (supabase test db; needs `supabase start`)
 
 ## Before public launch (from the trust reviews)
 
-- **Production email sender.** Replace the testing Gmail SMTP with a sending service on your own domain, with SPF/DKIM set up, so sign-in codes don't land in spam.
+- **Production email sender** ✅ Sign-in codes go through Resend (`smtp.resend.com:465`, user `resend`, a sending-only API key for shoplocale.app) from `Locale <hello@shoplocale.app>`; set under Supabase **Authentication → Emails → SMTP Settings**, with **Rate Limits → emails** raised to about 100 an hour. Incoming mail to hello@ and privacy@ is forwarded by Cloudflare Email Routing; Gmail sends as hello@ through the same Resend domain with its own key.
 
 - **Child-safety reporting process.** US providers have legal obligations when they become aware of apparent child sexual abuse material (reporting to NCMEC's CyberTipline, preserving evidence). Set up the human process, response times and legal review before launch. The `child_safety` reason and the auto-hide are the technical hooks, not the process.
 - **A real moderator console** to replace SQL-editor review. It needs reviewer accounts, an audit log, and actions on profiles and groups (today only posts can be taken down).
