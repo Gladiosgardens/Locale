@@ -70,6 +70,7 @@ Before a public launch, work through the list at the bottom of this file.
 1. **Website on your own domain** (affiliate networks require one), with Privacy Policy and Terms that cover commissions, payouts and the creator rules above.
 2. **Affiliate network:** get approved by Sovrn Commerce and/or Skimlinks, then set the link template from their link-wrapping docs, with `{url}` for the destination and `{sub}` for our click id in their custom/sub-ID parameter:
    `npx supabase secrets set AFFILIATE_LINK_TEMPLATE='https://…{url}…{sub}'`
+   For **Sovrn Commerce** (Commerce API install): `AFFILIATE_LINK_TEMPLATE='https://redirect.viglink.com?key=<your Sovrn API key>&cuid={sub}&u={url}'`. The click id goes in `cuid` as 32 letters and digits (dashes removed), and Sovrn's reports show it in their CUID column, which is the `--sub` column for `scripts/import-commissions.mjs`.
 3. **Stripe:** create a Stripe account for your US business, turn on **Connect** (Express accounts, cross-border payouts, and 1099 tax reporting in the Connect settings), then `npx supabase secrets set STRIPE_SECRET_KEY=sk_live_…` (use `sk_test_…` first). Keep enough balance in Stripe to cover payouts (commissions arrive from the network to your bank; move funds to Stripe before the 1st).
 4. **Secrets for the jobs:** `npx supabase secrets set IMPORT_SECRET=$(openssl rand -hex 32) PAYOUT_SECRET=$(openssl rand -hex 32)` (note both values).
 5. **Deploy:**

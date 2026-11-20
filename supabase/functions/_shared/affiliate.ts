@@ -4,13 +4,15 @@
 /**
  * Turns a shop link into the network's tracked link. The template comes from
  * the network's docs, e.g. "https://network.example/?key=KEY&u={url}&sub={sub}":
- * {url} is replaced by the encoded destination and {sub} by our click id.
+ * {url} is replaced by the encoded destination and {sub} by our click id,
+ * sent without dashes (32 letters and digits, which every network accepts as a
+ * custom ID; import_commission reads it back as the same uuid).
  */
 export function wrapLink(template: string, url: string, subId: string): string {
   if (!template.startsWith('https://') || !template.includes('{url}')) {
     throw new Error('AFFILIATE_LINK_TEMPLATE must be an https URL containing {url}');
   }
-  return template.replaceAll('{url}', encodeURIComponent(url)).replaceAll('{sub}', encodeURIComponent(subId));
+  return template.replaceAll('{url}', encodeURIComponent(url)).replaceAll('{sub}', encodeURIComponent(subId.replaceAll('-', '')));
 }
 
 export type CommissionStatus = 'pending' | 'locked' | 'reversed';

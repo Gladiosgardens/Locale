@@ -4,8 +4,13 @@ import { expressAccountParams, formEncode, stripe, StripeError } from '../../sup
 describe('affiliate links', () => {
   it('wraps a link with the destination and our click id', () => {
     expect(wrapLink('https://net.example/?key=K&u={url}&sub={sub}', 'https://shop.com/a?b=1&c=2', 'abc-1')).toBe(
-      'https://net.example/?key=K&u=https%3A%2F%2Fshop.com%2Fa%3Fb%3D1%26c%3D2&sub=abc-1',
+      'https://net.example/?key=K&u=https%3A%2F%2Fshop.com%2Fa%3Fb%3D1%26c%3D2&sub=abc1',
     );
+  });
+  it('fits Sovrn: the click id goes in cuid as 32 letters and digits', () => {
+    expect(
+      wrapLink('https://redirect.viglink.com?key=K&cuid={sub}&u={url}', 'https://shop.com/p', '0f8fad5b-d9cb-469f-a165-70867728950e'),
+    ).toBe('https://redirect.viglink.com?key=K&cuid=0f8fad5bd9cb469fa16570867728950e&u=https%3A%2F%2Fshop.com%2Fp');
   });
   it('rejects a template without {url} or https', () => {
     expect(() => wrapLink('https://net.example/?key=K', 'https://shop.com', 'x')).toThrow();
